@@ -1,1 +1,0 @@
-web: lerna run start

@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "npm exec vite build",
     "serve": "vite preview",
     "test": "vitest"
   },
