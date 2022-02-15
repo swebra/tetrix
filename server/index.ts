@@ -7,7 +7,7 @@ import { Server } from "socket.io";
 import {
   ServerToClientEvents,
   ClientToServerEvents,
-} from "../common/message";
+} from "common/message";
 
 interface InterServerEvents {
   ping: () => void;
@@ -22,15 +22,20 @@ interface SocketData {
 // Initialize the express engine
 const app: express.Application = express();
 
-app.use(cors())
+app.use(function(req, res, next) {
+  res.header("Access-Control-Allow-Origin", "*");
+  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+  next();
+});
 
 const server = http.createServer(app)
 
 // Take a port 3000 for running server.
-const port: number = 3001;
+const port = process.env.PORT || 80
 
 // Server setup
 server.listen(port)
+
 
 const io = new Server<
   ClientToServerEvents,
@@ -39,7 +44,7 @@ const io = new Server<
   SocketData
 >(server, {
     cors: {
-        origin: ["http://localhost:3000"]
+        origin: "*"
     }});
 
 console.log("hello");

@@ -1,5 +1,5 @@
 {
-  "name": "phaser3-typescript-vite-template",
+  "name": "tetrix-client",
   "version": "0.0.0",
   "scripts": {
     "dev": "vite",
@@ -8,6 +8,7 @@
     "test": "vitest"
   },
   "dependencies": {
+    "common": "file:../common",
     "@types/lodash": "^4.14.178",
     "dotenv": "^14.3.2",
     "lodash": "^4.17.21",

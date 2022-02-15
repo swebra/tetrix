@@ -7,9 +7,9 @@ import {
   ServerToClientEvents,
   ClientToServerEvents,
   PlayerPosition,
-} from "../../common/message";
+} from "common/message";
 
-import { TetrominoType } from "../../common/TetrominoType";
+import { TetrominoType } from "common/TetrominoType";
 
 const BOARD_SIZE = 40;
 
