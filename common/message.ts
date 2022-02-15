@@ -1,9 +1,13 @@
+import {TetrominoType} from "./TetrominoType"
+
 interface ServerToClientEvents {
   initPlayer: (playerId: 0 | 1 | 2 | 3) => void;
-  playerAction: (playerAction: PlayerAction) => void;
+  playerMove: (playerId: PlayerID, moveEvent: MoveEvent, position: PlayerPosition) => void; // position: the position after this event, for verification purposes?
+  playerFall: (playerId: PlayerID, position: PlayerPosition) => void;
+  playerPlace: (playerId: PlayerID, position: PlayerPosition) => void;
 }
 
-type PlayerEvent = MoveEvent; // potentially more, so MoveEvent | TradeEvent | MoreEvent
+type PlayerID = 0 | 1 | 2 | 3;
 
 enum MoveEvent {
   Up,
@@ -12,14 +16,17 @@ enum MoveEvent {
   Right,
 }
 
-interface PlayerAction {
-  event: MoveEvent; // potentially more? MoveEvent | TradeEvent
-  playerId: 0 | 1 | 2 | 3;
+interface PlayerPosition {
+    tetroPosition: [number, number];
+    rotation: 0 | 1 | 2 | 3;
+    tetroType: TetrominoType
 }
 
 interface ClientToServerEvents {
   hello: () => void;
-  playerAction: (playerAction: PlayerAction) => void;
+  playerMove: (playerId: PlayerID, moveEvent: MoveEvent, position: PlayerPosition) => void; // position: the position after this event, for verification purposes?
+  playerFall: (playerId: PlayerID, position: PlayerPosition) => void;
+  playerPlace: (playerId: PlayerID, position: PlayerPosition) => void;
 }
 
-export { ServerToClientEvents, ClientToServerEvents, PlayerAction, MoveEvent, PlayerEvent };
+export { ServerToClientEvents, ClientToServerEvents, MoveEvent, PlayerPosition };

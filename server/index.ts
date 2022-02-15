@@ -53,8 +53,12 @@ io.on("connection", (socket) => {
   // works when broadcasting to a room
   // io.to("room1").emit("basicEmit", 1, "2", Buffer.from([3]));
 
-  socket.on("playerAction", ({event, playerId}) => {
-    console.log(`received event: `, event, ", from id: ", playerId)
-    socket.broadcast.emit("playerAction", {event, playerId})
+  socket.on("playerMove", (...args) => {
+     console.log(`received event: `, args)
+     socket.broadcast.emit("playerMove", ...args)
   })
+  // socket.on("playerAction", ({event, playerId}) => {
+  //   console.log(`received event: `, event, ", from id: ", playerId)
+  //   socket.broadcast.emit("playerAction", {event, playerId})
+  // })
 });
