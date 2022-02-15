@@ -77,26 +77,6 @@ class MyScene extends Phaser.Scene {
       callback: () => updateFalling(this),
       loop: true,
     });
-
-    // make a random block to "float" from bottom up. see if they collide reasonably
-    this.time.addEvent({
-      delay: 1000, // just to set a random interval so that two blocks don't arrive at the same time
-      callback: () => {
-        if (
-          canTetroFall(this.gameState.currentTetromino, this.gameState.board)
-        ) {
-          this.gameState.board[midH][mid - 2] = TetrominoType.Empty;
-          this.gameState.board[midH][mid - 1] = TetrominoType.Empty;
-          this.gameState.board[midH][mid - 0] = TetrominoType.Empty;
-          midH -= 1;
-          if (midH < 0) midH = BOARD_SIZE - 1;
-          this.gameState.board[midH][mid - 2] = TetrominoType.Square;
-          this.gameState.board[midH][mid - 1] = TetrominoType.Square;
-          this.gameState.board[midH][mid - 0] = TetrominoType.Square;
-        }
-      },
-      loop: true,
-    });
   }
 
   update(time: number, delta: number) {
@@ -373,7 +353,7 @@ class GameState {
       new Tetromino(TetrominoType.T),
     ];
 
-    this.socket = io("http://localhost:3001/");
+    this.socket = io((import.meta.env.PROD && "https://tetrix-web.herokuapp.com/") || "http://localhost:3001/");
     console.log(this.socket);
 
     this.socket.on("initPlayer", (playerId) => {
@@ -394,7 +374,7 @@ class GameState {
     });
   }
 
-  onRemoteUpdate!: () => void;
+  onRemoteUpdate: () => void = () => {};
 }
 
 const config = {
