@@ -4,7 +4,8 @@
 	"scripts": {
 		"start": "node ./build/index.js",
 		"test": "jest",
-        "build": "cd ../client && npm run build && cd ../server && tsc"
+        "build": "tsc",
+        "clean": "rm -rf ./build"
 	},
 	"dependencies": {
         "common": "file:../common",

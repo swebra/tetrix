@@ -3,6 +3,7 @@ import express from "express";
 import cors from 'cors';
 import http from 'http';
 import { Server } from "socket.io";
+import path from "path";
 
 import {
   ServerToClientEvents,
@@ -22,11 +23,13 @@ interface SocketData {
 // Initialize the express engine
 const app: express.Application = express();
 
-app.use(function(req, res, next) {
+app.use(function(_, res, next) {
   res.header("Access-Control-Allow-Origin", "*");
   res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
   next();
 });
+
+app.use('/', express.static(path.join(__dirname, 'public')))
 
 const server = http.createServer(app)
 
