@@ -1,6 +1,6 @@
 import Phaser, { Scene } from "phaser";
 import { io, Socket } from "socket.io-client";
-
+import { FullscreenScoreboard } from "./FullscreenScoreboard";
 import {
   PlayerAction,
   MoveEvent,
@@ -97,6 +97,15 @@ class MyScene extends Phaser.Scene {
         renderedPlayerC.draw(this);
         renderedPlayerD.draw(this);
     }
+
+    this.gameState.updateScoreboard = (playerPoints) => {
+      this.updateScoreboard(playerPoints);
+    }
+
+    this.gameState.fullScoreboard = (playerPoints) => {
+      this.scene.launch("FullscreenScoreboard");
+    }
+
     console.log("game board: ", this.gameState.board);
   }
 
@@ -127,6 +136,25 @@ class MyScene extends Phaser.Scene {
       }
       this.currentTetro.draw(this);
       this.frameElapsed = 0;
+    }
+  }
+
+  private updateScoreboard(playerPts: any) {
+    // Wipe the existing UI.
+    this.add.rectangle(800, 16, 200, 600, 0x000);
+
+    // Add in the updated UI.
+    this.add
+      .text(685, 16, "Leaderboards", { fontSize: "52px", fontFamily: "VT323" })
+      .setTint(0xFF0000);
+
+    let y = 30;
+
+    for (let element of playerPts) {
+      y += 50;
+      this.add
+        .text(700, y, `${element.color}: ${element.points}`, { fontSize: "32px", fontFamily: "VT323" })
+        .setTint(element.hex);
     }
   }
 }
@@ -250,6 +278,14 @@ class GameState {
       console.log("playerId: ", playerId);
     });
 
+    this.socket.on("updateScoreboard", (valFromServer) => {
+      this.updateScoreboard(valFromServer);
+    });
+
+    this.socket.on("showFullScoreboard", (valFromServer) => {
+      this.fullScoreboard(valFromServer);
+    });
+
     // other player is sending in some action, should re-render using onPlayerAction
     this.socket.on("playerAction", ({event, playerId}) => {
         console.log("received remote action: ", event, ", from ", playerId)
@@ -276,6 +312,8 @@ class GameState {
   }
 
   onPlayerAction!: (a: PlayerAction) => void;
+  updateScoreboard!: (data: any) => void;
+  fullScoreboard!: (data: any) => void;
 }
 
 const config = {
@@ -283,7 +321,7 @@ const config = {
   parent: "root",
   width: 50 * MyScene.blockSize,
   height: 50 * MyScene.blockSize,
-  scene: MyScene,
+  scene: [MyScene, FullscreenScoreboard]
 };
 
 export const game = new Phaser.Game(config);
