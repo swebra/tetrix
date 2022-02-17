@@ -14,7 +14,7 @@
     "noEmit": true,
     "jsx": "react",
     // https://github.com/vitest-dev/vitest/pull/687
-    "types": ["vitest/globals"]
+    "types": ["vitest/globals", "vite/client"]
   },
   "include": ["./src"]
 }

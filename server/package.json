@@ -1,10 +1,15 @@
 {
+    "name": "tetrix-server",
 	"main": "index.js",
 	"scripts": {
-		"start": "nodemon index.ts",
-		"test": "jest"
+		"start": "node ./build/index.js",
+		"test": "jest",
+        "build": "tsc",
+        "clean": "rm -rf ./build"
 	},
 	"dependencies": {
+        "common": "file:../common",
+        "client": "file:../client",
 		"@types/express": "^4.17.13",
 		"@types/node": "^17.0.12",
 		"cors": "^2.8.5",

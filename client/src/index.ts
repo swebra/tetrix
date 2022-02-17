@@ -3,6 +3,7 @@ import { FullscreenScoreboard } from "./SceneFullscreenScoreboard";
 import { GameArenaScene } from "./SceneGameArena";
 import { GameState } from "./GameState";
 
+
 const config = {
   type: Phaser.AUTO,
   parent: "root",
