@@ -16,4 +16,4 @@ const config = {
 const gamestate = new GameState();
 const game = new Phaser.Game(config);
 
-game.scene.start("SceneGameArena", {gameState: gamestate});
+game.scene.start("SceneGameArena", { gameState: gamestate });

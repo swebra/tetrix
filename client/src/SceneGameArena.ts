@@ -1,5 +1,5 @@
 import { GameState } from "./GameState";
-import { GameObjects } from "phaser";
+import Phaser, { GameObjects } from "phaser";
 import { RenderedTetromino } from "./RenderedTetromino";
 import { BOARD_SIZE } from "../../common/shared";
 import { cloneDeep } from "lodash";
@@ -91,20 +91,19 @@ export class SceneGameArena extends Phaser.Scene {
 
     private updateScoreboard(playerPts: any) {
         // Wipe the existing scoreboard UI.
-        this.add.rectangle(800, 16, 300, 600, 0x000);
+        this.add.rectangle(17.5 * BOARD_SIZE, 16, 300, 400, 0x000);
 
         // Add in the updated UI.
         this.add
-            .text(685, 16, "Leaderboards", { fontSize: "52px", fontFamily: "VT323" })
+            .text(14 * BOARD_SIZE + 25, 16, "Leaderboard", { fontSize: "42px", fontFamily: "VT323" })
             .setTint(0xFF0000);
 
-        let y = 30;
-
+        let y: number = 30;
         for (let element of playerPts) {
-            y += 50;
+            y += 30;
             let text = `${element.color}`.padEnd(10) + `${element.points}`;
             this.add
-                .text(720, y, text, { fontSize: "32px", fontFamily: "VT323" })
+                .text(14 * BOARD_SIZE + 60, y, text, { fontSize: "22px", fontFamily: "VT323" })
                 .setTint(element.hex);
         }
     }

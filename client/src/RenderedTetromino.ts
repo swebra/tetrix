@@ -1,4 +1,4 @@
-import { Scene } from "phaser";
+import Phaser, { Scene } from "phaser";
 import { Tetromino } from "./Tetromino";
 import { SceneGameArena } from "./SceneGameArena";
 

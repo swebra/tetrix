@@ -53,6 +53,7 @@ const io = new Server<
   },
 });
 
+console.log("Server started");
 let playerCounter: 0 | 1 | 2 | 3 = 0;
 let scoreboard = new Scoreboard();
 let level = new Level();
