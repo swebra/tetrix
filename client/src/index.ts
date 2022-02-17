@@ -141,7 +141,7 @@ class MyScene extends Phaser.Scene {
 
   private updateScoreboard(playerPts: any) {
     // Wipe the existing UI.
-    this.add.rectangle(800, 16, 200, 600, 0x000);
+    this.add.rectangle(800, 16, 300, 600, 0x000);
 
     // Add in the updated UI.
     this.add
@@ -152,8 +152,9 @@ class MyScene extends Phaser.Scene {
 
     for (let element of playerPts) {
       y += 50;
+      let text = `${element.color}`.padEnd(10) + `${element.points}`;
       this.add
-        .text(700, y, `${element.color}: ${element.points}`, { fontSize: "32px", fontFamily: "VT323" })
+        .text(720, y, text, { fontSize: "32px", fontFamily: "VT323" })
         .setTint(element.hex);
     }
   }
