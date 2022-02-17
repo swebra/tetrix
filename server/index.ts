@@ -60,17 +60,17 @@ let level = new Level();
 
 // Emit to all sockets.
 export function broadcastUpdateScoreboard(msg: any) {
-  io.sockets.emit("updateScoreboard", msg);
+  io.emit("updateScoreboard", msg);
 }
 
 // Emit to all sockets.
 export function broadcastEndSequence(msg: any) {
-  io.sockets.emit("endSequence", msg);
+  io.emit("endSequence", msg);
 }
 
 // Emit to all sockets.
 export function broadcastWipeScreen() {
-  io.sockets.emit("wipeScreen");
+  io.emit("wipeScreen");
 }
 
 io.on("connection", (socket) => {
