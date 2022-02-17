@@ -2,8 +2,8 @@ interface ServerToClientEvents {
   initPlayer: (playerId: 0 | 1 | 2 | 3) => void;
   playerAction: (playerAction: PlayerAction) => void;
   updateScoreboard: (data: any) => void;
-  showFullScoreboard: (data: any) => void;
-  hideScoreboard: () => void;
+  endSequence: (data: any) => void;
+  wipeScreen: () => void;
 }
 
 type PlayerEvent = MoveEvent; // potentially more, so MoveEvent | TradeEvent | MoreEvent

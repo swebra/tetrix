@@ -1,6 +1,6 @@
 import { Player } from "./PlayerAttributes";
 import { Level } from "./Level";
-import { broadcastUpdateScoreboard, broadcastHideScoreboard, broadcastShowFullScoreboard } from "../index";
+import { broadcastUpdateScoreboard, broadcastWipeScreen, broadcastEndSequence } from "../index";
 
 export class Scoreboard {
     private _orangeScore: number;
@@ -198,18 +198,20 @@ export class Scoreboard {
     public displayFullScreenUI() {
         this.updateScoreMap();
 
-        this._scoreMap.push({
+        // Temporary clone of the data so that we can append the level of the game.
+        let clonedData = Object.assign([], this._scoreMap);
+        clonedData.push({
             color: "TEAM SCORE",
             hex: 0xFFFF00,
             points: this.currentTeamScore
         });
 
         // Show scoreboard to all connected users.
-        broadcastShowFullScoreboard(this._scoreMap);
+        broadcastEndSequence(clonedData);
 
         // Hide the scoreboard after 30 seconds.
         setTimeout(() => {
-            broadcastHideScoreboard();
+            broadcastWipeScreen();
             this.resetScores();
         }, 30000);
     }
