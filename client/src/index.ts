@@ -1,15 +1,16 @@
 import Phaser from "phaser";
-import { FullscreenScoreboard } from "./SceneFullscreenScoreboard";
+import { SceneFullscreenScoreboard } from "./SceneFullscreenScoreboard";
 import { SceneGameArena } from "./SceneGameArena";
 import { GameState } from "./GameState";
+import { BOARD_SIZE } from "common/shared";
 
 
 const config = {
   type: Phaser.AUTO,
   parent: "root",
-  width: 50 * SceneGameArena.blockSize,
-  height: 50 * SceneGameArena.blockSize,
-  scene: [SceneGameArena, FullscreenScoreboard]
+  width: BOARD_SIZE * SceneGameArena.blockSize,
+  height: BOARD_SIZE * SceneGameArena.blockSize,
+  scene: [SceneGameArena, SceneFullscreenScoreboard]
 };
 
 const gamestate = new GameState();

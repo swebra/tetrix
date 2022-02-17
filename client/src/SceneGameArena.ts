@@ -70,7 +70,7 @@ export class SceneGameArena extends Phaser.Scene {
         }
 
         this.gameState.fullScoreboard = (playerPoints) => {
-            this.scene.start("FullscreenScoreboard", { playerPoints: playerPoints, blockSize: SceneGameArena.blockSize, gameState: this.gameState });
+            this.scene.start("SceneFullscreenScoreboard", { playerPoints: playerPoints, blockSize: SceneGameArena.blockSize, gameState: this.gameState });
         }
     }
 

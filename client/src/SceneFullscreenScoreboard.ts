@@ -1,14 +1,14 @@
 import Phaser from "phaser";
 import { GameState } from "./GameState";
 
-export class FullscreenScoreboard extends Phaser.Scene {
+export class SceneFullscreenScoreboard extends Phaser.Scene {
     private playerData!: any;
     private blockSize!: number;
     private gameState!: GameState;
 
     constructor () {
         super({
-            key: "FullscreenScoreboard"
+            key: "SceneFullscreenScoreboard"
         });
     }
 
