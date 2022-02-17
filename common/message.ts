@@ -2,6 +2,9 @@ import {TetrominoType} from "./TetrominoType"
 
 interface ServerToClientEvents {
   initPlayer: (playerId: 0 | 1 | 2 | 3) => void;
+  updateScoreboard: (data: any) => void;
+  endSequence: (data: any) => void;
+  wipeScreen: () => void;
   playerMove: (playerId: PlayerID, moveEvent: MoveEvent, position: PlayerPosition) => void; // position: the position after this event, for verification purposes?
   playerFall: (playerId: PlayerID, position: PlayerPosition) => void;
   playerPlace: (playerId: PlayerID, position: PlayerPosition) => void;
@@ -13,7 +16,7 @@ enum MoveEvent {
   Up,
   Down,
   Left,
-  Right,
+  Right
 }
 
 interface PlayerPosition {

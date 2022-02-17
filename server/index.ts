@@ -3,6 +3,8 @@ import express from "express";
 import cors from "cors";
 import http from "http";
 import { Server } from "socket.io";
+import { Level } from "./typescript/Level";
+import { Scoreboard } from "./typescript/Scoreboard";
 import path from "path";
 
 import { ServerToClientEvents, ClientToServerEvents } from "common/message";
@@ -51,11 +53,47 @@ const io = new Server<
   },
 });
 
+console.log("Server started");
 let playerCounter: 0 | 1 | 2 | 3 = 0;
+let scoreboard = new Scoreboard();
+let level = new Level();
+
+// Emit to all sockets.
+export function broadcastUpdateScoreboard(msg: any) {
+  io.sockets.emit("updateScoreboard", msg);
+}
+
+// Emit to all sockets.
+export function broadcastEndSequence(msg: any) {
+  io.sockets.emit("endSequence", msg);
+}
+
+// Emit to all sockets.
+export function broadcastWipeScreen() {
+  io.sockets.emit("wipeScreen");
+}
+
 io.on("connection", (socket) => {
-  socket.emit("initPlayer", playerCounter);
-  playerCounter += 1;
-  playerCounter %= 4;
+  socket.emit("initPlayer", playerCounter)
+  playerCounter += 1
+  playerCounter %= 4
+
+  // Notify the client of the current scores of the players.
+  // FIXME: This should check if a game is currently running before calling this function.
+  scoreboard.updateScoreboardUI(level.currentLevel);
+
+  // Uncomment the following to view the scoreboard update:
+  setTimeout(() => {
+    scoreboard.incrementScore(4, 5, level);
+    scoreboard.incrementScore(2, 2, level);
+    scoreboard.incrementScore(3, 1, level);
+  }, 1000);
+
+  // Uncomment to view the game end sequence:
+  // setTimeout(() => {
+  //   scoreboard.displayFullScreenUI();
+  // }, 2000);
+
   // works when broadcast to all
   // io.emit("noArg");
   // works when broadcasting to a room
