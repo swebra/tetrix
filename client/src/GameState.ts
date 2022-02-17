@@ -49,7 +49,7 @@ export class GameState {
         ];
 
         this.socket = io(
-            (import.meta.env.PROD && "https://tetrix-web.herokuapp.com/") ||
+            (import.meta.env.PROD && window.location.origin) ||
             "http://localhost:3001/"
         );
         console.log(this.socket);
