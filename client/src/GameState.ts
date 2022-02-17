@@ -1,9 +1,8 @@
 import { io, Socket } from "socket.io-client";
-import { TetrominoType } from "./TetrominoType";
+import { TetrominoType } from "common/TetrominoType";
 import { Tetromino } from "./Tetromino";
+import { BOARD_SIZE } from "common/shared";
 import {
-    PlayerAction,
-    MoveEvent,
     ServerToClientEvents,
     ClientToServerEvents,
 } from "../../common/message";
@@ -12,8 +11,11 @@ export class GameState {
     // used for synchronization. not related to rendering (no sprites, scene, phaser3 stuff)
     socket!: Socket<ServerToClientEvents, ClientToServerEvents>;
 
-    // synced from+to server?
+    // frozen board is the board without moving players, NOTE: frozenBoard is the truth of placed blocks
+    frozenBoard: Array<Array<TetrominoType>>;
+    // board is the final product being rendered. contains all 3 other players
     board: Array<Array<TetrominoType>>;
+
     // synced to server
     currentTetromino: Tetromino;
     // synced from server
@@ -22,9 +24,9 @@ export class GameState {
 
     private blankBoard() {
         let board = [];
-        for (let r = 0; r < 50; r++) {
+        for (let r = 0; r < BOARD_SIZE; r++) {
             let row = [];
-            for (let c = 0; c < 50; c++) {
+            for (let c = 0; c < BOARD_SIZE; c++) {
                 row.push(TetrominoType.Empty);
             }
             board.push(row);
@@ -34,21 +36,39 @@ export class GameState {
 
     constructor() {
         this.board = this.blankBoard();
+        this.frozenBoard = this.blankBoard();
+
         this.currentTetromino = new Tetromino(TetrominoType.T);
         // other player's moving piece, TODO this is synchronized with the server
         // how they are rendered is not concerned.
-        this.otherPieces = [ // FIXME not good?
+        this.otherPieces = [
+            // FIXME not good?
             new Tetromino(TetrominoType.T),
             new Tetromino(TetrominoType.T),
             new Tetromino(TetrominoType.T),
         ];
 
-        this.socket = io("http://localhost:3001/");
+        this.socket = io(
+            (import.meta.env.PROD && "https://tetrix-web.herokuapp.com/") ||
+            "http://localhost:3001/"
+        );
         console.log(this.socket);
 
         this.socket.on("initPlayer", (playerId) => {
             this.playerId = playerId;
             console.log("playerId: ", playerId);
+        });
+
+        // other player is sending in some action, should re-render using onPlayerAction
+        this.socket.on("playerMove", (playerId, event, position) => {
+            console.log("received remote action: ", event, ", from ", playerId);
+            let otherPlayerIndex = ((playerId + 4 - this.playerId) % 4) - 1; // FIXME hack.
+            console.log("this otherplayer is: ", otherPlayerIndex);
+
+            this.otherPieces[otherPlayerIndex].position = position.tetroPosition;
+            this.otherPieces[otherPlayerIndex].rotation = position.rotation;
+            this.otherPieces[otherPlayerIndex].type = position.tetroType;
+            this.onRemoteUpdate();
         });
 
         this.socket.on("updateScoreboard", (valFromServer) => {
@@ -62,33 +82,9 @@ export class GameState {
         this.socket.on("wipeScreen", () => {
             this.wipeScreen();
         });
-
-        // other player is sending in some action, should re-render using onPlayerAction
-        this.socket.on("playerAction", ({ event, playerId }) => {
-            console.log("received remote action: ", event, ", from ", playerId)
-            let otherPlayerIndex = (playerId + 4 - this.playerId) % 4 - 1 // FIXME hack.
-            console.log("this otherplayer is: ", otherPlayerIndex)
-            this.otherPieces[otherPlayerIndex]
-
-            if (event == MoveEvent.Left) {
-                // FIXME gameState is directly modified, pass in keyboard events and use a update() method?
-                let [row, col] = this.otherPieces[otherPlayerIndex].position;
-                this.otherPieces[otherPlayerIndex].position = [row, Math.max(0, col - 1)]; // TODO
-            } else if (event == MoveEvent.Right) {
-                let [row, col] = this.otherPieces[otherPlayerIndex].position;
-                this.otherPieces[otherPlayerIndex].position = [row, Math.min(50, col + 1)]; // TODO
-            }
-            if (this.onPlayerAction) this.onPlayerAction({ event, playerId })
-        })
     }
 
-    fall() {
-        // fall is called every 1 second
-        this.currentTetromino.fall();
-        this.otherPieces.forEach((tetro) => tetro.fall());
-    }
-
-    onPlayerAction!: (a: PlayerAction) => void;
+    onRemoteUpdate: () => void = () => { };
     updateScoreboard!: (data: any) => void;
     fullScoreboard!: (data: any) => void;
     wipeScreen!: () => void;

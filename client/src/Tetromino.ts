@@ -1,4 +1,6 @@
-import { TetrominoType } from "./TetrominoType";
+import { TetrominoType } from "common/TetrominoType";
+import { BOARD_SIZE } from "common/shared";
+import { PlayerPosition } from "common/message";
 
 export class Tetromino {
     type: TetrominoType;
@@ -10,7 +12,7 @@ export class Tetromino {
 
     constructor(type: TetrominoType) {
         this.type = type;
-        this.position = [0, 23]; // TODO hardcoded to the middle (50/2)
+        this.position = [0, Math.round(BOARD_SIZE / 2) - 2]; // TODO hardcoded to the middle (10/2)
         this.rotation = 0; // default (no rotation)
         this.cells = [
             // TODO generate based on type
@@ -21,9 +23,11 @@ export class Tetromino {
         ];
     }
 
-    fall() {
-        // TODO boundary checks
-        this.position[0] += 1;
-        if (this.position[0] > 50) this.position[0] = 0;
+    reportPosition(): PlayerPosition {
+        return {
+            tetroPosition: this.position,
+            rotation: this.rotation,
+            tetroType: this.type,
+        };
     }
 }
