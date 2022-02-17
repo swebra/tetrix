@@ -1,145 +1,236 @@
-import Phaser, { Scene } from "phaser";
+import Phaser, { Scene, GameObjects } from "phaser";
 import { io, Socket } from "socket.io-client";
+import { cloneDeep } from "lodash";
 
 import {
-  PlayerAction,
   MoveEvent,
   ServerToClientEvents,
   ClientToServerEvents,
-} from "../../common/message";
+  PlayerPosition,
+} from "common/message";
+
+import { TetrominoType } from "common/TetrominoType";
+
+const BOARD_SIZE = 40;
 
 class MyScene extends Phaser.Scene {
+  FRAMERATE: number = 12;
+
   cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
   gameState!: GameState;
 
   static blockSize: number = 20; // 20px width for a single square block
   currentTetro!: RenderedTetromino;
+  otherTetros!: Array<RenderedTetromino>;
+  renderedBoard!: Array<Array<GameObjects.Rectangle | null>>;
 
-  frameElapsed: number = 0; // the ms time since the last frame is drawn
+  frameTimeElapsed: number = 0; // the ms time since the last frame is drawn
 
-  preload() {
-  }
+  preload() {}
 
   create() {
     this.gameState = new GameState();
+    // initialize an empty rendered board
+    this.renderedBoard = [];
+    for (let row = 0; row < BOARD_SIZE; row++) {
+      let r = [];
+      for (let col = 0; col < BOARD_SIZE; col++) {
+        r.push(null);
+      }
+      this.renderedBoard.push(r);
+    }
 
     // keyboard input
     this.cursors = this.input.keyboard.createCursorKeys();
 
-    // play area
-    this.add.rectangle(
-      25 * MyScene.blockSize,
-      25 * MyScene.blockSize,
-      10 * MyScene.blockSize,
-      50 * MyScene.blockSize,
-      0xdddddd
-    );
-    this.add.rectangle(
-      25 * MyScene.blockSize,
-      25 * MyScene.blockSize,
-      50 * MyScene.blockSize,
-      10 * MyScene.blockSize,
-      0xdddddd
-    );
-
-    console.log("hello");
-
     // falling, controllable tetromino
     this.currentTetro = new RenderedTetromino(this.gameState.currentTetromino);
-    this.currentTetro.draw(this);
+    this.otherTetros = [];
+    for (let i = 0; i < 3; i++) {
+      this.otherTetros.push(
+        new RenderedTetromino(this.gameState.otherPieces[i])
+      );
+    }
 
-    /*
-     * for a player on the left side:
-     * rec.x = oldrec.y
-     * rec.y = height - oldrec.x
-     *
-     * for a player on the bottom
-     * rec.x = width - oldrec.x
-     * rec.y = height - oldrec.y
-     *
-     * for a player on the right
-     * rec.x = width - oldrec.y
-     * rec.y = oldrec.x
-     **/
-    // left player
-    let renderedPlayerB = new RenderedTetromino(this.gameState.otherPieces[0]);
-    renderedPlayerB.xyTransform = (x, y) => {
-      return { x: y, y: MyScene.blockSize * 50 - x };
-    };
-
-    // down player
-    let renderedPlayerC = new RenderedTetromino(this.gameState.otherPieces[1]);
-    renderedPlayerC.xyTransform = (x, y) => {
-      return { x: MyScene.blockSize * 50 - x, y: MyScene.blockSize * 50 - y };
-    };
-
-    // right player
-    let renderedPlayerD = new RenderedTetromino(this.gameState.otherPieces[2]);
-    renderedPlayerD.xyTransform = (x, y) => {
-      return { x: MyScene.blockSize * 50 - y, y: x };
-    };
-
+    // 1s interval falling rate, TODO put inside update()?
     this.time.addEvent({
       delay: 1000,
-      callback: () => {
-        this.gameState.fall();
-        this.currentTetro.draw(this);
-        renderedPlayerB.draw(this);
-        renderedPlayerC.draw(this);
-        renderedPlayerD.draw(this);
-      },
+      callback: () => updateFalling(this),
       loop: true,
     });
-
-    this.gameState.onPlayerAction = (otherPlayerAction) => {
-        this.currentTetro.draw(this);
-        renderedPlayerB.draw(this);
-        renderedPlayerC.draw(this);
-        renderedPlayerD.draw(this);
-    }
-    console.log("game board: ", this.gameState.board);
   }
 
   update(time: number, delta: number) {
-    // TODO: left and right bound
-    this.frameElapsed += delta;
-    if (this.frameElapsed > 1000 / 12) {
-      // 12 fps
-      if (this.cursors.left.isDown) {
-        // FIXME gameState is directly modified, pass in keyboard events and use a update() method?
-        let [row, col] = this.gameState.currentTetromino.position;
+    this.frameTimeElapsed += delta;
 
-        this.gameState.currentTetromino.position = [row, Math.max(0, col - 1)]; // TODO
+    // 12 fps
+    if (this.frameTimeElapsed > 1000 / this.FRAMERATE) {
+      updateBoardFromFrozen(this);
+      updateUserInput(this);
+      updateDrawBoard(this.gameState, this);
+      updateDrawPlayer(this);
 
-        console.log("emit left");
-        this.gameState.socket.emit("playerAction", {
-          playerId: this.gameState.playerId,
-          event: MoveEvent.Left,
-        });
-      } else if (this.cursors.right.isDown) {
-        let [row, col] = this.gameState.currentTetromino.position;
-        this.gameState.currentTetromino.position = [row, Math.min(50, col + 1)]; // TODO
-
-        this.gameState.socket.emit("playerAction", {
-          playerId: this.gameState.playerId,
-          event: MoveEvent.Right,
-        });
-      }
-      this.currentTetro.draw(this);
-      this.frameElapsed = 0;
+      // start next frame
+      this.frameTimeElapsed = 0;
     }
   }
 }
 
-enum TetrominoType {
-  LClockwise,
-  LCounterClockwise,
-  Z,
-  S,
-  T,
-  Square,
-  Long,
-  Empty,
+// the frozen board is all blocks that are placed. the board contains dynamic player blocks.
+// this function sync the board with frozenboard, and add players on top
+function updateBoardFromFrozen(scene: MyScene) {
+  scene.gameState.board = cloneDeep(scene.gameState.frozenBoard);
+  for (let i = 0; i < 3; i++) {
+    //putTetroOnBoard(scene.otherTetros[i].inner, scene.gameState.board)
+    let tetro = scene.otherTetros[i].inner;
+    for (let cell of tetro.cells) {
+      const rowAbsolute = cell[0] + tetro.position[0];
+      const colAbsolute = cell[1] + tetro.position[1];
+      let [row, col] = xyTransform(rowAbsolute, colAbsolute, i);
+      scene.gameState.board[row][col] = tetro.type;
+    }
+  }
+
+  // given row,col of a tetro coordinate, rotate it to the relative view of the local player
+  function xyTransform(row: number, col: number, i: number): [number, number] {
+    if (i === 0) {
+      return [col, BOARD_SIZE - row];
+    } else if (i === 1) {
+      return [BOARD_SIZE - row, BOARD_SIZE - col];
+    } else if (i === 2) {
+      return [BOARD_SIZE - col, row];
+    } else {
+      return [row, col];
+    }
+    //  // left player
+    //  this.otherTetros[0].xyTransform = (x, y) => {
+    //    return { x: y, y: MyScene.blockSize * BOARD_SIZE - x };
+    //  };
+    //  // down player
+    //  this.otherTetros[1].xyTransform = (x, y) => {
+    //    return {
+    //      x: MyScene.blockSize * BOARD_SIZE - x,
+    //      y: MyScene.blockSize * BOARD_SIZE - y,
+    //    };
+    //  };
+    //  // right player
+    //  this.otherTetros[2].xyTransform = (x, y) => {
+    //    return { x: MyScene.blockSize * BOARD_SIZE - y, y: x };
+    //  };
+  }
+}
+
+// TODO
+// 1. these update functions can have unified interface
+// 2. they have duplicate logic with the Phaser.Scene.time.addEvent, consider moving the falling down here, but we need a internal state/class instance for each of them to track time delta in order to have a different function
+function updateUserInput(scene: MyScene) {
+  if (scene.cursors.left.isDown) {
+    let [row, col] = scene.gameState.currentTetromino.position;
+
+    scene.gameState.currentTetromino.position = [row, Math.max(0, col - 1)]; // TODO
+
+    scene.gameState.socket.emit(
+      "playerMove",
+      scene.gameState.playerId,
+      MoveEvent.Left,
+      scene.gameState.currentTetromino.reportPosition()
+    );
+  } else if (scene.cursors.right.isDown) {
+    let [row, col] = scene.gameState.currentTetromino.position;
+    scene.gameState.currentTetromino.position = [
+      row,
+      Math.min(BOARD_SIZE, col + 1),
+    ]; // TODO
+
+    scene.gameState.socket.emit(
+      "playerMove",
+      scene.gameState.playerId,
+      MoveEvent.Right,
+      scene.gameState.currentTetromino.reportPosition()
+    );
+  }
+}
+
+function updateDrawOtherPlayers(scene: MyScene) {
+  for (let player of scene.otherTetros) {
+    player.draw(scene);
+  }
+}
+
+function updateDrawPlayer(scene: MyScene) {
+  scene.currentTetro.draw(scene);
+}
+
+function updateGameOver(state: GameState, scene: MyScene) {
+  // TODO
+  // if the current tetromino is placed and is outside its section, game is over.
+}
+
+function updateFalling(scene: MyScene) {
+  // fall the tetromino
+  // if (can fall)
+  //    fall
+  // else
+  //    TODO place on board
+
+  // NOTE: other players' tetrominoes are treated as static blocks, although they are synced shortly before this function
+
+  const state = scene.gameState;
+  const board = state.board;
+  const tetro = state.currentTetromino;
+
+  if (canTetroFall(tetro, board)) {
+    tetro.position[0] += 1;
+
+    scene.gameState.socket.emit(
+      "playerMove",
+      scene.gameState.playerId,
+      MoveEvent.Down,
+      scene.gameState.currentTetromino.reportPosition()
+    );
+  } else {
+    console.log(tetro, "cannot fall!");
+    // TODO place on state.board and emit events to the server
+  }
+}
+
+function canTetroFall(
+  tetro: Tetromino,
+  board: Array<Array<TetrominoType>>
+): Boolean {
+  // if the blocks right below this tetro are all empty, it can fall.
+  const bottomRelative = Math.max(...tetro.cells.map((cell) => cell[0])); // the lowest block in the tetro cells, ranging from 0-3
+  const bottomAbsolute = tetro.position[0] + bottomRelative; // the row of which the lowest block of the tetro is at in the board
+
+  if (bottomAbsolute + 1 >= board.length) return false;
+
+  return tetro.cells.every(
+    (cell) =>
+      cell[0] < bottomRelative || // either the cell is not the bottom cells which we don't care
+      board[bottomAbsolute + 1][tetro.position[1] + cell[1]] ==
+        TetrominoType.Empty // or the room below it has to be empty
+  );
+}
+
+function updateDrawBoard(state: GameState, scene: MyScene) {
+  // re-render the board
+  const board = state.board;
+  for (let row = 0; row < BOARD_SIZE; row++) {
+    for (let col = 0; col < BOARD_SIZE; col++) {
+      scene.renderedBoard[row][col]?.destroy();
+      if (board[row][col] != TetrominoType.Empty) {
+        let x = (col + 0.5) * MyScene.blockSize;
+        let y = (row + 0.5) * MyScene.blockSize;
+        scene.renderedBoard[row][col] = scene.add.rectangle(
+          x,
+          y,
+          MyScene.blockSize,
+          MyScene.blockSize,
+          0xffee00
+        );
+      }
+    }
+  }
 }
 
 class Tetromino {
@@ -152,7 +243,7 @@ class Tetromino {
 
   constructor(type: TetrominoType) {
     this.type = type;
-    this.position = [0, 23]; // TODO hardcoded to the middle (50/2)
+    this.position = [0, Math.round(BOARD_SIZE / 2) - 2]; // TODO hardcoded to the middle (10/2)
     this.rotation = 0; // default (no rotation)
     this.cells = [
       // TODO generate based on type
@@ -163,10 +254,12 @@ class Tetromino {
     ];
   }
 
-  fall() {
-    // TODO boundary checks
-    this.position[0] += 1;
-    if (this.position[0] > 50) this.position[0] = 0;
+  reportPosition(): PlayerPosition {
+    return {
+      tetroPosition: this.position,
+      rotation: this.rotation,
+      tetroType: this.type,
+    };
   }
 }
 
@@ -175,9 +268,6 @@ class RenderedTetromino {
 
   inner: Tetromino;
   cellSprites!: Array<Phaser.GameObjects.Rectangle>; // each representing one unit block.
-
-  // transform the top-down falling tetromino to another direction. used for other players than the current one.
-  xyTransform?: (x: number, y: number) => { x: number; y: number };
 
   constructor(tetromino: Tetromino) {
     this.inner = tetromino;
@@ -189,11 +279,6 @@ class RenderedTetromino {
       // transform relative block position on top of tetromino position
       let x = (this.inner.position[1] + col + 0.5) * MyScene.blockSize;
       let y = (this.inner.position[0] + row + 0.5) * MyScene.blockSize;
-
-      if (this.xyTransform) {
-        // rotate, needed for other players
-        ({ x, y } = this.xyTransform(x, y));
-      }
 
       let rec = scene.add.rectangle(
         x,
@@ -211,8 +296,11 @@ class GameState {
   // used for synchronization. not related to rendering (no sprites, scene, phaser3 stuff)
   socket!: Socket<ServerToClientEvents, ClientToServerEvents>;
 
-  // synced from+to server?
+  // frozen board is the board without moving players, NOTE: frozenBoard is the truth of placed blocks
+  frozenBoard: Array<Array<TetrominoType>>;
+  // board is the final product being rendered. contains all 3 other players
   board: Array<Array<TetrominoType>>;
+
   // synced to server
   currentTetromino: Tetromino;
   // synced from server
@@ -221,9 +309,9 @@ class GameState {
 
   private blankBoard() {
     let board = [];
-    for (let r = 0; r < 50; r++) {
+    for (let r = 0; r < BOARD_SIZE; r++) {
       let row = [];
-      for (let c = 0; c < 50; c++) {
+      for (let c = 0; c < BOARD_SIZE; c++) {
         row.push(TetrominoType.Empty);
       }
       board.push(row);
@@ -233,16 +321,22 @@ class GameState {
 
   constructor() {
     this.board = this.blankBoard();
+    this.frozenBoard = this.blankBoard();
+
     this.currentTetromino = new Tetromino(TetrominoType.T);
     // other player's moving piece, TODO this is synchronized with the server
     // how they are rendered is not concerned.
-    this.otherPieces = [ // FIXME not good?
+    this.otherPieces = [
+      // FIXME not good?
       new Tetromino(TetrominoType.T),
       new Tetromino(TetrominoType.T),
       new Tetromino(TetrominoType.T),
     ];
 
-    this.socket = io("http://localhost:3001/");
+    this.socket = io(
+      (import.meta.env.PROD && "https://tetrix-web.herokuapp.com/") ||
+        "http://localhost:3001/"
+    );
     console.log(this.socket);
 
     this.socket.on("initPlayer", (playerId) => {
@@ -251,39 +345,26 @@ class GameState {
     });
 
     // other player is sending in some action, should re-render using onPlayerAction
-    this.socket.on("playerAction", ({event, playerId}) => {
-        console.log("received remote action: ", event, ", from ", playerId)
-        let otherPlayerIndex = (playerId + 4 - this.playerId) % 4 - 1 // FIXME hack.
-        console.log("this otherplayer is: ",otherPlayerIndex)
-        this.otherPieces[otherPlayerIndex]
+    this.socket.on("playerMove", (playerId, event, position) => {
+      console.log("received remote action: ", event, ", from ", playerId);
+      let otherPlayerIndex = ((playerId + 4 - this.playerId) % 4) - 1; // FIXME hack.
+      console.log("this otherplayer is: ", otherPlayerIndex);
 
-          if (event == MoveEvent.Left) {
-            // FIXME gameState is directly modified, pass in keyboard events and use a update() method?
-            let [row, col] = this.otherPieces[otherPlayerIndex].position;
-            this.otherPieces[otherPlayerIndex].position = [row, Math.max(0, col - 1)]; // TODO
-          } else if (event == MoveEvent.Right) {
-            let [row, col] = this.otherPieces[otherPlayerIndex].position;
-            this.otherPieces[otherPlayerIndex].position = [row, Math.min(50, col + 1)]; // TODO
-      }
-       if (this.onPlayerAction) this.onPlayerAction({event, playerId})
-    })
+      this.otherPieces[otherPlayerIndex].position = position.tetroPosition;
+      this.otherPieces[otherPlayerIndex].rotation = position.rotation;
+      this.otherPieces[otherPlayerIndex].type = position.tetroType;
+      this.onRemoteUpdate();
+    });
   }
 
-  fall() {
-    // fall is called every 1 second
-    this.currentTetromino.fall();
-    this.otherPieces.forEach((tetro) => tetro.fall());
-  }
-
-  onPlayerAction!: (a: PlayerAction) => void;
+  onRemoteUpdate: () => void = () => {};
 }
 
 const config = {
   type: Phaser.AUTO,
   parent: "root",
-  width: 50 * MyScene.blockSize,
-  height: 50 * MyScene.blockSize,
+  width: BOARD_SIZE * MyScene.blockSize,
+  height: BOARD_SIZE * MyScene.blockSize,
   scene: MyScene,
 };
-
 export const game = new Phaser.Game(config);
