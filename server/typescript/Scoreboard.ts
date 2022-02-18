@@ -1,6 +1,6 @@
 import { Player } from "./PlayerAttributes";
 import { Level } from "./Level";
-import { broadcastUpdateScoreboard, broadcastWipeScreen, broadcastEndSequence } from "../index";
+import { broadcastUpdateScoreboard, broadcastStartSequence, broadcastEndSequence } from "../index";
 
 export class Scoreboard {
     private _orangeScore: number;
@@ -186,7 +186,7 @@ export class Scoreboard {
             color: "Level",
             hex: 0xFFFFFF,
             points: level
-        })
+        });
 
         // Notify all connected users.
         broadcastUpdateScoreboard(clonedData);
@@ -209,9 +209,9 @@ export class Scoreboard {
         // Show scoreboard to all connected users.
         broadcastEndSequence(clonedData);
 
-        // Hide the scoreboard after 30 seconds.
+        // Return to starting sequence after 30 seconds.
         setTimeout(() => {
-            broadcastWipeScreen();
+            broadcastStartSequence();
             this.resetScores();
         }, 30000);
     }

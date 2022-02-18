@@ -69,8 +69,8 @@ export function broadcastEndSequence(msg: any) {
 }
 
 // Emit to all sockets.
-export function broadcastWipeScreen() {
-  io.sockets.emit("wipeScreen");
+export function broadcastStartSequence() {
+  io.sockets.emit("startSequence");
 }
 
 io.on("connection", (socket) => {
@@ -102,6 +102,18 @@ io.on("connection", (socket) => {
   socket.on("playerMove", (...args) => {
     socket.broadcast.emit("playerMove", ...args);
   });
+
+  socket.on("scoreboardData", () => {
+    let clonedData = Object.assign([], scoreboard.scoreMap);
+    clonedData.push({
+      color: "Level",
+      hex: 0xFFFFFF,
+      points: level.currentLevel
+    });
+
+    socket.emit("updateScoreboard", clonedData)
+  });
+
   // socket.on("playerAction", ({event, playerId}) => {
   //   console.log(`received event: `, event, ", from id: ", playerId)
   //   socket.broadcast.emit("playerAction", {event, playerId})

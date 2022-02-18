@@ -39,7 +39,9 @@ export class SceneGameArena extends Phaser.Scene {
 
     create() {
         this.gameState = new GameState();
-        this.scoreboard = new ScoreboardUI(this);
+        this.scoreboard = new ScoreboardUI(this, true);
+        this.gameState.requestScoreboardData();
+
         // initialize an empty rendered board
         this.renderedBoard = [];
         for (let row = 0; row < BOARD_SIZE; row++) {
