@@ -78,10 +78,6 @@ io.on("connection", (socket) => {
   playerCounter += 1
   playerCounter %= 4
 
-  // Notify the client of the current scores of the players.
-  // FIXME: This should check if a game is currently running before calling this function.
-  scoreboard.updateScoreboardUI(level.currentLevel);
-
   // Uncomment the following to view the scoreboard update:
   setTimeout(() => {
     scoreboard.incrementScore(4, 5, level);
