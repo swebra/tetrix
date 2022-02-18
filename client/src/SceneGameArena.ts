@@ -8,6 +8,7 @@ import { Tetromino } from "./Tetromino";
 import {
     MoveEvent
 } from "common/message";
+import { ScoreboardUI } from "./ScoreboardUI";
 
 export class SceneGameArena extends Phaser.Scene {
     FRAMERATE: number = 12;
@@ -19,6 +20,8 @@ export class SceneGameArena extends Phaser.Scene {
     currentTetro!: RenderedTetromino;
     otherTetros!: Array<RenderedTetromino>;
     renderedBoard!: Array<Array<GameObjects.Rectangle | null>>;
+
+    scoreboard!: ScoreboardUI;
 
     frameTimeElapsed: number = 0; // the ms time since the last frame is drawn
 
@@ -36,6 +39,7 @@ export class SceneGameArena extends Phaser.Scene {
 
     create() {
         this.gameState = new GameState();
+        this.scoreboard = new ScoreboardUI(this);
         // initialize an empty rendered board
         this.renderedBoard = [];
         for (let row = 0; row < BOARD_SIZE; row++) {
@@ -66,7 +70,7 @@ export class SceneGameArena extends Phaser.Scene {
         });
 
         this.gameState.updateScoreboard = (playerPoints) => {
-            this.updateScoreboard(playerPoints);
+            this.scoreboard.updateScoreboard(playerPoints);
         }
 
         this.gameState.fullScoreboard = (playerPoints) => {
@@ -86,25 +90,6 @@ export class SceneGameArena extends Phaser.Scene {
 
             // start next frame
             this.frameTimeElapsed = 0;
-        }
-    }
-
-    private updateScoreboard(playerPts: any) {
-        // Wipe the existing scoreboard UI.
-        this.add.rectangle(17.5 * BOARD_SIZE, 16, 300, 400, 0x000);
-
-        // Add in the updated UI.
-        this.add
-            .text(14 * BOARD_SIZE + 25, 16, "Leaderboard", { fontSize: "42px", fontFamily: "VT323" })
-            .setTint(0xFF0000);
-
-        let y: number = 30;
-        for (let element of playerPts) {
-            y += 30;
-            let text = `${element.color}`.padEnd(10) + `${element.points}`;
-            this.add
-                .text(14 * BOARD_SIZE + 60, y, text, { fontSize: "22px", fontFamily: "VT323" })
-                .setTint(element.hex);
         }
     }
 
