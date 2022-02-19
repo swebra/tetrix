@@ -2,7 +2,7 @@ export class Level {
     private _currentLevel: number;
 
     constructor() {
-        this._currentLevel = 0;
+        this._currentLevel = 1;
     }
 
     get currentLevel() {
