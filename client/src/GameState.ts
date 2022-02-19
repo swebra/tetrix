@@ -79,13 +79,19 @@ export class GameState {
             this.fullScoreboard(valFromServer);
         });
 
-        this.socket.on("wipeScreen", () => {
-            this.wipeScreen();
+        this.socket.on("startSequence", () => {
+            this.startSequence();
         });
     }
 
+    // Events received from server.
     onRemoteUpdate: () => void = () => { };
     updateScoreboard!: (data: any) => void;
     fullScoreboard!: (data: any) => void;
-    wipeScreen!: () => void;
+    startSequence!: () => void;
+
+    // Events sent to server.
+    public requestScoreboardData() {
+        this.socket.emit("scoreboardData");
+    }
 }
