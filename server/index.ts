@@ -5,6 +5,7 @@ import http from "http";
 import { Server } from "socket.io";
 import { Level } from "./typescript/Level";
 import { Scoreboard } from "./typescript/Scoreboard";
+import { Spectator } from "./typescript/Spectator";
 import path from "path";
 
 import { ServerToClientEvents, ClientToServerEvents } from "common/message";
@@ -57,6 +58,7 @@ console.log("Server started");
 let playerCounter: 0 | 1 | 2 | 3 = 0;
 let scoreboard = new Scoreboard();
 let level = new Level();
+let spectator = new Spectator();
 
 // Emit to all sockets.
 export function broadcastUpdateScoreboard(msg: any) {
@@ -73,17 +75,30 @@ export function broadcastStartSequence() {
   io.sockets.emit("startSequence");
 }
 
+// Emit to all sockets.
+export function broadcastShowVotingSequence(votingSequence: string) {
+  io.sockets.emit("showVotingSequence", votingSequence);
+}
+
+// Emit to all sockets.
+export function broadcastHideVotingSequence() {
+  io.sockets.emit("hideVotingSequence");
+}
+
+// Uncomment to send the client a voting request. (lasts 10 seconds)
+spectator.generateFirstVotingSequence(level);
+
 io.on("connection", (socket) => {
   socket.emit("initPlayer", playerCounter)
   playerCounter += 1
   playerCounter %= 4
 
   // Uncomment the following to view the scoreboard update:
-  setTimeout(() => {
-    scoreboard.incrementScore(4, 5, level);
-    scoreboard.incrementScore(2, 2, level);
-    scoreboard.incrementScore(3, 1, level);
-  }, 1000);
+  // setTimeout(() => {
+  //   scoreboard.incrementScore(4, 5, level);
+  //   scoreboard.incrementScore(2, 2, level);
+  //   scoreboard.incrementScore(3, 1, level);
+  // }, 1000);
 
   // Uncomment to view the game end sequence:
   // setTimeout(() => {
@@ -99,7 +114,7 @@ io.on("connection", (socket) => {
     socket.broadcast.emit("playerMove", ...args);
   });
 
-  socket.on("scoreboardData", () => {
+  socket.on("requestScoreboardData", () => {
     let clonedData = Object.assign([], scoreboard.scoreMap);
     clonedData.push({
       color: "Level",
@@ -108,6 +123,23 @@ io.on("connection", (socket) => {
     });
 
     socket.emit("updateScoreboard", clonedData)
+  });
+
+  socket.on("vote", (votingResult: string) => {
+    spectator.getResult(votingResult);
+  });
+
+  socket.on("requestVotingSequence", () => {
+    let currentSequence = spectator.isVoteRunning();
+    if (currentSequence) {
+      socket.emit("showVotingSequence", currentSequence);
+    }
+  });
+
+  socket.on("requestVotingCountdown", () => {
+    if (spectator.isVoteRunning()) {
+      socket.emit("sendVotingCountdown", spectator.countdownValue);
+    }
   });
 
   // socket.on("playerAction", ({event, playerId}) => {

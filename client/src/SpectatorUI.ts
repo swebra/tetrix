@@ -1,6 +1,5 @@
 import { BOARD_SIZE } from "common/shared";
 import { CookieTracker } from "./CookieTracker";
-import { GameState } from "./GameState";
 import { SceneGameArena } from "./SceneGameArena";
 
 export class SpectatorUI {
@@ -8,45 +7,52 @@ export class SpectatorUI {
     private scene: SceneGameArena;
     private countdown: any;
     private buttons: any[];
-    private gameState: GameState;
+    private alreadyVoted: any;
     private countdownConfig: any;
     private buttonConfig: any;
 
-    constructor(scene: SceneGameArena, gameState: GameState) {
+    constructor(scene: SceneGameArena) {
         this.cookieTracker = new CookieTracker();
         this.scene = scene;
-        this.gameState = gameState;
         this.countdownConfig = {
-            fontSize: `${BOARD_SIZE}px`,
+            fontSize: `${BOARD_SIZE/1.5}px`,
             fontFamily: "VT323"
         };
         this.buttonConfig = {
-            fontSize: `${BOARD_SIZE/2}px`,
+            fontSize: `${BOARD_SIZE/1.7}px`,
             fontFamily: "VT323"
         };
 
         this.buttons = [];
 
-        // Creating a blank text object.
+        // Creating a blank text object(s).
+        let y: number = BOARD_SIZE * 14;
         this.countdown = this.scene.add
-            .text(14 * BOARD_SIZE + 60, BOARD_SIZE - 30, "", this.countdownConfig)
+            .text(14 * BOARD_SIZE, y, "", this.countdownConfig)
             .setTint(0x53bb74);
 
-        this.buttons[0] = this.scene.add
-            .text(14 * BOARD_SIZE + 60, BOARD_SIZE - 30, "", this.buttonConfig)
-            .setTint(0x53bb74);
+        this.alreadyVoted = this.scene.add
+            .text(14 * BOARD_SIZE + 20, y + 90, "", this.buttonConfig)
+            .setTint(0xe6e4da);
 
         this.buttons[0] = this.scene.add
-            .text(14 * BOARD_SIZE + 60, BOARD_SIZE - 30, "", this.buttonConfig)
-            .setTint(0x53bb74);
+            .text(14 * BOARD_SIZE + 20, y + 60, "", this.buttonConfig)
+            .setTint(0xe6e4da);
 
-        this.buttons[0] = this.scene.add
-            .text(14 * BOARD_SIZE + 60, BOARD_SIZE - 30, "", this.buttonConfig)
-            .setTint(0x53bb74);
+        this.buttons[1] = this.scene.add
+            .text(14 * BOARD_SIZE + 20, y + 90, "", this.buttonConfig)
+            .setTint(0xe6e4da);
 
-        this.buttons[0] = this.scene.add
-            .text(14 * BOARD_SIZE + 60, BOARD_SIZE - 30, "", this.buttonConfig)
-            .setTint(0x53bb74);
+        this.buttons[2] = this.scene.add
+            .text(14 * BOARD_SIZE + 20, y + 120, "", this.buttonConfig)
+            .setTint(0xe6e4da);
+
+        this.buttons[3] = this.scene.add
+            .text(14 * BOARD_SIZE + 20, y + 150, "", this.buttonConfig)
+            .setTint(0xe6e4da);
+
+        // Request info on any on-going voting sequences.
+        this.scene.gameState.requestVotingSequence();
     }
 
     /**
@@ -56,138 +62,137 @@ export class SpectatorUI {
     public generateTimedEvent(valFromServer: string) {
         this.removeTimedEvent();
         this.createOptions(valFromServer);
-
-        // Request the current countdown value from server.
-        this._sendToServer("requestCountdownValue", null);
     }
 
     /**
      * Remove the spectator voting section.
      */
     public removeTimedEvent() {
-        if (this.countdown) {
-            this.countdown.setText("");
+        this.countdown.setText("");
+        this.alreadyVoted.setText("");
+
+        this.cookieTracker.deleteCookie("hasVoted");
+
+        for (let element of this.buttons) {
+            element.setText("");
         }
     }
 
+    /**
+     * Generate options for the user to select.
+     * @param votingOption This value is received from the server. Based off the value obtained, display a different set of buttons.
+     */
     private createOptions(votingOption: string) {
-        this.countdown = this.scene.add
-            .text(14 * BOARD_SIZE + 60, BOARD_SIZE - 30, "Vote on what happens Next!".padEnd(10) + "10", this.countdownConfig)
-            .setTint(0x53bb74);
+        this.countdown.setText("Vote on what happens!\n  Time left: 10").setTint(0x53bb74);
 
+        this.scene.gameState.requestVotingCountdown();
+
+        // Only show options if the user has not already voted.
+        if (this.cookieTracker.getCookie("hasVoted")) {
+            this.alreadyVoted.setText("  Your vote has\n    been sent!");
+            return;
+        }
 
         switch (votingOption) {
             case "initialDisplay":
                 // Initial voting step. Generate round 1 of votes.
-                btnLocation.appendChild(this._generateVotingButtions("Change Fall Rate", "option1"));
-                btnLocation.appendChild(this._generateVotingButtions("Choose Next Block", "option2"));
-                btnLocation.appendChild(this._generateVotingButtions("Randomize Their Blocks", "option3"));
-
-                document.getElementById("no-action-location").setAttribute("class", "col text-center disabled-btn");
-                document.getElementById("no-action-text").innerHTML = "No Action";
-                document.getElementById("no-action-location").addEventListener("click", () => {
-                    if (document.getElementById("no-action-location").classList.contains("btn")) {
-                        document.getElementById("no-action-location").setAttribute("class", "col text-center confirmed-btn");
-                        this.cookieTracker.setCookie("hasVoted", "true");
-                        this._sendToServer("vote", "noAction");
-                        this._disableOtherButtons();
-                    }
-                }, false);
+                this.setVotingButton(this.buttons[0], "Change Fall Rate", "option1");
+                this.setVotingButton(this.buttons[1], "Choose Next Block", "option2");
+                this.setVotingButton(this.buttons[2], "Randomize Their Blocks", "option3");
+                this.setVotingButton(this.buttons[3], "No Action", "noAction");
                 break;
             case "fallRate":
                 // Second voting step. Generate Fall rate options.
-                btnLocation.appendChild(this._generateVotingButtions("Increase Fall Rate (20 Seconds)", "option1"));
-                btnLocation.appendChild(this._generateVotingButtions("Decrease Fall Rate (20 Seconds)", "option2"));
+                this.setVotingButton(this.buttons[0], "Increase Fall Rate", "option1");
+                this.setVotingButton(this.buttons[1], "Decrease Fall Rate", "option2");
                 break;
             case "tetrominoSelection":
                 // Second voting step. Generate next block options.
-                btnLocation.appendChild(this._generateVotingButtions("FIXME", "option1"));
-                btnLocation.appendChild(this._generateVotingButtions("FIXME", "option2"));
-                btnLocation.appendChild(this._generateVotingButtions("FIXME", "option3"));
+                this.setVotingButton(this.buttons[0], "FIXME", "option1");
+                this.setVotingButton(this.buttons[1], "FIXME", "option2");
+                this.setVotingButton(this.buttons[2], "FIXME", "option3");
                 break;
         }
     }
 
-    // Create a voting button based off a given text.
-    _generateVotingButtions(buttonText, valForServer) {
-        let btn = document.createElement("div");
-
-        btn.setAttribute("class", "col text-center disabled-btn");
-
-        let span = document.createElement("span");
-        span.innerHTML = buttonText;
-
-        btn.appendChild(span);
-        btn.addEventListener("click", () => {
-            if (btn.classList.contains("btn")) {
-                btn.setAttribute("class", "col text-center confirmed-btn");
-                this._sendToServer("vote", valForServer);
+    /**
+     * Setup the voting buttons with interactions.
+     * @param button The button to modify.
+     * @param buttonText The new text to set for the button.
+     * @param valForServer The value to send to the server if the button is clicked.
+     */
+    private setVotingButton(button: any, buttonText: string, valForServer: string) {
+        button.setText(buttonText)
+            .setInteractive()
+            .on("pointerover", () => { this.isHovered(button, true) })
+            .on("pointerout", () => { this.isHovered(button, false) })
+            .on("pointerup", () => {
+                this.hideVotingSequence();
+                this.scene.gameState.sendVotingSubmission(valForServer);
                 this.cookieTracker.setCookie("hasVoted", "true");
-                this._disableOtherButtons();
-            }
-        }, false);
-
-        return btn;
+                this.alreadyVoted.setText("  Your vote has\n    been sent!");
+            });
     }
 
-    _sendToServer(event, data) {
-        this.socket.emit(event, data);
+    /**
+     * Change the color of the button if it is hovered or not.
+     * @param button The button to modify.
+     * @param isHovered Whether the button is being hovered or not.
+     */
+    private isHovered(button: any, isHovered: boolean) {
+        if (isHovered) {
+            button.setTint(0xd4cb22);
+        } else {
+            button.setTint(0xe6e4da);
+        }
     }
 
-    // Disable all other buttons.
-    _disableOtherButtons() {
-        document.querySelectorAll(".btn").forEach((btn) => {
-            btn.setAttribute("class", "col text-center disabled-btn");
-        })
+    /**
+     * Hide the voting sequence.
+     */
+    private hideVotingSequence() {
+        for (let element of this.buttons) {
+            element.setText("");
+        }
     }
 
-    // Enable all other buttons.
-    _enableOtherButtons() {
-        document.querySelectorAll(".disabled-btn").forEach((btn) => {
-            btn.setAttribute("class", "col text-center btn");
-        })
-    }
+    /**
+     * Modifies the countdown numbers and css depending on the number of seconds remaining.
+     * @param secondsLeft The seconds left on the counter.
+     * @returns Whether to stop the 1second interval that the countdown runs on.
+     */
+    private updateCountdown(secondsLeft: number) {
+        this.countdown.setText(`Vote on what happens!\n  Time left: ${secondsLeft}`);
 
-    // Modifies the countdown numbers and css depending on the number of seconds remaining.
-    // Returns whether to stop the 1second interval that the countdown runs on.
-    _updateCountdown(countdown, seconds_left) {
-        countdown.innerHTML = `<span>${seconds_left}</span>`;
-
-        if (seconds_left == 0) {
-            this._disableOtherButtons();
+        if (secondsLeft == 0) {
+            this.removeTimedEvent();
             this.cookieTracker.deleteCookie("hasVoted");
             return true;
-        } else if (seconds_left < 4)  {
+        } else if (secondsLeft < 4)  {
             // Add the Red background.
-            countdown.classList.remove('color-half');
-            countdown.classList.add('color-empty');
-        } else if (seconds_left < 7)  {
+            this.countdown.setTint(0xe5554e);
+        } else if (secondsLeft < 7)  {
             // Add the Yellow background.
-            countdown.classList.remove('color-full');
-            countdown.classList.add('color-half');
+            this.countdown.setTint(0xebc85d);
         }
 
         return false;
     }
 
-    // Update the seconds on screen.
-    syncCountdown(seconds_left) {
-        seconds_left = parseInt(seconds_left);
-        let countdown = document.getElementById("tiles");
-        this._updateCountdown(countdown, seconds_left);
-
-        // Enable the buttons if the countdown has begun and they havent voted before.
-        if (!this.cookieTracker.getCookie("hasVoted") && seconds_left > 0) {
-            this._enableOtherButtons();
-        }
+    /**
+     * Update the seconds on the counter.
+     * @param secondsLeft The number of seconds left on the voting sequence (received from the server).
+     */
+    syncCountdown(secondsLeft: number) {
+        this.updateCountdown(secondsLeft);
 
         // Start the countdown.
         let interval = setInterval(() => {
-            if (this._updateCountdown(countdown, seconds_left)) {
+            if (this.updateCountdown(secondsLeft)) {
                 clearInterval(interval);
             }
 
-            seconds_left--;
+            secondsLeft--;
         }, 1000);
     }
 }

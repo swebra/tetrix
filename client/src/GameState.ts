@@ -82,6 +82,18 @@ export class GameState {
         this.socket.on("startSequence", () => {
             this.startSequence();
         });
+
+        this.socket.on("showVotingSequence", (valFromServer) => {
+            this.showVotingSequence(valFromServer);
+        });
+
+        this.socket.on("hideVotingSequence", () => {
+            this.hideVotingSequence();
+        });
+
+        this.socket.on("sendVotingCountdown", (secondsLeft) => {
+            this.sendVotingCountdown(secondsLeft);
+        });
     }
 
     // Events received from server.
@@ -89,9 +101,24 @@ export class GameState {
     updateScoreboard!: (data: any) => void;
     fullScoreboard!: (data: any) => void;
     startSequence!: () => void;
+    showVotingSequence!: (data: string) => void;
+    hideVotingSequence!: () => void;
+    sendVotingCountdown!: (secondsLeft: number) => void;
 
     // Events sent to server.
     public requestScoreboardData() {
-        this.socket.emit("scoreboardData");
+        this.socket.emit("requestScoreboardData");
+    }
+
+    public requestVotingSequence() {
+        this.socket.emit("requestVotingSequence");
+    }
+
+    public sendVotingSubmission(vote: string) {
+        this.socket.emit("vote", vote);
+    }
+
+    public requestVotingCountdown() {
+        this.socket.emit("requestVotingCountdown");
     }
 }
