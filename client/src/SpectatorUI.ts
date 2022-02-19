@@ -96,21 +96,21 @@ export class SpectatorUI {
         switch (votingOption) {
             case "initialDisplay":
                 // Initial voting step. Generate round 1 of votes.
-                this.setVotingButton(this.buttons[0], "Change Fall Rate", "option1");
-                this.setVotingButton(this.buttons[1], "Choose Next Block", "option2");
-                this.setVotingButton(this.buttons[2], "Randomize Their Blocks", "option3");
-                this.setVotingButton(this.buttons[3], "No Action", "noAction");
+                this.setVotingButton(this.buttons[0], "> Change Fall Rate", "option1");
+                this.setVotingButton(this.buttons[1], "> Choose Next Block", "option2");
+                this.setVotingButton(this.buttons[2], "> Randomize Their Blocks", "option3");
+                this.setVotingButton(this.buttons[3], "> No Action", "noAction");
                 break;
             case "fallRate":
                 // Second voting step. Generate Fall rate options.
-                this.setVotingButton(this.buttons[0], "Increase Fall Rate", "option1");
-                this.setVotingButton(this.buttons[1], "Decrease Fall Rate", "option2");
+                this.setVotingButton(this.buttons[0], "> Increase Fall Rate", "option1");
+                this.setVotingButton(this.buttons[1], "> Decrease Fall Rate", "option2");
                 break;
             case "tetrominoSelection":
                 // Second voting step. Generate next block options.
-                this.setVotingButton(this.buttons[0], "FIXME", "option1");
-                this.setVotingButton(this.buttons[1], "FIXME", "option2");
-                this.setVotingButton(this.buttons[2], "FIXME", "option3");
+                this.setVotingButton(this.buttons[0], "> FIXME", "option1");
+                this.setVotingButton(this.buttons[1], "> FIXME", "option2");
+                this.setVotingButton(this.buttons[2], "> FIXME", "option3");
                 break;
         }
     }

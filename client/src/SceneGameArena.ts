@@ -83,6 +83,7 @@ export class SceneGameArena extends Phaser.Scene {
             this.scene.start("SceneFullscreenScoreboard", { playerPoints: playerPoints, blockSize: SceneGameArena.blockSize, gameState: this.gameState });
         }
 
+        // FIXME: Only show spectator things to "spectators" (not players).
         this.gameState.showVotingSequence = (votingSequence) => {
             this.spectator.generateTimedEvent(votingSequence);
         }
