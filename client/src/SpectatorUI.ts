@@ -123,7 +123,7 @@ export class SpectatorUI {
      */
     private setVotingButton(button: any, buttonText: string, valForServer: string) {
         button.setText(buttonText)
-            .setInteractive()
+            .setInteractive({ useHandCursor: true })
             .on("pointerover", () => { this.isHovered(button, true) })
             .on("pointerout", () => { this.isHovered(button, false) })
             .on("pointerup", () => {
