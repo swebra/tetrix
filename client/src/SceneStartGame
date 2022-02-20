@@ -1,0 +1,49 @@
+import Phaser from "phaser";
+import { GameState } from "./GameState";
+import { BOARD_SIZE } from "common/shared";
+
+export class SceneStartGame extends Phaser.Scene {
+    private playersNeeded!: number;
+    private gameState!: GameState;
+
+    constructor () {
+        super({
+            key: "SceneStartGame"
+        });
+    }
+
+    init(data: any) {
+        this.gameState = data.gameState;
+    }
+
+    create() {
+        this.playersNeeded = 4;
+
+        this.add.text(BOARD_SIZE / 2, BOARD_SIZE / 2, "A new game is starting soon", { fontSize: "82px", fontFamily: "VT323" })
+            .setTint(0xFF0000);
+        this.add.text(BOARD_SIZE / 2, BOARD_SIZE / 2, "Click the button below to join!", { fontSize: "82px", fontFamily: "VT323" })
+            .setTint(0xFF0000);
+
+        let button = this.add.text(BOARD_SIZE / 2, BOARD_SIZE / 2, "> Join <", { fontSize: "82px", fontFamily: "VT323" })
+            .setTint(0x53bb74)
+            .setInteractive({ userHandCursor: true })
+            .on("pointerover", () => { this.isHovered(button, true) })
+            .on("pointerout", () => { this.isHovered(button, false) })
+            .on("pointerdown", () => {  });
+
+        this.add.text(BOARD_SIZE / 2, BOARD_SIZE / 2, `Waiting on ${this.playersNeeded} more player(s)`, { fontSize: "62px", fontFamily: "VT323" })
+            .setTint(0xFF0000);
+    }
+
+    private isHovered(button: any, isHovered: boolean) {
+        if (isHovered) {
+            button.setTint(0xd4cb22);
+        } else {
+            button.setTint(0x53bb74);
+        }
+    }
+
+    private joinGame() {
+        
+    }
+}
