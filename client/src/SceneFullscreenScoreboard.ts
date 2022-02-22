@@ -3,7 +3,7 @@ import { GameState } from "./GameState";
 import { ScoreboardUI } from "./ScoreboardUI";
 
 export class SceneFullscreenScoreboard extends Phaser.Scene {
-    private playerData!: any;
+    private playerData!: Array<{ color: string, hex: number, points: number }>;
     private blockSize!: number;
     private gameState!: GameState;
     private scoreboard!: ScoreboardUI;

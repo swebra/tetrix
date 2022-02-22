@@ -3,9 +3,10 @@ import express from "express";
 import cors from "cors";
 import http from "http";
 import { Server } from "socket.io";
-import { Level } from "./typescript/Level";
-import { Scoreboard } from "./typescript/Scoreboard";
-import { Spectator } from "./typescript/Spectator";
+import { Level } from "./src/Level";
+import { Scoreboard } from "./src/Scoreboard";
+import { PlayerQueue } from "./src/PlayerQueue";
+import { Spectator } from "./src/Spectator";
 import path from "path";
 
 import { ServerToClientEvents, ClientToServerEvents } from "common/message";
@@ -55,23 +56,26 @@ const io = new Server<
 });
 
 console.log("Server started");
-let playerCounter: 0 | 1 | 2 | 3 = 0;
+let playerCounter: 0 | 1 | 2 | 3 = 0;  // FIXME: Remove this on final version.
 let scoreboard = new Scoreboard();
 let level = new Level();
+let queue = new PlayerQueue();
 let spectator = new Spectator();
 
 // Emit to all sockets.
-export function broadcastUpdateScoreboard(msg: any) {
+export function broadcastUpdateScoreboard(msg: Array<{ color: string, hex: number, points: number }>) {
   io.sockets.emit("updateScoreboard", msg);
 }
 
 // Emit to all sockets.
-export function broadcastEndSequence(msg: any) {
+export function broadcastEndSequence(msg: Array<{ color: string, hex: number, points: number }>) {
+  queue.resetCounter();
   io.sockets.emit("endSequence", msg);
 }
 
 // Emit to all sockets.
 export function broadcastStartSequence() {
+  queue.resetCounter();
   io.sockets.emit("startSequence");
 }
 
@@ -89,16 +93,13 @@ export function broadcastHideVotingSequence() {
 spectator.generateFirstVotingSequence(level);
 
 io.on("connection", (socket) => {
+  // =====================================================
+  // FIXME: Delete the following lines from the final game.
+  // These are left in for testing convenience.
   socket.emit("initPlayer", playerCounter)
   playerCounter += 1
   playerCounter %= 4
-
-  // Uncomment the following to view the scoreboard update:
-  // setTimeout(() => {
-  //   scoreboard.incrementScore(4, 5, level);
-  //   scoreboard.incrementScore(2, 2, level);
-  //   scoreboard.incrementScore(3, 1, level);
-  // }, 1000);
+  // ======================================================
 
   // Uncomment to view the game end sequence:
   // setTimeout(() => {
@@ -139,6 +140,25 @@ io.on("connection", (socket) => {
   socket.on("requestVotingCountdown", () => {
     if (spectator.isVoteRunning()) {
       socket.emit("sendVotingCountdown", spectator.countdownValue);
+    }
+  });
+
+  socket.on("requestRemainingPlayers", () => {
+    socket.emit("sendRemainingPlayers", queue.getRemainingPlayers());
+  });
+
+  socket.on("joinGame", () => {
+    let playerIndex: number = queue.addToQueue();
+
+    // If there was room in the queue, notify the client of their player index value.
+    if (playerIndex < 4) {
+      socket.emit("initPlayer", playerIndex as 0 | 1 | 2 | 3);
+      io.sockets.emit("sendRemainingPlayers", queue.getRemainingPlayers());
+
+      // 4 players have joined. Start the game.
+      if (playerIndex == 3) {
+        io.sockets.emit("startGame");
+      }
     }
   });
 

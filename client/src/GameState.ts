@@ -71,12 +71,12 @@ export class GameState {
             this.onRemoteUpdate();
         });
 
-        this.socket.on("updateScoreboard", (valFromServer) => {
-            this.updateScoreboard(valFromServer);
+        this.socket.on("updateScoreboard", (playerScores) => {
+            this.updateScoreboard(playerScores);
         });
 
-        this.socket.on("endSequence", (valFromServer) => {
-            this.fullScoreboard(valFromServer);
+        this.socket.on("endSequence", (playerScores) => {
+            this.fullScoreboard(playerScores);
         });
 
         this.socket.on("startSequence", () => {
@@ -94,16 +94,26 @@ export class GameState {
         this.socket.on("sendVotingCountdown", (secondsLeft) => {
             this.sendVotingCountdown(secondsLeft);
         });
+
+        this.socket.on("sendRemainingPlayers", (remainingPlayers) => {
+            this.updateRemainingPlayers(remainingPlayers);
+        });
+
+        this.socket.on("startGame", () => {
+            this.startGame();
+        })
     }
 
     // Events received from server.
     onRemoteUpdate: () => void = () => { };
-    updateScoreboard!: (data: any) => void;
-    fullScoreboard!: (data: any) => void;
+    updateScoreboard!: (data: Array<{ color: string, hex: number, points: number }>) => void;
+    fullScoreboard!: (data: Array<{ color: string, hex: number, points: number }>) => void;
     startSequence!: () => void;
     showVotingSequence!: (data: string) => void;
     hideVotingSequence!: () => void;
     sendVotingCountdown!: (secondsLeft: number) => void;
+    updateRemainingPlayers!: (remainingPlayers: number) => void;
+    startGame!: () => void;
 
     // Events sent to server.
     public requestScoreboardData() {
@@ -114,11 +124,19 @@ export class GameState {
         this.socket.emit("requestVotingSequence");
     }
 
-    public sendVotingSubmission(vote: string) {
+    public sendVotingSubmission(vote: "option1" | "option2" | "option3" | "noAction") {
         this.socket.emit("vote", vote);
     }
 
     public requestVotingCountdown() {
         this.socket.emit("requestVotingCountdown");
+    }
+
+    public requestRemainingPlayers() {
+        this.socket.emit("requestRemainingPlayers");
+    }
+
+    public joinGame() {
+        this.socket.emit("joinGame");
     }
 }

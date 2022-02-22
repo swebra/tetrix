@@ -6,7 +6,7 @@ export class Spectator {
     private _isAcceptingVotes: boolean;
     private _isVoteRunning: boolean;
     private _previouslyVotedOption: string;
-    private _votingMap: any;
+    private _votingMap: { noAction: number, option1: number, option2: number, option3: number };
     private _countdownValue: number;
     private _secondVotingRoundSelection: string;
 
@@ -46,7 +46,7 @@ export class Spectator {
     /**
      * If a vote is currently running, then notify the client to display the voting UI.
      */
-    public isVoteRunning() {
+    public isVoteRunning(): string {
         if (this._isVoteRunning) {
             if (this._isFirstRoundVoting) {
                 return "initialDisplay";

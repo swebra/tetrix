@@ -8,7 +8,7 @@ export class Scoreboard {
     private _pinkScore: number;
     private _blueScore: number;
     private _totalScore: number;
-    private _scoreMap: any[];
+    private _scoreMap: Array<{ color: string, hex: number, points: number }>;
 
     constructor() {
         this._orangeScore = 0;
@@ -67,7 +67,7 @@ export class Scoreboard {
         return this._orangeScore + this._greenScore + this._pinkScore + this._blueScore;
     }
 
-    get scoreMap(): any {
+    get scoreMap(): Array<{ color: string, hex: number, points: number }> {
         return this._scoreMap;
     }
 

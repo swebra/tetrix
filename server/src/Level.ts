@@ -5,7 +5,7 @@ export class Level {
         this._currentLevel = 1;
     }
 
-    get currentLevel() {
+    get currentLevel(): number {
         return this._currentLevel;
     }
 

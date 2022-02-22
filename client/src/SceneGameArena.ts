@@ -29,7 +29,7 @@ export class SceneGameArena extends Phaser.Scene {
 
     constructor() {
         super({
-            key: "GameArenaScene"
+            key: "SceneGameArena"
         });
     }
 
