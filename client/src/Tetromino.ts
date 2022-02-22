@@ -1,6 +1,8 @@
 import { TetrominoType } from "common/TetrominoType";
 import { BOARD_SIZE } from "common/shared";
 import { PlayerPosition } from "common/message";
+import { rotateCoords } from "./utils"
+import { cloneDeep } from "lodash";
 
 type Shape = {
     width: number;
@@ -25,7 +27,7 @@ export class Tetromino {
 
     constructor(type: TetrominoType) {
         this.type = type;
-        this.cells = Tetromino.shapes[type].tiles;
+        this.cells = cloneDeep(Tetromino.shapes[type].tiles);
         this.position = [0, Math.round((BOARD_SIZE - Tetromino.shapes[type].width) / 2)];
         this.rotation = 0; // default (no rotation)
     }
@@ -36,5 +38,31 @@ export class Tetromino {
             rotation: this.rotation,
             tetroType: this.type,
         };
+    }
+
+    setRotation(rotation: number): boolean {
+        if (!this.canRotate()) { return false; }
+        for (let i = 0; i < this.cells.length; i++) {
+            this.cells[i] = rotateCoords(
+                this.cells[i],
+                Tetromino.shapes[this.type].width,
+                4 - this.rotation + rotation
+            );
+        }
+        this.rotation = <0 | 1 | 2 | 3> (rotation % 4);
+        return true;
+    }
+
+    rotateCW(): boolean {
+        return this.setRotation(this.rotation + 1);
+    }
+
+    rotateCCW(): boolean {
+        return this.setRotation(4 + this.rotation - 1);
+    }
+
+    // TODO
+    private canRotate(): boolean {
+        return true;
     }
 }

@@ -14,6 +14,6 @@ export function rotateCoords(coords: [number, number], size: number, ccRotations
         case 3: // 90 degree counterclockwise
             return [coords[1], maxCoord - coords[0]];
         default: // 0 degree
-            return [coords[0], coords[1]];
+            return coords;
     }
 }

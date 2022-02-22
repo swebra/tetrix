@@ -12,7 +12,7 @@ import { ScoreboardUI } from "./ScoreboardUI";
 export class SceneGameArena extends Phaser.Scene {
     FRAMERATE: number = 12;
 
-    cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
+    keys!: any; // Phaser doesn't provide nice typing for keyboard.addKeys
     gameState!: GameState;
 
     static blockSize: number = 20; // 20px width for a single square block
@@ -52,7 +52,7 @@ export class SceneGameArena extends Phaser.Scene {
         }
 
         // keyboard input
-        this.cursors = this.input.keyboard.createCursorKeys();
+        this.keys = this.input.keyboard.addKeys("w,up,a,left,s,down,d,right,q,z,e,x");
 
         // falling, controllable tetromino
         this.currentTetro = new RenderedTetromino(this.gameState.currentTetromino);
@@ -114,7 +114,7 @@ export class SceneGameArena extends Phaser.Scene {
     // 1. these update functions can have unified interface
     // 2. they have duplicate logic with the Phaser.Scene.time.addEvent, consider moving the falling down here, but we need a internal state/class instance for each of them to track time delta in order to have a different function
     private updateUserInput(scene: SceneGameArena) {
-        if (scene.cursors.left.isDown) {
+        if (scene.keys.a.isDown || scene.keys.left.isDown) {
             let [row, col] = scene.gameState.currentTetromino.position;
 
             scene.gameState.currentTetromino.position = [row, Math.max(0, col - 1)]; // TODO
@@ -125,7 +125,7 @@ export class SceneGameArena extends Phaser.Scene {
                 MoveEvent.Left,
                 scene.gameState.currentTetromino.reportPosition()
             );
-        } else if (scene.cursors.right.isDown) {
+        } else if (scene.keys.d.isDown || scene.keys.right.isDown) {
             let [row, col] = scene.gameState.currentTetromino.position;
             scene.gameState.currentTetromino.position = [
                 row,
@@ -138,6 +138,14 @@ export class SceneGameArena extends Phaser.Scene {
                 MoveEvent.Right,
                 scene.gameState.currentTetromino.reportPosition()
             );
+        } else if (scene.keys.q.isDown || scene.keys.z.isDown) {
+            if (scene.gameState.currentTetromino.rotateCCW()) {
+                // TODO: emit
+            };
+        } else if (scene.keys.e.isDown || scene.keys.x.isDown) {
+            if (scene.gameState.currentTetromino.rotateCW()) {
+                // TODO: emit
+            };
         }
     }
 
