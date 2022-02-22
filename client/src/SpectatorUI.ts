@@ -161,9 +161,9 @@ export class SpectatorUI {
      * @returns Whether to stop the 1second interval that the countdown runs on.
      */
     private updateCountdown(secondsLeft: number) {
-        this.countdown.setText(`Vote on what happens!\n  Time left: ${secondsLeft}`);
+        this.countdown.setText(`Vote on what happens!\n Time left: ${secondsLeft}`);
 
-        if (secondsLeft == 0) {
+        if (secondsLeft < 0) {
             this.removeTimedEvent();
             this.cookieTracker.deleteCookie("hasVoted");
             return true;

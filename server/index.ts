@@ -3,10 +3,10 @@ import express from "express";
 import cors from "cors";
 import http from "http";
 import { Server } from "socket.io";
-import { Level } from "./typescript/Level";
-import { Scoreboard } from "./typescript/Scoreboard";
-import { PlayerQueue } from "./typescript/PlayerQueue";
-import { Spectator } from "./typescript/Spectator";
+import { Level } from "./src/Level";
+import { Scoreboard } from "./src/Scoreboard";
+import { PlayerQueue } from "./src/PlayerQueue";
+import { Spectator } from "./src/Spectator";
 import path from "path";
 
 import { ServerToClientEvents, ClientToServerEvents } from "common/message";
@@ -56,7 +56,7 @@ const io = new Server<
 });
 
 console.log("Server started");
-let playerCounter: 0 | 1 | 2 | 3 = 0;
+let playerCounter: 0 | 1 | 2 | 3 = 0;  // FIXME: Remove this on final version.
 let scoreboard = new Scoreboard();
 let level = new Level();
 let queue = new PlayerQueue();
