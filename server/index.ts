@@ -55,7 +55,7 @@ const io = new Server<
   },
 });
 
-console.log("Server started");
+console.log(`Server started at port ${port}`);
 let playerCounter: 0 | 1 | 2 | 3 = 0;  // FIXME: Remove this on final version.
 let scoreboard = new Scoreboard();
 let level = new Level();
@@ -144,7 +144,7 @@ io.on("connection", (socket) => {
   });
 
   socket.on("requestRemainingPlayers", () => {
-    socket.emit("sendRemainingPlayers", queue.getRemainingPlayers());
+    socket.emit("updateRemainingPlayers", queue.getRemainingPlayers());
   });
 
   socket.on("joinGame", () => {
@@ -153,7 +153,7 @@ io.on("connection", (socket) => {
     // If there was room in the queue, notify the client of their player index value.
     if (playerIndex < 4) {
       socket.emit("initPlayer", playerIndex as 0 | 1 | 2 | 3);
-      io.sockets.emit("sendRemainingPlayers", queue.getRemainingPlayers());
+      io.sockets.emit("updateRemainingPlayers", queue.getRemainingPlayers());
 
       // 4 players have joined. Start the game.
       if (playerIndex == 3) {
@@ -162,8 +162,5 @@ io.on("connection", (socket) => {
     }
   });
 
-  // socket.on("playerAction", ({event, playerId}) => {
-  //   console.log(`received event: `, event, ", from id: ", playerId)
-  //   socket.broadcast.emit("playerAction", {event, playerId})
-  // })
+  // FIXME need a state machine to tell which scene the game is at, conditionally tackle disconnections?
 });

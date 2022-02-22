@@ -13,6 +13,11 @@ export class PlayerQueue {
         return this.playerCounter++;
     }
 
+    public removeOne(): number {
+        this.playerCounter = Math.max(0, this.playerCounter - 1);
+        return this.playerCounter;
+    }
+
     /**
      * Reset the counter.
      */

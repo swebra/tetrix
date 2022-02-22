@@ -1,11 +1,19 @@
 import Phaser from "phaser";
-import { GameState } from "./GameState";
+import { GameState } from "../GameState";
 import { BOARD_SIZE } from "common/shared";
+import {SharedState} from "..";
+import { io, Socket } from "socket.io-client";
+
+import { DownEvents, UpEvents } from "common/messages/sceneStartGame";
+
+type SocketStartGame = Socket<DownEvents, UpEvents>;
 
 export class SceneStartGame extends Phaser.Scene {
     private playersNeededText!: Phaser.GameObjects.Text;
     private button!: Phaser.GameObjects.Text;
     private gameState!: GameState;
+    private socket!: SocketStartGame;
+    private sharedData!: SharedState;
 
     constructor () {
         super({
@@ -13,8 +21,11 @@ export class SceneStartGame extends Phaser.Scene {
         });
     }
 
-    init(data: any) {
+    init(data: SharedState) {
+        this.sharedData = data
         this.gameState = data.gameState;
+        this.socket = data.socket;
+        this.initListeners()
     }
 
     create() {
@@ -34,22 +45,24 @@ export class SceneStartGame extends Phaser.Scene {
             .setTint(0xFF0000);
 
         // Request the # of remaining players needed to start the game.
-        this.gameState.requestRemainingPlayers();
+        this.socket.emit("requestRemainingPlayers");
+    }
 
-        // Upon receiving the # players needed to start the game, update the text on screen.
-        this.gameState.updateRemainingPlayers = (remainingPlayers) => {
+    initListeners () {
+        this.socket.on("updateRemainingPlayers", (remainingPlayers) => {
+            console.log("update remaining: ", remainingPlayers)
             this.playersNeededText.setText(`Waiting on ${remainingPlayers} more player(s)`);
 
             // Hide the join button if all player positions are occupied.
             if (remainingPlayers <= 0) {
                 this.button.setText("");
             }
-        }
+        })
 
         // If the queue is full, we should receive the signal from the server to start the game.
-        this.gameState.startGame = () => {
-            this.scene.start("SceneGameArena", { gameState: this.gameState });
-        }
+        this.socket.on("startGame", () => {
+            this.scene.start("SceneGameArena", this.sharedData);
+        })
     }
 
     /**
@@ -70,6 +83,6 @@ export class SceneStartGame extends Phaser.Scene {
      */
     private requestJoinGame() {
         this.button.setText("");
-        this.gameState.joinGame();
+        this.socket.emit("joinGame");
     }
 }

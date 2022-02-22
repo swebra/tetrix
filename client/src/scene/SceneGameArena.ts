@@ -1,21 +1,30 @@
-import { GameState } from "./GameState";
+import { GameState } from "../GameState";
 import Phaser, { GameObjects } from "phaser";
-import { RenderedTetromino } from "./RenderedTetromino";
-import { BOARD_SIZE } from "../../common/shared";
+import { RenderedTetromino } from "../RenderedTetromino";
+import { BOARD_SIZE } from "common/shared";
 import { cloneDeep } from "lodash";
 import { TetrominoType } from "common/TetrominoType";
-import { Tetromino } from "./Tetromino";
+import { Tetromino } from "../Tetromino";
 import {
     MoveEvent
 } from "common/message";
-import { ScoreboardUI } from "./ScoreboardUI";
-import { SpectatorUI } from "./SpectatorUI";
+import { ScoreboardUI } from "../scene/ScoreboardUI";
+import { SpectatorUI } from "../scene/SpectatorUI";
+import {SharedState} from "..";
+
+import { Socket } from "socket.io-client";
+
+import { DownEvents, UpEvents } from "common/messages/sceneGame";
+
+type SocketGame = Socket<DownEvents, UpEvents>;
 
 export class SceneGameArena extends Phaser.Scene {
     FRAMERATE: number = 12;
 
     cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
+    sharedState!: SharedState;
     gameState!: GameState;
+    socket!: SocketGame;
 
     static blockSize: number = 20; // 20px width for a single square block
     currentTetro!: RenderedTetromino;
@@ -35,16 +44,17 @@ export class SceneGameArena extends Phaser.Scene {
 
     preload() { }
 
-    init(data: any) {
+    init(data: SharedState) {
+        this.sharedState = data;
         this.gameState = data.gameState;
+        this.socket = data.socket;
     }
 
     create() {
-        this.gameState = new GameState();
-        this.scoreboard = new ScoreboardUI(this, true);
-        this.gameState.requestScoreboardData();
+        this.scoreboard = new ScoreboardUI(this, this.sharedState.socket, true);
+        this.scoreboard.requestScoreboardData()
 
-        this.spectator = new SpectatorUI(this);
+        this.spectator = new SpectatorUI(this, this.sharedState.socket);
 
         // initialize an empty rendered board
         this.renderedBoard = [];
@@ -75,26 +85,10 @@ export class SceneGameArena extends Phaser.Scene {
             loop: true,
         });
 
-        this.gameState.updateScoreboard = (playerPoints) => {
-            this.scoreboard.updateScoreboard(playerPoints);
-        }
+        this.socket.on("endSequence", (playerPoints) => {
+            this.scene.start("SceneFullscreenScoreboard", { ...this.sharedState, playerPoints: playerPoints, blockSize: SceneGameArena.blockSize, gameState: this.gameState });
+        })
 
-        this.gameState.fullScoreboard = (playerPoints) => {
-            this.scene.start("SceneFullscreenScoreboard", { playerPoints: playerPoints, blockSize: SceneGameArena.blockSize, gameState: this.gameState });
-        }
-
-        // FIXME: Only show spectator things to "spectators" (not players).
-        this.gameState.showVotingSequence = (votingSequence) => {
-            this.spectator.generateTimedEvent(votingSequence);
-        }
-
-        this.gameState.hideVotingSequence = () => {
-            this.spectator.removeTimedEvent();
-        }
-
-        this.gameState.sendVotingCountdown = (secondsLeft) => {
-            this.spectator.syncCountdown(secondsLeft);
-        }
     }
 
     update(time: number, delta: number) {
@@ -138,21 +132,6 @@ export class SceneGameArena extends Phaser.Scene {
             } else {
                 return [row, col];
             }
-            //  // left player
-            //  this.otherTetros[0].xyTransform = (x, y) => {
-            //    return { x: y, y: SceneGameArena.blockSize * BOARD_SIZE - x };
-            //  };
-            //  // down player
-            //  this.otherTetros[1].xyTransform = (x, y) => {
-            //    return {
-            //      x: SceneGameArena.blockSize * BOARD_SIZE - x,
-            //      y: SceneGameArena.blockSize * BOARD_SIZE - y,
-            //    };
-            //  };
-            //  // right player
-            //  this.otherTetros[2].xyTransform = (x, y) => {
-            //    return { x: SceneGameArena.blockSize * BOARD_SIZE - y, y: x };
-            //  };
         }
     }
 

@@ -1,7 +1,12 @@
 import { BOARD_SIZE } from "common/shared";
-import { CookieTracker } from "./CookieTracker";
+import { CookieTracker } from "../CookieTracker";
 import { SceneGameArena } from "./SceneGameArena";
-import { TextConfig } from "./TextConfig";
+import { TextConfig } from "../TextConfig";
+
+import { Socket } from "socket.io-client";
+import { UpEvents, DownEvents } from "common/messages/spectator"
+
+type SocketSpectator = Socket<DownEvents, UpEvents>;
 
 export class SpectatorUI {
     private cookieTracker: CookieTracker;
@@ -12,8 +17,13 @@ export class SpectatorUI {
     private countdownConfig: TextConfig;
     private buttonConfig: TextConfig;
 
-    constructor(scene: SceneGameArena) {
+    private socket: SocketSpectator;
+
+    constructor(scene: SceneGameArena, socket: SocketSpectator) {
         this.cookieTracker = new CookieTracker();
+        this.socket = socket;
+        this.initListeners()
+
         this.scene = scene;
         this.countdownConfig = {
             fontSize: `${BOARD_SIZE/1.5}px`,
@@ -53,7 +63,22 @@ export class SpectatorUI {
             .setTint(0xe6e4da);
 
         // Request info on any on-going voting sequences.
-        this.scene.gameState.requestVotingSequence();
+        this.socket.emit("requestVotingSequence");
+    }
+
+    initListeners() {
+        // FIXME: Only show spectator things to "spectators" (not players).
+        this.socket.on("showVotingSequence", (votingSequence) => {
+            this.generateTimedEvent(votingSequence);
+        })
+
+        this.socket.on("hideVotingSequence", () => {
+            this.removeTimedEvent();
+        })
+
+        this.socket.on("sendVotingCountdown", (secondsLeft) => {
+            this.syncCountdown(secondsLeft);
+        })
     }
 
     /**
@@ -84,7 +109,7 @@ export class SpectatorUI {
     private createOptions(votingOption: string) {
         this.countdown.setText("Vote on what happens!\n  Time left: 10").setTint(0x53bb74);
 
-        this.scene.gameState.requestVotingCountdown();
+        this.socket.emit("requestVotingCountdown");
 
         // Only show options if the user has not already voted.
         if (this.cookieTracker.getCookie("hasVoted")) {
@@ -127,7 +152,7 @@ export class SpectatorUI {
             .on("pointerout", () => { this.isHovered(button, false) })
             .on("pointerup", () => {
                 this.hideOptions();
-                this.scene.gameState.sendVotingSubmission(valForServer);
+                this.socket.emit("vote", valForServer);
                 this.cookieTracker.setCookie("hasVoted", "true");
                 this.alreadyVoted.setText("  Your vote has\n    been sent!");
             });
