@@ -8,6 +8,9 @@ interface ServerToClientEvents {
   playerFall: (playerId: PlayerID, position: PlayerPosition) => void;
   playerPlace: (playerId: PlayerID, position: PlayerPosition) => void;
   startSequence: () => void;
+  showVotingSequence: (votingSequence: string) => void;
+  hideVotingSequence: () => void;
+  sendVotingCountdown: (secondsLeft: number) => void;
 }
 
 type PlayerID = 0 | 1 | 2 | 3;
@@ -30,7 +33,10 @@ interface ClientToServerEvents {
   playerMove: (playerId: PlayerID, moveEvent: MoveEvent, position: PlayerPosition) => void; // position: the position after this event, for verification purposes?
   playerFall: (playerId: PlayerID, position: PlayerPosition) => void;
   playerPlace: (playerId: PlayerID, position: PlayerPosition) => void;
-  scoreboardData: () => void;
+  requestScoreboardData: () => void;
+  requestVotingSequence: () => void;
+  vote: (playerVote: string) => void;
+  requestVotingCountdown: () => void;
 }
 
 export { ServerToClientEvents, ClientToServerEvents, MoveEvent, PlayerPosition };
