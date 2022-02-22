@@ -5,6 +5,7 @@ import {SharedState} from "..";
 import { io, Socket } from "socket.io-client";
 
 import { DownEvents, UpEvents } from "common/messages/sceneStartGame";
+import { WebFontFile } from "../plugins/WebFontFile";
 
 type SocketStartGame = Socket<DownEvents, UpEvents>;
 
@@ -26,6 +27,10 @@ export class SceneStartGame extends Phaser.Scene {
         this.gameState = data.gameState;
         this.socket = data.socket;
         this.initListeners()
+    }
+
+    preload() {
+        this.load.addFile(new WebFontFile(this.load, 'VT323')) 
     }
 
     create() {

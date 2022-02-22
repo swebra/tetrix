@@ -11,6 +11,7 @@ import {
 import { ScoreboardUI } from "../scene/ScoreboardUI";
 import { SpectatorUI } from "../scene/SpectatorUI";
 import {SharedState} from "..";
+import { WebFontFile } from "../plugins/WebFontFile";
 
 import { Socket } from "socket.io-client";
 
@@ -41,8 +42,6 @@ export class SceneGameArena extends Phaser.Scene {
             key: "SceneGameArena"
         });
     }
-
-    preload() { }
 
     init(data: SharedState) {
         this.sharedState = data;
