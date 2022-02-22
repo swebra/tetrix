@@ -12,9 +12,9 @@ export class GameState {
     socket!: Socket<ServerToClientEvents, ClientToServerEvents>;
 
     // frozen board is the board without moving players, NOTE: frozenBoard is the truth of placed blocks
-    frozenBoard: Array<Array<TetrominoType>>;
+    frozenBoard: Array<Array<TetrominoType | null>>;
     // board is the final product being rendered. contains all 3 other players
-    board: Array<Array<TetrominoType>>;
+    board: Array<Array<TetrominoType | null>>;
 
     // synced to server
     currentTetromino: Tetromino;
@@ -27,7 +27,7 @@ export class GameState {
         for (let r = 0; r < BOARD_SIZE; r++) {
             let row = [];
             for (let c = 0; c < BOARD_SIZE; c++) {
-                row.push(TetrominoType.Empty);
+                row.push(null);
             }
             board.push(row);
         }

@@ -8,7 +8,7 @@ type Shape = {
 };
 
 export class Tetromino {
-    static readonly shapes: {[key in Exclude<TetrominoType, TetrominoType.Empty>]: Shape} = {
+    static readonly shapes: {[key in TetrominoType]: Shape} = {
         [TetrominoType.I]: {width: 4, tiles: [[1, 0], [1, 1], [1, 2], [1, 3]]},
         [TetrominoType.J]: {width: 3, tiles: [[0, 0], [1, 0], [1, 1], [1, 2]]},
         [TetrominoType.L]: {width: 3, tiles: [[0, 2], [1, 0], [1, 1], [1, 2]]},
@@ -23,7 +23,7 @@ export class Tetromino {
     rotation: 0 | 1 | 2 | 3;
     cells: Array<[number, number]>;
 
-    constructor(type: Exclude<TetrominoType, TetrominoType.Empty>) {
+    constructor(type: TetrominoType) {
         this.type = type;
         this.cells = Tetromino.shapes[type].tiles;
         this.position = [0, Math.round((BOARD_SIZE - Tetromino.shapes[type].width) / 2)];

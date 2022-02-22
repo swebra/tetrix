@@ -147,7 +147,7 @@ export class SceneGameArena extends Phaser.Scene {
         for (let row = 0; row < BOARD_SIZE; row++) {
             for (let col = 0; col < BOARD_SIZE; col++) {
                 scene.renderedBoard[row][col]?.destroy();
-                if (board[row][col] != TetrominoType.Empty) {
+                if (board[row][col]) {
                     let x = (col + 0.5) * SceneGameArena.blockSize;
                     let y = (row + 0.5) * SceneGameArena.blockSize;
                     scene.renderedBoard[row][col] = scene.add.rectangle(
@@ -196,7 +196,7 @@ export class SceneGameArena extends Phaser.Scene {
 
     private canTetroFall(
         tetro: Tetromino,
-        board: Array<Array<TetrominoType>>
+        board: Array<Array<TetrominoType | null>>
     ): Boolean {
         // if the blocks right below this tetro are all empty, it can fall.
         const bottomRelative = Math.max(...tetro.cells.map((cell) => cell[0])); // the lowest block in the tetro cells, ranging from 0-3
@@ -207,8 +207,7 @@ export class SceneGameArena extends Phaser.Scene {
         return tetro.cells.every(
             (cell: any) =>
                 cell[0] < bottomRelative || // either the cell is not the bottom cells which we don't care
-                board[bottomAbsolute + 1][tetro.position[1] + cell[1]] ==
-                TetrominoType.Empty // or the room below it has to be empty
+                board[bottomAbsolute + 1][tetro.position[1] + cell[1]] == null // or the room below it has to be empty
         );
     }
 }

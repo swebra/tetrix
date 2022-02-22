@@ -1,4 +1,3 @@
-// TODO: Remove Empty TetrominoType and use nulls or Optional type?
 export enum TetrominoType {
   I,
   J,
@@ -6,6 +5,5 @@ export enum TetrominoType {
   O,
   S,
   T,
-  Z,
-  Empty,
+  Z
 };
