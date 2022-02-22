@@ -1,8 +1,8 @@
 export namespace Player {
     export enum Color {
-        Orange = 1,
-        Green = 2,
-        Pink = 3,
-        Blue = 4
+        Orange = 0,
+        Green = 1,
+        Pink = 2,
+        Blue = 3
     }
 }

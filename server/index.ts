@@ -5,6 +5,7 @@ import http from "http";
 import { Server } from "socket.io";
 import { Level } from "./typescript/Level";
 import { Scoreboard } from "./typescript/Scoreboard";
+import { PlayerQueue } from "./typescript/PlayerQueue";
 import path from "path";
 
 import { ServerToClientEvents, ClientToServerEvents } from "common/message";
@@ -57,6 +58,7 @@ console.log("Server started");
 let playerCounter: 0 | 1 | 2 | 3 = 0;
 let scoreboard = new Scoreboard();
 let level = new Level();
+let queue = new PlayerQueue();
 
 // Emit to all sockets.
 export function broadcastUpdateScoreboard(msg: any) {
@@ -70,6 +72,7 @@ export function broadcastEndSequence(msg: any) {
 
 // Emit to all sockets.
 export function broadcastStartSequence() {
+  queue.resetCounter();
   io.sockets.emit("startSequence");
 }
 
@@ -80,9 +83,9 @@ io.on("connection", (socket) => {
 
   // Uncomment the following to view the scoreboard update:
   setTimeout(() => {
-    scoreboard.incrementScore(4, 5, level);
+    scoreboard.incrementScore(3, 5, level);
     scoreboard.incrementScore(2, 2, level);
-    scoreboard.incrementScore(3, 1, level);
+    scoreboard.incrementScore(0, 1, level);
   }, 1000);
 
   // Uncomment to view the game end sequence:
