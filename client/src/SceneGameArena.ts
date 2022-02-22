@@ -5,9 +5,8 @@ import { BOARD_SIZE } from "../../common/shared";
 import { cloneDeep } from "lodash";
 import { TetrominoType } from "common/TetrominoType";
 import { Tetromino } from "./Tetromino";
-import {
-    MoveEvent
-} from "common/message";
+import { rotateCoords } from "./utils";
+import { MoveEvent } from "common/message";
 import { ScoreboardUI } from "./ScoreboardUI";
 
 export class SceneGameArena extends Phaser.Scene {
@@ -105,37 +104,9 @@ export class SceneGameArena extends Phaser.Scene {
             for (let cell of tetro.cells) {
                 const rowAbsolute = cell[0] + tetro.position[0];
                 const colAbsolute = cell[1] + tetro.position[1];
-                let [row, col] = xyTransform(rowAbsolute, colAbsolute, i);
+                let [row, col] = rotateCoords([rowAbsolute, colAbsolute], BOARD_SIZE - 1, i);
                 scene.gameState.board[row][col] = tetro.type;
             }
-        }
-
-        // given row,col of a tetro coordinate, rotate it to the relative view of the local player
-        function xyTransform(row: number, col: number, i: number): [number, number] {
-            if (i === 0) {
-                return [col, BOARD_SIZE - row];
-            } else if (i === 1) {
-                return [BOARD_SIZE - row, BOARD_SIZE - col];
-            } else if (i === 2) {
-                return [BOARD_SIZE - col, row];
-            } else {
-                return [row, col];
-            }
-            //  // left player
-            //  this.otherTetros[0].xyTransform = (x, y) => {
-            //    return { x: y, y: SceneGameArena.blockSize * BOARD_SIZE - x };
-            //  };
-            //  // down player
-            //  this.otherTetros[1].xyTransform = (x, y) => {
-            //    return {
-            //      x: SceneGameArena.blockSize * BOARD_SIZE - x,
-            //      y: SceneGameArena.blockSize * BOARD_SIZE - y,
-            //    };
-            //  };
-            //  // right player
-            //  this.otherTetros[2].xyTransform = (x, y) => {
-            //    return { x: SceneGameArena.blockSize * BOARD_SIZE - y, y: x };
-            //  };
         }
     }
 
