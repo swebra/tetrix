@@ -2,25 +2,32 @@ import { TetrominoType } from "common/TetrominoType";
 import { BOARD_SIZE } from "common/shared";
 import { PlayerPosition } from "common/message";
 
+type Shape = {
+    width: number;
+    tiles: Array<[number, number]>;
+};
+
 export class Tetromino {
+    static readonly shapes: {[key in Exclude<TetrominoType, TetrominoType.Empty>]: Shape} = {
+        [TetrominoType.I]: {width: 4, tiles: [[1, 0], [1, 1], [1, 2], [1, 3]]},
+        [TetrominoType.J]: {width: 3, tiles: [[0, 0], [1, 0], [1, 1], [1, 2]]},
+        [TetrominoType.L]: {width: 3, tiles: [[0, 2], [1, 0], [1, 1], [1, 2]]},
+        [TetrominoType.O]: {width: 2, tiles: [[0, 0], [0, 1], [1, 0], [1, 1]]},
+        [TetrominoType.S]: {width: 3, tiles: [[0, 1], [0, 2], [1, 0], [1, 1]]},
+        [TetrominoType.T]: {width: 3, tiles: [[0, 1], [1, 0], [1, 1], [1, 2]]},
+        [TetrominoType.Z]: {width: 3, tiles: [[0, 0], [0, 1], [1, 1], [1, 2]]}
+    };
+
     type: TetrominoType;
     position: [number, number];
     rotation: 0 | 1 | 2 | 3;
-    // individual square blocks inside a 3x3 virtual block containing the tetromino. ideally it should be 4x4? not sure if we want to go with this.
-    // TODO rotate happens here? (matrix rotation)
     cells: Array<[number, number]>;
 
-    constructor(type: TetrominoType) {
+    constructor(type: Exclude<TetrominoType, TetrominoType.Empty>) {
         this.type = type;
-        this.position = [0, Math.round(BOARD_SIZE / 2) - 2]; // TODO hardcoded to the middle (10/2)
+        this.cells = Tetromino.shapes[type].tiles;
+        this.position = [0, Math.round((BOARD_SIZE - Tetromino.shapes[type].width) / 2)];
         this.rotation = 0; // default (no rotation)
-        this.cells = [
-            // TODO generate based on type
-            [2, 0],
-            [2, 1],
-            [2, 2],
-            [1, 1],
-        ];
     }
 
     reportPosition(): PlayerPosition {

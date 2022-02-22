@@ -1,10 +1,11 @@
+// TODO: Remove Empty TetrominoType and use nulls or Optional type?
 export enum TetrominoType {
-  LClockwise,
-  LCounterClockwise,
-  Z,
+  I,
+  J,
+  L,
+  O,
   S,
   T,
-  Square,
-  Long,
+  Z,
   Empty,
-}
+};
