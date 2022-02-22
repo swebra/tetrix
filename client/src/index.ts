@@ -11,11 +11,13 @@ const config = {
   parent: "root",
   width: BOARD_SIZE * SceneGameArena.blockSize,
   height: BOARD_SIZE * SceneGameArena.blockSize,
-  scene: [SceneGameArena, SceneFullscreenScoreboard, SceneStartGame]
+  // scene: [SceneStartGame, SceneGameArena, SceneFullscreenScoreboard]  // FIXME: Uncomment this line in the final version. Allows for users to join the player queue etc..
+  scene: [SceneGameArena, SceneFullscreenScoreboard]  // FIXME: Delete this line in the final version. This is left in for testing convenience.
 };
 
 const gamestate = new GameState();
 const game = new Phaser.Game(config);
 
-game.scene.start("SceneStartGame", { gameState: gamestate });
-// game.scene.start("SceneGameArena", { gameState: gamestate });
+// FIXME: Uncomment the following line in the final game. This is commented out for testing convenience.
+// game.scene.start("SceneStartGame", { gameState: gamestate });
+game.scene.start("SceneGameArena", { gameState: gamestate });   // FIXME: Delete this line from the final game. This is left in for testing convenience.

@@ -63,12 +63,13 @@ let queue = new PlayerQueue();
 let spectator = new Spectator();
 
 // Emit to all sockets.
-export function broadcastUpdateScoreboard(msg: any) {
+export function broadcastUpdateScoreboard(msg: Array<{ color: string, hex: number, points: number }>) {
   io.sockets.emit("updateScoreboard", msg);
 }
 
 // Emit to all sockets.
-export function broadcastEndSequence(msg: any) {
+export function broadcastEndSequence(msg: Array<{ color: string, hex: number, points: number }>) {
+  queue.resetCounter();
   io.sockets.emit("endSequence", msg);
 }
 
@@ -92,16 +93,13 @@ export function broadcastHideVotingSequence() {
 spectator.generateFirstVotingSequence(level);
 
 io.on("connection", (socket) => {
+  // =====================================================
+  // FIXME: Delete the following lines from the final game.
+  // These are left in for testing convenience.
   socket.emit("initPlayer", playerCounter)
   playerCounter += 1
   playerCounter %= 4
-
-  // Uncomment the following to view the scoreboard update:
-  setTimeout(() => {
-    scoreboard.incrementScore(3, 5, level);
-    scoreboard.incrementScore(2, 2, level);
-    scoreboard.incrementScore(0, 1, level);
-  }, 1000);
+  // ======================================================
 
   // Uncomment to view the game end sequence:
   // setTimeout(() => {
@@ -142,6 +140,25 @@ io.on("connection", (socket) => {
   socket.on("requestVotingCountdown", () => {
     if (spectator.isVoteRunning()) {
       socket.emit("sendVotingCountdown", spectator.countdownValue);
+    }
+  });
+
+  socket.on("requestRemainingPlayers", () => {
+    socket.emit("sendRemainingPlayers", queue.getRemainingPlayers());
+  });
+
+  socket.on("joinGame", () => {
+    let playerIndex: number = queue.addToQueue();
+
+    // If there was room in the queue, notify the client of their player index value.
+    if (playerIndex < 4) {
+      socket.emit("initPlayer", playerIndex as 0 | 1 | 2 | 3);
+      io.sockets.emit("sendRemainingPlayers", queue.getRemainingPlayers());
+
+      // 4 players have joined. Start the game.
+      if (playerIndex == 3) {
+        io.sockets.emit("startGame");
+      }
     }
   });
 

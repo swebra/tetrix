@@ -1,15 +1,16 @@
 import { BOARD_SIZE } from "common/shared";
 import { CookieTracker } from "./CookieTracker";
 import { SceneGameArena } from "./SceneGameArena";
+import { TextConfig } from "./TextConfig";
 
 export class SpectatorUI {
     private cookieTracker: CookieTracker;
     private scene: SceneGameArena;
-    private countdown: any;
-    private buttons: any[];
-    private alreadyVoted: any;
-    private countdownConfig: any;
-    private buttonConfig: any;
+    private countdown: Phaser.GameObjects.Text;
+    private buttons: Array<Phaser.GameObjects.Text>;
+    private alreadyVoted: Phaser.GameObjects.Text;
+    private countdownConfig: TextConfig;
+    private buttonConfig: TextConfig;
 
     constructor(scene: SceneGameArena) {
         this.cookieTracker = new CookieTracker();
@@ -73,9 +74,7 @@ export class SpectatorUI {
 
         this.cookieTracker.deleteCookie("hasVoted");
 
-        for (let element of this.buttons) {
-            element.setText("");
-        }
+        this.hideOptions();
     }
 
     /**
@@ -121,13 +120,13 @@ export class SpectatorUI {
      * @param buttonText The new text to set for the button.
      * @param valForServer The value to send to the server if the button is clicked.
      */
-    private setVotingButton(button: any, buttonText: string, valForServer: string) {
+    private setVotingButton(button: Phaser.GameObjects.Text, buttonText: string, valForServer: "option1" | "option2" | "option3" | "noAction") {
         button.setText(buttonText)
             .setInteractive({ useHandCursor: true })
             .on("pointerover", () => { this.isHovered(button, true) })
             .on("pointerout", () => { this.isHovered(button, false) })
             .on("pointerup", () => {
-                this.hideVotingSequence();
+                this.hideOptions();
                 this.scene.gameState.sendVotingSubmission(valForServer);
                 this.cookieTracker.setCookie("hasVoted", "true");
                 this.alreadyVoted.setText("  Your vote has\n    been sent!");
@@ -139,7 +138,7 @@ export class SpectatorUI {
      * @param button The button to modify.
      * @param isHovered Whether the button is being hovered or not.
      */
-    private isHovered(button: any, isHovered: boolean) {
+    private isHovered(button: Phaser.GameObjects.Text, isHovered: boolean) {
         if (isHovered) {
             button.setTint(0xd4cb22);
         } else {
@@ -150,7 +149,7 @@ export class SpectatorUI {
     /**
      * Hide the voting sequence.
      */
-    private hideVotingSequence() {
+    private hideOptions() {
         for (let element of this.buttons) {
             element.setText("");
         }
@@ -183,7 +182,7 @@ export class SpectatorUI {
      * Update the seconds on the counter.
      * @param secondsLeft The number of seconds left on the voting sequence (received from the server).
      */
-    syncCountdown(secondsLeft: number) {
+    public syncCountdown(secondsLeft: number) {
         this.updateCountdown(secondsLeft);
 
         // Start the countdown.

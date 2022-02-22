@@ -3,8 +3,8 @@ import { GameState } from "./GameState";
 import { BOARD_SIZE } from "common/shared";
 
 export class SceneStartGame extends Phaser.Scene {
-    private playersNeededText!: any;
-    private button!: any;
+    private playersNeededText!: Phaser.GameObjects.Text;
+    private button!: Phaser.GameObjects.Text;
     private gameState!: GameState;
 
     constructor () {
@@ -33,11 +33,31 @@ export class SceneStartGame extends Phaser.Scene {
         this.playersNeededText = this.add.text(BOARD_SIZE * 6.7, BOARD_SIZE * 12, "Waiting on 4 more player(s)", { fontSize: "22px", fontFamily: "VT323" })
             .setTint(0xFF0000);
 
-        // Fixme: needs to go into the gameState handler thing.
-        // this.scene.start("SceneGameArena", { gameState: this.gameState });
+        // Request the # of remaining players needed to start the game.
+        this.gameState.requestRemainingPlayers();
+
+        // Upon receiving the # players needed to start the game, update the text on screen.
+        this.gameState.updateRemainingPlayers = (remainingPlayers) => {
+            this.playersNeededText.setText(`Waiting on ${remainingPlayers} more player(s)`);
+
+            // Hide the join button if all player positions are occupied.
+            if (remainingPlayers <= 0) {
+                this.button.setText("");
+            }
+        }
+
+        // If the queue is full, we should receive the signal from the server to start the game.
+        this.gameState.startGame = () => {
+            this.scene.start("SceneGameArena", { gameState: this.gameState });
+        }
     }
 
-    private isHovered(button: any, isHovered: boolean) {
+    /**
+     * Modifies the color of text based off whether a cursor is over the element.
+     * @param button The text element.
+     * @param isHovered Whether a cursor is hovering over it.
+     */
+    private isHovered(button: Phaser.GameObjects.Text, isHovered: boolean) {
         if (isHovered) {
             button.setTint(0xd4cb22);
         } else {
@@ -45,11 +65,11 @@ export class SceneStartGame extends Phaser.Scene {
         }
     }
 
+    /**
+     * If the join button was clicked, erase it from screen and send a request to the server to join the queue.
+     */
     private requestJoinGame() {
         this.button.setText("");
-    }
-
-    private newPlayerJoined(playersInQueue: number) {
-        this.playersNeededText.setText(`Waiting on ${4 - playersInQueue} more player(s)`);
+        this.gameState.joinGame();
     }
 }
