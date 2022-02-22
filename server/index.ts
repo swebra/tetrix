@@ -106,42 +106,11 @@ io.on("connection", (socket) => {
   //   scoreboard.displayFullScreenUI();
   // }, 2000);
 
-  // works when broadcast to all
-  // io.emit("noArg");
-  // works when broadcasting to a room
-  // io.to("room1").emit("basicEmit", 1, "2", Buffer.from([3]));
-
   socket.on("playerMove", (...args) => {
     socket.broadcast.emit("playerMove", ...args);
   });
-
-  socket.on("requestScoreboardData", () => {
-    let clonedData = Object.assign([], scoreboard.scoreMap);
-    clonedData.push({
-      color: "Level",
-      hex: 0xFFFFFF,
-      points: level.currentLevel
-    });
-
-    socket.emit("updateScoreboard", clonedData)
-  });
-
-  socket.on("vote", (votingResult: string) => {
-    spectator.getResult(votingResult);
-  });
-
-  socket.on("requestVotingSequence", () => {
-    let currentSequence = spectator.isVoteRunning();
-    if (currentSequence) {
-      socket.emit("showVotingSequence", currentSequence);
-    }
-  });
-
-  socket.on("requestVotingCountdown", () => {
-    if (spectator.isVoteRunning()) {
-      socket.emit("sendVotingCountdown", spectator.countdownValue);
-    }
-  });
+  scoreboard.initSocketListeners(socket, level)
+  spectator.initSocketListeners(socket)
 
   socket.on("requestRemainingPlayers", () => {
     socket.emit("updateRemainingPlayers", queue.getRemainingPlayers());

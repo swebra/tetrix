@@ -62,6 +62,7 @@ export class SpectatorUI {
             .text(14 * BOARD_SIZE + 20, y + 150, "", this.buttonConfig)
             .setTint(0xe6e4da);
 
+        console.log("spectator ui: ", this.socket)
         // Request info on any on-going voting sequences.
         this.socket.emit("requestVotingSequence");
     }

@@ -1,6 +1,11 @@
 import { Level } from "./Level";
 import { broadcastHideVotingSequence, broadcastShowVotingSequence } from "../index";
 
+import { UpEvents, DownEvents } from "common/messages/spectator";
+import {Socket} from "socket.io";
+
+type SocketSpectator = Socket<UpEvents, DownEvents>;
+
 export class Spectator {
     private _isFirstRoundVoting: boolean;
     private _isAcceptingVotes: boolean;
@@ -27,6 +32,25 @@ export class Spectator {
 
     get countdownValue(): number {
         return this._countdownValue;
+    }
+
+    initSocketListeners(socket: SocketSpectator) {
+      socket.on("vote", (votingResult: string) => {
+        this.getResult(votingResult);
+      });
+
+      socket.on("requestVotingSequence", () => {
+        let currentSequence = this.isVoteRunning();
+        if (currentSequence) {
+          socket.emit("showVotingSequence", currentSequence);
+        }
+      });
+
+      socket.on("requestVotingCountdown", () => {
+        if (this.isVoteRunning()) {
+          socket.emit("sendVotingCountdown", this.countdownValue);
+        }
+      });
     }
 
     /**
