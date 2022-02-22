@@ -104,7 +104,7 @@ export class SceneGameArena extends Phaser.Scene {
             for (let cell of tetro.cells) {
                 const rowAbsolute = cell[0] + tetro.position[0];
                 const colAbsolute = cell[1] + tetro.position[1];
-                let [row, col] = rotateCoords([rowAbsolute, colAbsolute], BOARD_SIZE - 1, i);
+                let [row, col] = rotateCoords([rowAbsolute, colAbsolute], BOARD_SIZE, i);
                 scene.gameState.board[row][col] = tetro.type;
             }
         }
