@@ -9,6 +9,7 @@ import {
     MoveEvent
 } from "common/message";
 import { ScoreboardUI } from "./ScoreboardUI";
+import { SpectatorUI } from "./SpectatorUI";
 
 export class SceneGameArena extends Phaser.Scene {
     FRAMERATE: number = 12;
@@ -22,6 +23,7 @@ export class SceneGameArena extends Phaser.Scene {
     renderedBoard!: Array<Array<GameObjects.Rectangle | null>>;
 
     scoreboard!: ScoreboardUI;
+    spectator!: SpectatorUI;
 
     frameTimeElapsed: number = 0; // the ms time since the last frame is drawn
 
@@ -41,6 +43,8 @@ export class SceneGameArena extends Phaser.Scene {
         this.gameState = new GameState();
         this.scoreboard = new ScoreboardUI(this, true);
         this.gameState.requestScoreboardData();
+
+        this.spectator = new SpectatorUI(this);
 
         // initialize an empty rendered board
         this.renderedBoard = [];
@@ -77,6 +81,19 @@ export class SceneGameArena extends Phaser.Scene {
 
         this.gameState.fullScoreboard = (playerPoints) => {
             this.scene.start("SceneFullscreenScoreboard", { playerPoints: playerPoints, blockSize: SceneGameArena.blockSize, gameState: this.gameState });
+        }
+
+        // FIXME: Only show spectator things to "spectators" (not players).
+        this.gameState.showVotingSequence = (votingSequence) => {
+            this.spectator.generateTimedEvent(votingSequence);
+        }
+
+        this.gameState.hideVotingSequence = () => {
+            this.spectator.removeTimedEvent();
+        }
+
+        this.gameState.sendVotingCountdown = (secondsLeft) => {
+            this.spectator.syncCountdown(secondsLeft);
         }
     }
 
