@@ -3,7 +3,7 @@ import * as sceneGameArenaMsgs from "./messages/sceneGameArena"
 import * as gameMsgs from "./messages/game"
 import * as scoreboardMsgs from "./messages/scoreboard"
 import * as spectatorMsgs from "./messages/spectator"
-import * as sceneFullscreenScoreboardMsgs from "./messages/sceneFullscreenScoreboard"
+import * as sceneGameOverMsgs from "./messages/sceneGameOver"
 import { TetrominoType } from "./TetrominoType"
 
 export type ServerToClientEvents = sceneWaitingRoomMsgs.ToClientEvents
@@ -11,14 +11,14 @@ export type ServerToClientEvents = sceneWaitingRoomMsgs.ToClientEvents
                                     & gameMsgs.ToClientEvents
                                     & scoreboardMsgs.ToClientEvents
                                     & spectatorMsgs.ToClientEvents
-                                    & sceneFullscreenScoreboardMsgs.ToClientEvents;
+                                    & sceneGameOverMsgs.ToClientEvents;
 
 export type ClientToServerEvents = sceneWaitingRoomMsgs.ToServerEvents
                                     & sceneGameArenaMsgs.ToServerEvents
                                     & gameMsgs.ToClientEvents
                                     & scoreboardMsgs.ToServerEvents
                                     & spectatorMsgs.ToServerEvents
-                                    & sceneFullscreenScoreboardMsgs.ToServerEvents;
+                                    & sceneGameOverMsgs.ToServerEvents;
 
 export type PlayerID = 0 | 1 | 2 | 3;
 

@@ -68,9 +68,9 @@ export function broadcastUpdateScoreboard(msg: Array<ColoredScore>) {
 }
 
 // Emit to all sockets.
-export function broadcastToSceneFullscreenScoreboard(msg: Array<ColoredScore>) {
+export function broadcastToSceneGameOver(msg: Array<ColoredScore>) {
   queue.resetCounter();
-  io.sockets.emit("toSceneFullscreenScoreboard", msg);
+  io.sockets.emit("toSceneGameOver", msg);
 }
 
 // Emit to all sockets.
@@ -92,6 +92,12 @@ export function broadcastHideVotingSequence() {
 // Uncomment to send the client a voting request. (lasts 10 seconds)
 spectator.generateFirstVotingSequence(level);
 
+// Uncomment to view the game end sequence:
+// setTimeout(() => {
+//   console.log("Sending clients to Game Over Screen!")
+//   scoreboard.displaySceneGameOver();
+// }, 30000);
+
 io.on("connection", (socket) => {
   // =====================================================
   // FIXME: Delete the following lines from the final game.
@@ -100,11 +106,6 @@ io.on("connection", (socket) => {
   playerCounter += 1
   playerCounter %= 4
   // ======================================================
-
-  // Uncomment to view the game end sequence:
-  // setTimeout(() => {
-  //   scoreboard.displayFullScreenUI();
-  // }, 2000);
 
   socket.on("playerMove", (...args) => {
     socket.broadcast.emit("playerMove", ...args);

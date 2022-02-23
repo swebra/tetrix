@@ -1,9 +1,9 @@
 import Phaser from "phaser";
 import { io, Socket } from "socket.io-client";
 
-import { SceneFullscreenScoreboard } from "./scene/SceneFullscreenScoreboard";
-import { SceneGameArena } from "./scene/SceneGameArena";
 import { SceneWaitingRoom } from "./scene/SceneWaitingRoom";
+import { SceneGameArena } from "./scene/SceneGameArena";
+import { SceneGameOver } from "./scene/SceneGameOver";
 import { GameState } from "./GameState";
 import { BOARD_SIZE, TILE_SIZE } from "common/shared";
 
@@ -18,8 +18,8 @@ const config = {
   width: BOARD_SIZE * TILE_SIZE,
   height: BOARD_SIZE * TILE_SIZE,
   scene: import.meta.env.VITE_DISABLE_WAITING_ROOM
-    ? [SceneGameArena, SceneFullscreenScoreboard]
-    : [SceneWaitingRoom, SceneGameArena, SceneFullscreenScoreboard],
+    ? [SceneGameArena, SceneGameOver]
+    : [SceneWaitingRoom, SceneGameArena, SceneGameOver],
 };
 
 const socket = io(

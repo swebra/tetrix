@@ -1,6 +1,6 @@
 import { SceneGameArena } from "./SceneGameArena";
 import { BOARD_SIZE } from "common/shared";
-import { SceneFullscreenScoreboard } from "./SceneFullscreenScoreboard";
+import { SceneGameOver } from "./SceneGameOver";
 import { TextConfig } from "../TextConfig";
 
 import { Socket } from "socket.io-client";
@@ -11,13 +11,13 @@ import { TILE_SIZE } from "common/shared";
 type SocketScoreboard = Socket<ToClientEvents, ToServerEvents>;
 
 export class ScoreboardUI {
-    private scene: SceneGameArena | SceneFullscreenScoreboard;
+    private scene: SceneGameArena | SceneGameOver;
     private listOfScores: Array<Phaser.GameObjects.Text>;
     private headerTextConfig: TextConfig;
     private regularTextConfig: TextConfig;
     private socket: SocketScoreboard;
 
-    constructor(SceneGameArena: SceneGameArena | SceneFullscreenScoreboard, socket: SocketScoreboard, shouldLoadScoreboard: boolean = false) {
+    constructor(SceneGameArena: SceneGameArena | SceneGameOver, socket: SocketScoreboard, shouldLoadScoreboard: boolean = false) {
         this.scene = SceneGameArena;
         this.listOfScores = [];
         this.socket = socket;
@@ -99,7 +99,7 @@ export class ScoreboardUI {
     }
 
     /**
-     * Create a fullscreen scoreboard for the ending sequence.
+     * Create a fullscreen scoreboard for the game over scene.
      * @param TILE_SIZE The block size defined in the game arena.
      * @param playerData The array of objects containing player data (name + points + hex-color).
      */

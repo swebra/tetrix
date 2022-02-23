@@ -1,6 +1,6 @@
 import { Player } from "./PlayerAttributes";
 import { Level } from "./Level";
-import { broadcastUpdateScoreboard, broadcastToSceneWaitingRoom, broadcastToSceneFullscreenScoreboard } from "../index";
+import { broadcastUpdateScoreboard, broadcastToSceneWaitingRoom, broadcastToSceneGameOver } from "../index";
 
 import { ToServerEvents, ToClientEvents } from "common/messages/scoreboard";
 import { ColoredScore } from "common/shared";
@@ -212,9 +212,9 @@ export class Scoreboard {
     }
 
     /**
-     * Display a fullscreen scoreboard UI of the game.
+     * Display the game over screen with the fullscreen scoreboard UI.
      */
-    public displayFullScreenUI() {
+    public displaySceneGameOver() {
         this.updateScoreMap();
 
         // Temporary clone of the data so that we can append the level of the game.
@@ -226,7 +226,7 @@ export class Scoreboard {
         });
 
         // Show scoreboard to all connected users.
-        broadcastToSceneFullscreenScoreboard(clonedData);
+        broadcastToSceneGameOver(clonedData);
 
         // Return to starting sequence after 30 seconds.
         setTimeout(() => {

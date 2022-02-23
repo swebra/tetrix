@@ -4,24 +4,24 @@ import { SharedState } from "..";
 import { GameState } from "../GameState";
 import { ScoreboardUI } from "./ScoreboardUI";
 
-import { ToClientEvents, ToServerEvents } from "common/messages/sceneFullscreenScoreboard";
+import { ToClientEvents, ToServerEvents } from "common/messages/sceneGameOver";
 import { ColoredScore } from "common/shared";
 
-type SocketFullscreenScoreboard = Socket<ToClientEvents, ToServerEvents>;
-type SceneDataFullscreen = SharedState & {playerPoints: Array<ColoredScore>};
-export class SceneFullscreenScoreboard extends Phaser.Scene {
+type SocketGameOver = Socket<ToClientEvents, ToServerEvents>;
+type SceneDataGameOver = SharedState & {playerPoints: Array<ColoredScore>};
+export class SceneGameOver extends Phaser.Scene {
     private playerData!: Array<ColoredScore>;
     private gameState!: GameState;
     private scoreboard!: ScoreboardUI;
-    private socket!: SocketFullscreenScoreboard;
+    private socket!: SocketGameOver;
 
     constructor () {
         super({
-            key: "SceneFullscreenScoreboard"
+            key: "SceneGameOver"
         });
     }
 
-    init(data: SceneDataFullscreen) {
+    init(data: SceneDataGameOver) {
         this.playerData = data.playerPoints;
         this.gameState = data.gameState;
         this.socket = data.socket;

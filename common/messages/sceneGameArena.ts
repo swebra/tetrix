@@ -1,7 +1,7 @@
 import {ColoredScore} from "../shared";
 
 export interface ToClientEvents {
-  toSceneFullscreenScoreboard: (data: Array<ColoredScore>) => void;
+  toSceneGameOver: (data: Array<ColoredScore>) => void;
 }
 
 export interface ToServerEvents {

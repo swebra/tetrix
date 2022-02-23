@@ -85,8 +85,8 @@ export class SceneGameArena extends Phaser.Scene {
             loop: true,
         });
 
-        this.socket.on("toSceneFullscreenScoreboard", (playerPoints) => {
-            this.scene.start("SceneFullscreenScoreboard", { ...this.sharedState, playerPoints: playerPoints, gameState: this.gameState });
+        this.socket.on("toSceneGameOver", (playerPoints) => {
+            this.scene.start("SceneGameOver", { ...this.sharedState, playerPoints: playerPoints, gameState: this.gameState });
         });
 
     }
