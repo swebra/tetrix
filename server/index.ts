@@ -3,8 +3,10 @@ import express from "express";
 import cors from "cors";
 import http from "http";
 import { Server } from "socket.io";
-import { Level } from "./typescript/Level";
-import { Scoreboard } from "./typescript/Scoreboard";
+import { Level } from "./src/Level";
+import { Scoreboard } from "./src/Scoreboard";
+import { PlayerQueue } from "./src/PlayerQueue";
+import { Spectator } from "./src/Spectator";
 import path from "path";
 
 import { ServerToClientEvents, ClientToServerEvents } from "common/message";
@@ -53,65 +55,81 @@ const io = new Server<
   },
 });
 
-console.log("Server started");
-let playerCounter: 0 | 1 | 2 | 3 = 0;
+console.log(`Server started at port ${port}`);
+let playerCounter: 0 | 1 | 2 | 3 = 0;  // FIXME: Remove this on final version.
 let scoreboard = new Scoreboard();
 let level = new Level();
+let queue = new PlayerQueue();
+let spectator = new Spectator();
 
 // Emit to all sockets.
-export function broadcastUpdateScoreboard(msg: any) {
+export function broadcastUpdateScoreboard(msg: Array<{ color: string, hex: number, points: number }>) {
   io.sockets.emit("updateScoreboard", msg);
 }
 
 // Emit to all sockets.
-export function broadcastEndSequence(msg: any) {
+export function broadcastEndSequence(msg: Array<{ color: string, hex: number, points: number }>) {
+  queue.resetCounter();
   io.sockets.emit("endSequence", msg);
 }
 
 // Emit to all sockets.
 export function broadcastStartSequence() {
+  queue.resetCounter();
   io.sockets.emit("startSequence");
 }
 
+// Emit to all sockets.
+export function broadcastShowVotingSequence(votingSequence: string) {
+  io.sockets.emit("showVotingSequence", votingSequence);
+}
+
+// Emit to all sockets.
+export function broadcastHideVotingSequence() {
+  io.sockets.emit("hideVotingSequence");
+}
+
+// Uncomment to send the client a voting request. (lasts 10 seconds)
+spectator.generateFirstVotingSequence(level);
+
 io.on("connection", (socket) => {
+  // =====================================================
+  // FIXME: Delete the following lines from the final game.
+  // These are left in for testing convenience.
   socket.emit("initPlayer", playerCounter)
   playerCounter += 1
   playerCounter %= 4
-
-  // Uncomment the following to view the scoreboard update:
-  setTimeout(() => {
-    scoreboard.incrementScore(4, 5, level);
-    scoreboard.incrementScore(2, 2, level);
-    scoreboard.incrementScore(3, 1, level);
-  }, 1000);
+  // ======================================================
 
   // Uncomment to view the game end sequence:
   // setTimeout(() => {
   //   scoreboard.displayFullScreenUI();
   // }, 2000);
 
-  // works when broadcast to all
-  // io.emit("noArg");
-  // works when broadcasting to a room
-  // io.to("room1").emit("basicEmit", 1, "2", Buffer.from([3]));
-
   socket.on("playerMove", (...args) => {
     socket.broadcast.emit("playerMove", ...args);
   });
+  scoreboard.initSocketListeners(socket, level)
+  spectator.initSocketListeners(socket)
 
-  socket.on("scoreboardData", () => {
-    let clonedData = Object.assign([], scoreboard.scoreMap);
-    clonedData.push({
-      color: "Level",
-      hex: 0xFFFFFF,
-      points: level.currentLevel
-    });
-
-    socket.emit("updateScoreboard", clonedData)
+  socket.on("requestRemainingPlayers", () => {
+    socket.emit("updateRemainingPlayers", queue.getRemainingPlayers());
   });
 
-  // socket.on("playerAction", ({event, playerId}) => {
-  //   console.log(`received event: `, event, ", from id: ", playerId)
-  //   socket.broadcast.emit("playerAction", {event, playerId})
-  // })
+  socket.on("joinGame", () => {
+    let playerIndex: number = queue.addToQueue();
+
+    // If there was room in the queue, notify the client of their player index value.
+    if (playerIndex < 4) {
+      socket.emit("initPlayer", playerIndex as 0 | 1 | 2 | 3);
+      io.sockets.emit("updateRemainingPlayers", queue.getRemainingPlayers());
+
+      // 4 players have joined. Start the game.
+      if (playerIndex == 3) {
+        io.sockets.emit("startGame");
+      }
+    }
+  });
+
+  // FIXME need a state machine to tell which scene the game is at, conditionally tackle disconnections?
 });

@@ -1,6 +1,6 @@
 import Phaser, { Scene } from "phaser";
 import { Tetromino } from "./Tetromino";
-import { SceneGameArena } from "./SceneGameArena";
+import { SceneGameArena } from "./scene/SceneGameArena";
 
 export class RenderedTetromino {
     // used to wrap around Tetromino and link blocks with sprites, used for rendering and colliding

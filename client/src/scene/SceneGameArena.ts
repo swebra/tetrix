@@ -1,19 +1,30 @@
-import { GameState } from "./GameState";
+import { GameState } from "../GameState";
 import Phaser, { GameObjects } from "phaser";
-import { RenderedTetromino } from "./RenderedTetromino";
-import { BOARD_SIZE } from "../../common/shared";
+import { RenderedTetromino } from "../RenderedTetromino";
+import { BOARD_SIZE } from "common/shared";
 import { cloneDeep } from "lodash";
 import { TetrominoType } from "common/TetrominoType";
-import { Tetromino } from "./Tetromino";
-import { rotateCoords } from "./utils";
+import { Tetromino } from "../Tetromino";
+import { rotateCoords } from "../utils";
 import { MoveEvent } from "common/message";
-import { ScoreboardUI } from "./ScoreboardUI";
+import { ScoreboardUI } from "../scene/ScoreboardUI";
+import { SpectatorUI } from "../scene/SpectatorUI";
+import {SharedState} from "..";
+import { WebFontFile } from "../plugins/WebFontFile";
+
+import { Socket } from "socket.io-client";
+
+import { DownEvents, UpEvents } from "common/messages/sceneGameArena";
+
+type SocketGame = Socket<DownEvents, UpEvents>;
 
 export class SceneGameArena extends Phaser.Scene {
     FRAMERATE: number = 12;
 
     keys!: any; // Phaser doesn't provide nice typing for keyboard.addKeys
+    sharedState!: SharedState;
     gameState!: GameState;
+    socket!: SocketGame;
 
     static blockSize: number = 20; // 20px width for a single square block
     currentTetro!: RenderedTetromino;
@@ -21,25 +32,31 @@ export class SceneGameArena extends Phaser.Scene {
     renderedBoard!: Array<Array<GameObjects.Rectangle | null>>;
 
     scoreboard!: ScoreboardUI;
+    spectator!: SpectatorUI;
 
     frameTimeElapsed: number = 0; // the ms time since the last frame is drawn
 
     constructor() {
         super({
-            key: "GameArenaScene"
+            key: "SceneGameArena"
         });
     }
 
-    preload() { }
+    preload() {
+        this.load.addFile(new WebFontFile(this.load, 'VT323'))
+    }
 
-    init(data: any) {
+    init(data: SharedState) {
+        this.sharedState = data;
         this.gameState = data.gameState;
+        this.socket = data.socket;
     }
 
     create() {
-        this.gameState = new GameState();
-        this.scoreboard = new ScoreboardUI(this, true);
-        this.gameState.requestScoreboardData();
+        this.scoreboard = new ScoreboardUI(this, this.sharedState.socket, true);
+        this.scoreboard.requestScoreboardData()
+
+        this.spectator = new SpectatorUI(this, this.sharedState.socket);
 
         // initialize an empty rendered board
         this.renderedBoard = [];
@@ -70,13 +87,10 @@ export class SceneGameArena extends Phaser.Scene {
             loop: true,
         });
 
-        this.gameState.updateScoreboard = (playerPoints) => {
-            this.scoreboard.updateScoreboard(playerPoints);
-        }
+        this.socket.on("endSequence", (playerPoints) => {
+            this.scene.start("SceneFullscreenScoreboard", { ...this.sharedState, playerPoints: playerPoints, blockSize: SceneGameArena.blockSize, gameState: this.gameState });
+        })
 
-        this.gameState.fullScoreboard = (playerPoints) => {
-            this.scene.start("SceneFullscreenScoreboard", { playerPoints: playerPoints, blockSize: SceneGameArena.blockSize, gameState: this.gameState });
-        }
     }
 
     update(time: number, delta: number) {
