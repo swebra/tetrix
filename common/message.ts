@@ -1,7 +1,7 @@
 import {TetrominoType} from "./TetrominoType"
 import { UpEvents as GameUp, DownEvents as GameDown } from "./messages/game"
 import { UpEvents as SceneStartUp, DownEvents as SceneStartDown } from "./messages/sceneStartGame"
-import { UpEvents as SceneGameUp, DownEvents as SceneGameDown } from "./messages/sceneGame"
+import { UpEvents as SceneGameUp, DownEvents as SceneGameDown } from "./messages/sceneGameArena"
 import { UpEvents as ScoreboardUp, DownEvents as ScoreboardDown } from "./messages/scoreboard"
 import { UpEvents as SpectatorUp, DownEvents as SpectatorDown } from "./messages/spectator"
 

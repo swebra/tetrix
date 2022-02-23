@@ -1,8 +1,9 @@
 import {TetrominoType} from "../TetrominoType"
 import {PlayerPosition, PlayerID, MoveEvent} from "../message"
+import {ColoredScore} from "./scoreboard"
 
 export interface DownEvents {
-  endSequence: (data: Array<{ color: string, hex: number, points: number }>) => void;
+  endSequence: (data: Array<ColoredScore>) => void;
   startSequence: () => void;
   showVotingSequence: (votingSequence: string) => void;
   hideVotingSequence: () => void;

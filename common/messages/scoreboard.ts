@@ -5,7 +5,7 @@ export type ColoredScore = { color: string, hex: number, points: number };
 
 export interface DownEvents {
   updateScoreboard: (data: Array<ColoredScore>) => void;
-  endSequence: (data: Array<{ color: string, hex: number, points: number }>) => void;
+  endSequence: (data: Array<ColoredScore>) => void;
   startSequence: () => void;
 }
 

@@ -15,7 +15,7 @@ import { WebFontFile } from "../plugins/WebFontFile";
 
 import { Socket } from "socket.io-client";
 
-import { DownEvents, UpEvents } from "common/messages/sceneGame";
+import { DownEvents, UpEvents } from "common/messages/sceneGameArena";
 
 type SocketGame = Socket<DownEvents, UpEvents>;
 
@@ -41,6 +41,10 @@ export class SceneGameArena extends Phaser.Scene {
         super({
             key: "SceneGameArena"
         });
+    }
+
+    preload() {
+        this.load.addFile(new WebFontFile(this.load, 'VT323')) 
     }
 
     init(data: SharedState) {
