@@ -1,6 +1,5 @@
 // Import the express in typescript file
 import express from "express";
-import cors from "cors";
 import http from "http";
 import { Server } from "socket.io";
 import { Level } from "./src/Level";
@@ -10,6 +9,7 @@ import { Spectator } from "./src/Spectator";
 import path from "path";
 
 import { ServerToClientEvents, ClientToServerEvents } from "common/message";
+import { ColoredScore } from "common/shared";
 
 interface InterServerEvents {
   ping: () => void;
@@ -63,20 +63,20 @@ let queue = new PlayerQueue();
 let spectator = new Spectator();
 
 // Emit to all sockets.
-export function broadcastUpdateScoreboard(msg: Array<{ color: string, hex: number, points: number }>) {
+export function broadcastUpdateScoreboard(msg: Array<ColoredScore>) {
   io.sockets.emit("updateScoreboard", msg);
 }
 
 // Emit to all sockets.
-export function broadcastEndSequence(msg: Array<{ color: string, hex: number, points: number }>) {
+export function broadcastToSceneFullscreenScoreboard(msg: Array<ColoredScore>) {
   queue.resetCounter();
-  io.sockets.emit("endSequence", msg);
+  io.sockets.emit("toSceneFullscreenScoreboard", msg);
 }
 
 // Emit to all sockets.
-export function broadcastStartSequence() {
+export function broadcastToSceneStartGame() {
   queue.resetCounter();
-  io.sockets.emit("startSequence");
+  io.sockets.emit("toSceneStartGame");
 }
 
 // Emit to all sockets.
@@ -126,7 +126,7 @@ io.on("connection", (socket) => {
 
       // 4 players have joined. Start the game.
       if (playerIndex == 3) {
-        io.sockets.emit("startGame");
+        io.sockets.emit("toSceneGameArena");
       }
     }
   });

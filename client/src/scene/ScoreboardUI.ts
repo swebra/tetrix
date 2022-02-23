@@ -4,9 +4,11 @@ import { SceneFullscreenScoreboard } from "./SceneFullscreenScoreboard";
 import { TextConfig } from "../TextConfig";
 
 import { Socket } from "socket.io-client";
-import { UpEvents, DownEvents, ColoredScore } from "common/messages/scoreboard"
+import { ToServerEvents, ToClientEvents } from "common/messages/scoreboard";
+import { ColoredScore } from "common/shared";
+import { TILE_SIZE } from "common/shared";
 
-type SocketScoreboard = Socket<DownEvents, UpEvents>;
+type SocketScoreboard = Socket<ToClientEvents, ToServerEvents>;
 
 export class ScoreboardUI {
     private scene: SceneGameArena | SceneFullscreenScoreboard;
@@ -47,7 +49,7 @@ export class ScoreboardUI {
         }
 
         this.socket.on("updateScoreboard", (scores) => {
-            this.updateScoreboard(scores)
+            this.updateScoreboard(scores);
         })
     }
 
@@ -98,25 +100,25 @@ export class ScoreboardUI {
 
     /**
      * Create a fullscreen scoreboard for the ending sequence.
-     * @param blockSize The block size defined in the game arena.
+     * @param TILE_SIZE The block size defined in the game arena.
      * @param playerData The array of objects containing player data (name + points + hex-color).
      */
-    public createFullscreenScoreboard(blockSize: number, playerData: Array<{ color: string, hex: number, points: number }>) {
+    public createFullscreenScoreboard(playerData: Array<ColoredScore>) {
         this.scene.add
-            .text(BOARD_SIZE * blockSize / 4, BOARD_SIZE * blockSize / 4, "Game Over!", { fontSize: "82px", fontFamily: "VT323" })
+            .text(BOARD_SIZE * TILE_SIZE / 4, BOARD_SIZE * TILE_SIZE / 4, "Game Over!", { fontSize: "82px", fontFamily: "VT323" })
             .setTint(0xFF0000);
 
-        let y: number = 12 * blockSize;
+        let y: number = 12 * TILE_SIZE;
         for (let element of playerData) {
             y += 50;
             let text = `${element.color}`.padEnd(20) + `${element.points}`;
             this.scene.add
-                .text(11 * blockSize, y, text, { fontSize: "32px", fontFamily: "VT323" })
+                .text(11 * TILE_SIZE, y, text, { fontSize: "32px", fontFamily: "VT323" })
                 .setTint(element.hex);
         }
 
         this.scene.add
-            .text(5 * blockSize, y + 70, "New game starting in 30 seconds", { fontSize: "42px", fontFamily: "VT323" })
+            .text(5 * TILE_SIZE, y + 70, "New game starting in 30 seconds", { fontSize: "42px", fontFamily: "VT323" })
             .setTint(0xFF0000);
     }
 }

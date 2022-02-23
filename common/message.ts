@@ -1,25 +1,18 @@
 import {TetrominoType} from "./TetrominoType"
-import { UpEvents as GameUp, DownEvents as GameDown } from "./messages/game"
-import { UpEvents as SceneStartUp, DownEvents as SceneStartDown } from "./messages/sceneStartGame"
-import { UpEvents as SceneGameUp, DownEvents as SceneGameDown } from "./messages/sceneGameArena"
-import { UpEvents as ScoreboardUp, DownEvents as ScoreboardDown } from "./messages/scoreboard"
-import { UpEvents as SpectatorUp, DownEvents as SpectatorDown } from "./messages/spectator"
+import { ToServerEvents as GameToServer, ToClientEvents as GameToClient } from "./messages/game"
+import { ToServerEvents as SceneStartToServer, ToClientEvents as SceneStartToClient } from "./messages/sceneStartGame"
+import { ToServerEvents as SceneGameToServer, ToClientEvents as SceneGameToClient } from "./messages/sceneGameArena"
+import { ToServerEvents as ScoreboardToServer, ToClientEvents as ScoreboardToClient } from "./messages/scoreboard"
+import { ToServerEvents as SpectatorToServer, ToClientEvents as SpectatorToClient } from "./messages/spectator"
+import { ToServerEvents as SceneFullscreenScoreboardToServer, ToClientEvents as SceneFullscreenScoreboardToClient } from "./messages/sceneFullscreenScoreboard"
 
-export enum MoveEvent {
-  Up,
-  Down,
-  Left,
-  Right
-}
-
-export type ServerToClientEvents = GameDown & SceneStartDown & SceneGameDown & ScoreboardDown & SpectatorDown;
-export type ClientToServerEvents = GameUp & SceneStartUp & SceneGameUp & ScoreboardUp & SpectatorUp;
+export type ServerToClientEvents = GameToClient & SceneStartToClient & SceneGameToClient & ScoreboardToClient & SpectatorToClient & SceneFullscreenScoreboardToClient;
+export type ClientToServerEvents = GameToServer & SceneStartToServer & SceneGameToServer & ScoreboardToServer & SpectatorToServer & SceneFullscreenScoreboardToServer;
 
 export type PlayerID = 0 | 1 | 2 | 3;
 
-export interface PlayerPosition {
-    tetroPosition: [number, number];
+export type TetrominoState = {
+    position: [number, number];
     rotation: 0 | 1 | 2 | 3;
-    tetroType: TetrominoType
+    type: TetrominoType
 }
-

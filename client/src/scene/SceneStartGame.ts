@@ -1,13 +1,13 @@
 import Phaser from "phaser";
 import { GameState } from "../GameState";
 import { BOARD_SIZE } from "common/shared";
-import {SharedState} from "..";
-import { io, Socket } from "socket.io-client";
+import { SharedState } from "..";
+import { Socket } from "socket.io-client";
 
-import { DownEvents, UpEvents } from "common/messages/sceneStartGame";
+import { ToClientEvents, ToServerEvents } from "common/messages/sceneStartGame";
 import { WebFontFile } from "../plugins/WebFontFile";
 
-type SocketStartGame = Socket<DownEvents, UpEvents>;
+type SocketStartGame = Socket<ToClientEvents, ToServerEvents>;
 
 export class SceneStartGame extends Phaser.Scene {
     private playersNeededText!: Phaser.GameObjects.Text;
@@ -23,7 +23,7 @@ export class SceneStartGame extends Phaser.Scene {
     }
 
     init(data: SharedState) {
-        this.sharedData = data
+        this.sharedData = data;
         this.gameState = data.gameState;
         this.socket = data.socket;
         this.initListeners()
@@ -65,7 +65,7 @@ export class SceneStartGame extends Phaser.Scene {
         })
 
         // If the queue is full, we should receive the signal from the server to start the game.
-        this.socket.on("startGame", () => {
+        this.socket.on("toSceneGameArena", () => {
             this.scene.start("SceneGameArena", this.sharedData);
         })
     }

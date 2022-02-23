@@ -1,11 +1,12 @@
 import { Player } from "./PlayerAttributes";
 import { Level } from "./Level";
-import { broadcastUpdateScoreboard, broadcastStartSequence, broadcastEndSequence } from "../index";
+import { broadcastUpdateScoreboard, broadcastToSceneStartGame, broadcastToSceneFullscreenScoreboard } from "../index";
 
-import { UpEvents, DownEvents } from "common/messages/scoreboard";
-import {Socket} from "socket.io";
+import { ToServerEvents, ToClientEvents } from "common/messages/scoreboard";
+import { ColoredScore } from "common/shared";
+import { Socket } from "socket.io";
 
-type SocketScoreboard = Socket<UpEvents, DownEvents>;
+type SocketScoreboard = Socket<ToServerEvents, ToClientEvents>;
 
 export class Scoreboard {
     private _orangeScore: number;
@@ -13,7 +14,7 @@ export class Scoreboard {
     private _pinkScore: number;
     private _blueScore: number;
     private _totalScore: number;
-    private _scoreMap: Array<{ color: string, hex: number, points: number }>;
+    private _scoreMap: Array<ColoredScore>;
 
     constructor() {
         this._orangeScore = 0;
@@ -85,7 +86,7 @@ export class Scoreboard {
         return this._orangeScore + this._greenScore + this._pinkScore + this._blueScore;
     }
 
-    get scoreMap(): Array<{ color: string, hex: number, points: number }> {
+    get scoreMap(): Array<ColoredScore> {
         return this._scoreMap;
     }
 
@@ -225,12 +226,12 @@ export class Scoreboard {
         });
 
         // Show scoreboard to all connected users.
-        broadcastEndSequence(clonedData);
+        broadcastToSceneFullscreenScoreboard(clonedData);
 
         // Return to starting sequence after 30 seconds.
         setTimeout(() => {
-            broadcastStartSequence();
+            broadcastToSceneStartGame();
             this.resetScores();
-        }, 30000);
+        }, 10000);
     }
 }

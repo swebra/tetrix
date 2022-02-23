@@ -5,7 +5,7 @@ import { SceneFullscreenScoreboard } from "./scene/SceneFullscreenScoreboard";
 import { SceneGameArena } from "./scene/SceneGameArena";
 import { SceneStartGame } from "./scene/SceneStartGame";
 import { GameState } from "./GameState";
-import { BOARD_SIZE } from "common/shared";
+import { BOARD_SIZE, TILE_SIZE } from "common/shared";
 
 export interface SharedState {
     gameState: GameState,
@@ -15,8 +15,8 @@ export interface SharedState {
 const config = {
   type: Phaser.AUTO,
   parent: "root",
-  width: BOARD_SIZE * SceneGameArena.blockSize,
-  height: BOARD_SIZE * SceneGameArena.blockSize,
+  width: BOARD_SIZE * TILE_SIZE,
+  height: BOARD_SIZE * TILE_SIZE,
   scene: [SceneStartGame, SceneGameArena, SceneFullscreenScoreboard]  // FIXME: Uncomment this line in the final version. Allows for users to join the player queue etc..
   // scene: [SceneGameArena, SceneFullscreenScoreboard]  // FIXME: Delete this line in the final version. This is left in for testing convenience.
 };
@@ -29,5 +29,5 @@ const gameState = new GameState(socket);
 const game = new Phaser.Game(config);
 
 // FIXME: Uncomment the following line in the final game. This is commented out for testing convenience.
- game.scene.start("SceneStartGame", { gameState, socket });
+game.scene.start("SceneStartGame", { gameState, socket });
 // game.scene.start("SceneGameArena", { gameState, socket })   // FIXME: Delete this line from the final game. This is left in for testing convenience.

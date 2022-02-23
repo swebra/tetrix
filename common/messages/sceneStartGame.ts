@@ -1,13 +1,9 @@
-import {TetrominoType} from "../TetrominoType"
-import {PlayerPosition, PlayerID, MoveEvent} from "../message"
-
-export interface DownEvents {
+export interface ToClientEvents {
   updateRemainingPlayers: (remainingPlayers: number) => void;
-  startGame: () => void;
+  toSceneGameArena: () => void;
 }
 
-export interface UpEvents {
+export interface ToServerEvents {
   requestRemainingPlayers: () => void;
   joinGame: () => void;
 }
-
