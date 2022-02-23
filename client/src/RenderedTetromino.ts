@@ -1,6 +1,6 @@
 import Phaser, { Scene } from "phaser";
 import { Tetromino } from "./Tetromino";
-import { SceneGameArena } from "./scene/SceneGameArena";
+import { TILE_SIZE } from "common/shared";
 
 export class RenderedTetromino {
     // used to wrap around Tetromino and link blocks with sprites, used for rendering and colliding
@@ -16,14 +16,14 @@ export class RenderedTetromino {
         if (this.cellSprites) this.cellSprites.forEach((rec) => rec.destroy());
         this.cellSprites = this.inner.cells.map(([row, col]) => {
             // transform relative block position on top of tetromino position
-            let x = (this.inner.position[1] + col + 0.5) * SceneGameArena.blockSize;
-            let y = (this.inner.position[0] + row + 0.5) * SceneGameArena.blockSize;
+            let x = (this.inner.position[1] + col + 0.5) * TILE_SIZE;
+            let y = (this.inner.position[0] + row + 0.5) * TILE_SIZE;
 
             let rec = scene.add.rectangle(
                 x,
                 y,
-                SceneGameArena.blockSize,
-                SceneGameArena.blockSize,
+                TILE_SIZE,
+                TILE_SIZE,
                 0xff0000
             );
             return rec;

@@ -1,15 +1,9 @@
-import {TetrominoType} from "../TetrominoType"
-import {PlayerPosition, PlayerID, MoveEvent} from "../message"
+import {ColoredScore} from "../shared";
 
-export type ColoredScore = { color: string, hex: number, points: number };
-
-export interface DownEvents {
+export interface ToClientEvents {
   updateScoreboard: (data: Array<ColoredScore>) => void;
-  endSequence: (data: Array<ColoredScore>) => void;
-  startSequence: () => void;
 }
 
-export interface UpEvents {
+export interface ToServerEvents {
   requestScoreboardData: () => void;
 }
-

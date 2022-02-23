@@ -1,25 +1,29 @@
-import {TetrominoType} from "./TetrominoType"
-import { UpEvents as GameUp, DownEvents as GameDown } from "./messages/game"
-import { UpEvents as SceneStartUp, DownEvents as SceneStartDown } from "./messages/sceneStartGame"
-import { UpEvents as SceneGameUp, DownEvents as SceneGameDown } from "./messages/sceneGameArena"
-import { UpEvents as ScoreboardUp, DownEvents as ScoreboardDown } from "./messages/scoreboard"
-import { UpEvents as SpectatorUp, DownEvents as SpectatorDown } from "./messages/spectator"
+import * as sceneWaitingRoomMsgs from "./messages/sceneWaitingRoom"
+import * as sceneGameArenaMsgs from "./messages/sceneGameArena"
+import * as gameMsgs from "./messages/game"
+import * as scoreboardMsgs from "./messages/scoreboard"
+import * as spectatorMsgs from "./messages/spectator"
+import * as sceneGameOverMsgs from "./messages/sceneGameOver"
+import { TetrominoType } from "./TetrominoType"
 
-export enum MoveEvent {
-  Up,
-  Down,
-  Left,
-  Right
-}
+export type ServerToClientEvents = sceneWaitingRoomMsgs.ToClientEvents
+                                    & sceneGameArenaMsgs.ToClientEvents
+                                    & gameMsgs.ToClientEvents
+                                    & scoreboardMsgs.ToClientEvents
+                                    & spectatorMsgs.ToClientEvents
+                                    & sceneGameOverMsgs.ToClientEvents;
 
-export type ServerToClientEvents = GameDown & SceneStartDown & SceneGameDown & ScoreboardDown & SpectatorDown;
-export type ClientToServerEvents = GameUp & SceneStartUp & SceneGameUp & ScoreboardUp & SpectatorUp;
+export type ClientToServerEvents = sceneWaitingRoomMsgs.ToServerEvents
+                                    & sceneGameArenaMsgs.ToServerEvents
+                                    & gameMsgs.ToClientEvents
+                                    & scoreboardMsgs.ToServerEvents
+                                    & spectatorMsgs.ToServerEvents
+                                    & sceneGameOverMsgs.ToServerEvents;
 
 export type PlayerID = 0 | 1 | 2 | 3;
 
-export interface PlayerPosition {
-    tetroPosition: [number, number];
+export type TetrominoState = {
+    position: [number, number];
     rotation: 0 | 1 | 2 | 3;
-    tetroType: TetrominoType
+    type: TetrominoType
 }
-

@@ -4,9 +4,9 @@ import { SceneGameArena } from "./SceneGameArena";
 import { TextConfig } from "../TextConfig";
 
 import { Socket } from "socket.io-client";
-import { UpEvents, DownEvents } from "common/messages/spectator"
+import { ToServerEvents, ToClientEvents } from "common/messages/spectator"
 
-type SocketSpectator = Socket<DownEvents, UpEvents>;
+type SocketSpectator = Socket<ToClientEvents, ToServerEvents>;
 
 export class SpectatorUI {
     private cookieTracker: CookieTracker;

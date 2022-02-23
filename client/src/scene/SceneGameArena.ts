@@ -6,17 +6,17 @@ import { cloneDeep } from "lodash";
 import { TetrominoType } from "common/TetrominoType";
 import { Tetromino } from "../Tetromino";
 import { rotateCoords } from "../utils";
-import { MoveEvent } from "common/message";
 import { ScoreboardUI } from "../scene/ScoreboardUI";
 import { SpectatorUI } from "../scene/SpectatorUI";
-import {SharedState} from "..";
+import { SharedState } from "..";
 import { WebFontFile } from "../plugins/WebFontFile";
 
 import { Socket } from "socket.io-client";
 
-import { DownEvents, UpEvents } from "common/messages/sceneGameArena";
+import { ToClientEvents, ToServerEvents } from "common/messages/sceneGameArena";
+import { TILE_SIZE } from "common/shared";
 
-type SocketGame = Socket<DownEvents, UpEvents>;
+type SocketGame = Socket<ToClientEvents, ToServerEvents>;
 
 export class SceneGameArena extends Phaser.Scene {
     FRAMERATE: number = 12;
@@ -26,7 +26,6 @@ export class SceneGameArena extends Phaser.Scene {
     gameState!: GameState;
     socket!: SocketGame;
 
-    static blockSize: number = 20; // 20px width for a single square block
     currentTetro!: RenderedTetromino;
     otherTetros!: Array<RenderedTetromino>;
     renderedBoard!: Array<Array<GameObjects.Rectangle | null>>;
@@ -43,7 +42,7 @@ export class SceneGameArena extends Phaser.Scene {
     }
 
     preload() {
-        this.load.addFile(new WebFontFile(this.load, 'VT323'))
+        this.load.addFile(new WebFontFile(this.load, 'VT323'));
     }
 
     init(data: SharedState) {
@@ -54,7 +53,7 @@ export class SceneGameArena extends Phaser.Scene {
 
     create() {
         this.scoreboard = new ScoreboardUI(this, this.sharedState.socket, true);
-        this.scoreboard.requestScoreboardData()
+        this.scoreboard.requestScoreboardData();
 
         this.spectator = new SpectatorUI(this, this.sharedState.socket);
 
@@ -87,9 +86,9 @@ export class SceneGameArena extends Phaser.Scene {
             loop: true,
         });
 
-        this.socket.on("endSequence", (playerPoints) => {
-            this.scene.start("SceneFullscreenScoreboard", { ...this.sharedState, playerPoints: playerPoints, blockSize: SceneGameArena.blockSize, gameState: this.gameState });
-        })
+        this.socket.on("toSceneGameOver", (playerPoints) => {
+            this.scene.start("SceneGameOver", { ...this.sharedState, playerPoints: playerPoints, gameState: this.gameState });
+        });
 
     }
 
@@ -136,7 +135,6 @@ export class SceneGameArena extends Phaser.Scene {
             scene.gameState.socket.emit(
                 "playerMove",
                 scene.gameState.playerId,
-                MoveEvent.Left,
                 scene.gameState.currentTetromino.reportPosition()
             );
         } else if (scene.keys.d.isDown || scene.keys.right.isDown) {
@@ -149,7 +147,6 @@ export class SceneGameArena extends Phaser.Scene {
             scene.gameState.socket.emit(
                 "playerMove",
                 scene.gameState.playerId,
-                MoveEvent.Right,
                 scene.gameState.currentTetromino.reportPosition()
             );
         } else if (scene.keys.q.isDown || scene.keys.z.isDown) {
@@ -170,13 +167,13 @@ export class SceneGameArena extends Phaser.Scene {
             for (let col = 0; col < BOARD_SIZE; col++) {
                 scene.renderedBoard[row][col]?.destroy();
                 if (board[row][col]) {
-                    let x = (col + 0.5) * SceneGameArena.blockSize;
-                    let y = (row + 0.5) * SceneGameArena.blockSize;
+                    let x = (col + 0.5) * TILE_SIZE;
+                    let y = (row + 0.5) * TILE_SIZE;
                     scene.renderedBoard[row][col] = scene.add.rectangle(
                         x,
                         y,
-                        SceneGameArena.blockSize,
-                        SceneGameArena.blockSize,
+                        TILE_SIZE,
+                        TILE_SIZE,
                         0xffee00
                     );
                 }
@@ -207,7 +204,6 @@ export class SceneGameArena extends Phaser.Scene {
             scene.gameState.socket.emit(
                 "playerMove",
                 scene.gameState.playerId,
-                MoveEvent.Down,
                 scene.gameState.currentTetromino.reportPosition()
             );
         } else {

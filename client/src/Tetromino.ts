@@ -1,6 +1,6 @@
 import { TetrominoType } from "common/TetrominoType";
 import { BOARD_SIZE } from "common/shared";
-import { PlayerPosition } from "common/message";
+import { TetrominoState } from "common/message";
 import { rotateCoords } from "./utils"
 import { cloneDeep } from "lodash";
 
@@ -32,11 +32,11 @@ export class Tetromino {
         this.rotation = 0; // default (no rotation)
     }
 
-    reportPosition(): PlayerPosition {
+    reportPosition(): TetrominoState {
         return {
-            tetroPosition: this.position,
+            position: this.position,
             rotation: this.rotation,
-            tetroType: this.type,
+            type: this.type,
         };
     }
 

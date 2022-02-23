@@ -1,13 +1,10 @@
-import { io, Socket } from "socket.io-client";
+import { Socket } from "socket.io-client";
 import { TetrominoType } from "common/TetrominoType";
 import { Tetromino } from "./Tetromino";
 import { BOARD_SIZE } from "common/shared";
-import {
-    UpEvents as GameUpEvents,
-    DownEvents as GameDownEvents,
-} from "common/messages/game";
+import { ToServerEvents, ToClientEvents } from "common/messages/game";
 
-type GameSocket = Socket<GameDownEvents, GameUpEvents>;
+type GameSocket = Socket<ToClientEvents, ToServerEvents>;
 
 export class GameState {
     // used for synchronization. not related to rendering (no sprites, scene, phaser3 stuff)
@@ -57,14 +54,11 @@ export class GameState {
         });
 
         // other player is sending in some action, should re-render using onPlayerAction
-        this.socket.on("playerMove", (playerId, event, position) => {
-            console.log("received remote action: ", event, ", from ", playerId);
+        this.socket.on("playerMove", (playerId, position) => {
             let otherPlayerIndex = ((playerId + 4 - this.playerId) % 4) - 1; // FIXME hack.
-            console.log("this otherplayer is: ", otherPlayerIndex);
-
-            this.otherPieces[otherPlayerIndex].position = position.tetroPosition;
+            this.otherPieces[otherPlayerIndex].position = position.position;
             this.otherPieces[otherPlayerIndex].rotation = position.rotation;
-            this.otherPieces[otherPlayerIndex].type = position.tetroType;
+            this.otherPieces[otherPlayerIndex].type = position.type;
         });
     }
 }

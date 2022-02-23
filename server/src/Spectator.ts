@@ -1,10 +1,10 @@
 import { Level } from "./Level";
 import { broadcastHideVotingSequence, broadcastShowVotingSequence } from "../index";
 
-import { UpEvents, DownEvents } from "common/messages/spectator";
+import { ToServerEvents, ToClientEvents } from "common/messages/spectator";
 import {Socket} from "socket.io";
 
-type SocketSpectator = Socket<UpEvents, DownEvents>;
+type SocketSpectator = Socket<ToServerEvents, ToClientEvents>;
 
 export class Spectator {
     private _isFirstRoundVoting: boolean;

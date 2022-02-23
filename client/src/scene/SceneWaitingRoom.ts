@@ -1,36 +1,36 @@
 import Phaser from "phaser";
 import { GameState } from "../GameState";
 import { BOARD_SIZE } from "common/shared";
-import {SharedState} from "..";
-import { io, Socket } from "socket.io-client";
+import { SharedState } from "..";
+import { Socket } from "socket.io-client";
 
-import { DownEvents, UpEvents } from "common/messages/sceneStartGame";
+import { ToClientEvents, ToServerEvents } from "common/messages/sceneWaitingRoom";
 import { WebFontFile } from "../plugins/WebFontFile";
 
-type SocketStartGame = Socket<DownEvents, UpEvents>;
+type SocketWaitingRoom = Socket<ToClientEvents, ToServerEvents>;
 
-export class SceneStartGame extends Phaser.Scene {
+export class SceneWaitingRoom extends Phaser.Scene {
     private playersNeededText!: Phaser.GameObjects.Text;
     private button!: Phaser.GameObjects.Text;
     private gameState!: GameState;
-    private socket!: SocketStartGame;
+    private socket!: SocketWaitingRoom;
     private sharedData!: SharedState;
 
     constructor () {
         super({
-            key: "SceneStartGame"
+            key: "SceneWaitingRoom"
         });
     }
 
     init(data: SharedState) {
-        this.sharedData = data
+        this.sharedData = data;
         this.gameState = data.gameState;
         this.socket = data.socket;
         this.initListeners()
     }
 
     preload() {
-        this.load.addFile(new WebFontFile(this.load, 'VT323')) 
+        this.load.addFile(new WebFontFile(this.load, 'VT323'))
     }
 
     create() {
@@ -54,7 +54,7 @@ export class SceneStartGame extends Phaser.Scene {
     }
 
     initListeners () {
-        this.socket.on("updateRemainingPlayers", (remainingPlayers) => {
+        this.socket.on("updateRemainingPlayers", (remainingPlayers: number) => {
             console.log("update remaining: ", remainingPlayers)
             this.playersNeededText.setText(`Waiting on ${remainingPlayers} more player(s)`);
 
@@ -65,7 +65,7 @@ export class SceneStartGame extends Phaser.Scene {
         })
 
         // If the queue is full, we should receive the signal from the server to start the game.
-        this.socket.on("startGame", () => {
+        this.socket.on("toSceneGameArena", () => {
             this.scene.start("SceneGameArena", this.sharedData);
         })
     }

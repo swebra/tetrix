@@ -1,15 +1,14 @@
-import {PlayerPosition, PlayerID, MoveEvent} from "../message"
+import {TetrominoState, PlayerID} from "../message"
 
-export interface DownEvents {
+export interface ToClientEvents {
   initPlayer: (playerId: 0 | 1 | 2 | 3) => void;
-  playerMove: (playerId: PlayerID, moveEvent: MoveEvent, position: PlayerPosition) => void; // position: the position after this event, for verification purposes?
-  playerPlace: (playerId: PlayerID, position: PlayerPosition) => void;
+  playerMove: (playerId: PlayerID, tetrominoState: TetrominoState) => void;
+  playerPlace: (playerId: PlayerID, tetrominoState: TetrominoState) => void;
 }
 
 
-export interface UpEvents {
-  hello: () => void;
-  playerMove: (playerId: PlayerID, moveEvent: MoveEvent, position: PlayerPosition) => void; // position: the position after this event, for verification purposes?
-  playerPlace: (playerId: PlayerID, position: PlayerPosition) => void;
+export interface ToServerEvents {
+  playerMove: (playerId: PlayerID, tetrominoState: TetrominoState) => void;
+  playerPlace: (playerId: PlayerID, tetrominoState: TetrominoState) => void;
 }
 
