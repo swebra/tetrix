@@ -1,13 +1,24 @@
+import * as sceneWaitingRoomMsgs from "./messages/sceneWaitingRoom"
+import * as sceneGameArenaMsgs from "./messages/sceneGameArena"
+import * as gameMsgs from "./messages/game"
+import * as scoreboardMsgs from "./messages/scoreboard"
+import * as spectatorMsgs from "./messages/spectator"
+import * as sceneFullscreenScoreboardMsgs from "./messages/sceneFullscreenScoreboard"
 import { TetrominoType } from "./TetrominoType"
-import { ToServerEvents as GameToServer, ToClientEvents as GameToClient } from "./messages/game"
-import { ToServerEvents as SceneWaitingRoomToServer, ToClientEvents as SceneWaitingRoomToClient } from "./messages/sceneWaitingRoom"
-import { ToServerEvents as SceneGameToServer, ToClientEvents as SceneGameToClient } from "./messages/sceneGameArena"
-import { ToServerEvents as ScoreboardToServer, ToClientEvents as ScoreboardToClient } from "./messages/scoreboard"
-import { ToServerEvents as SpectatorToServer, ToClientEvents as SpectatorToClient } from "./messages/spectator"
-import { ToServerEvents as SceneFullscreenScoreboardToServer, ToClientEvents as SceneFullscreenScoreboardToClient } from "./messages/sceneFullscreenScoreboard"
 
-export type ServerToClientEvents = GameToClient & SceneWaitingRoomToClient & SceneGameToClient & ScoreboardToClient & SpectatorToClient & SceneFullscreenScoreboardToClient;
-export type ClientToServerEvents = GameToServer & SceneWaitingRoomToServer & SceneGameToServer & ScoreboardToServer & SpectatorToServer & SceneFullscreenScoreboardToServer;
+export type ServerToClientEvents = sceneWaitingRoomMsgs.ToClientEvents
+                                    & sceneGameArenaMsgs.ToClientEvents
+                                    & gameMsgs.ToClientEvents
+                                    & scoreboardMsgs.ToClientEvents
+                                    & spectatorMsgs.ToClientEvents
+                                    & sceneFullscreenScoreboardMsgs.ToClientEvents;
+
+export type ClientToServerEvents = sceneWaitingRoomMsgs.ToServerEvents
+                                    & sceneGameArenaMsgs.ToServerEvents
+                                    & gameMsgs.ToClientEvents
+                                    & scoreboardMsgs.ToServerEvents
+                                    & spectatorMsgs.ToServerEvents
+                                    & sceneFullscreenScoreboardMsgs.ToServerEvents;
 
 export type PlayerID = 0 | 1 | 2 | 3;
 
