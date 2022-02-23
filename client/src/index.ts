@@ -17,17 +17,21 @@ const config = {
   parent: "root",
   width: BOARD_SIZE * TILE_SIZE,
   height: BOARD_SIZE * TILE_SIZE,
-  scene: [SceneStartGame, SceneGameArena, SceneFullscreenScoreboard]  // FIXME: Uncomment this line in the final version. Allows for users to join the player queue etc..
-  // scene: [SceneGameArena, SceneFullscreenScoreboard]  // FIXME: Delete this line in the final version. This is left in for testing convenience.
+  scene:  import.meta.env.VITE_DISABLE_GAMESTART
+    ? [SceneGameArena, SceneFullscreenScoreboard]
+    : [SceneStartGame, SceneGameArena, SceneFullscreenScoreboard],
 };
 
 const socket = io(
             (import.meta.env.PROD && window.location.origin) ||
+            import.meta.env.VITE_BACKEND_URL ||
             "http://localhost:3001/"
         );
 const gameState = new GameState(socket);
 const game = new Phaser.Game(config);
 
-// FIXME: Uncomment the following line in the final game. This is commented out for testing convenience.
-game.scene.start("SceneStartGame", { gameState, socket });
-// game.scene.start("SceneGameArena", { gameState, socket })   // FIXME: Delete this line from the final game. This is left in for testing convenience.
+if (import.meta.env.VITE_DISABLE_GAMESTART) {
+  game.scene.start("SceneGameArena", { gameState, socket });
+} else {
+  game.scene.start("SceneStartGame", { gameState, socket });
+}
