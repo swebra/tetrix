@@ -1,5 +1,5 @@
 export interface ToClientEvents {
-  toSceneStartGame: () => void;
+  toSceneWaitingRoom: () => void;
 }
 
 export interface ToServerEvents {

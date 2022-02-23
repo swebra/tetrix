@@ -32,8 +32,8 @@ export class SceneFullscreenScoreboard extends Phaser.Scene {
         this.scoreboard = new ScoreboardUI(this, this.socket);
         this.scoreboard.createFullscreenScoreboard(this.playerData);
 
-        this.socket.on("toSceneStartGame", () => {
-            this.scene.start("SceneStartGame", { gameState: this.gameState, socket: this.socket });
+        this.socket.on("toSceneWaitingRoom", () => {
+            this.scene.start("SceneWaitingRoom", {gameState: this.gameState, socket: this.socket});
             // FIXME: Possibly remove all our listeners here?
         });
     }

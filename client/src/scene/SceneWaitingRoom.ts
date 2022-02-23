@@ -4,21 +4,21 @@ import { BOARD_SIZE } from "common/shared";
 import { SharedState } from "..";
 import { Socket } from "socket.io-client";
 
-import { ToClientEvents, ToServerEvents } from "common/messages/sceneStartGame";
+import { ToClientEvents, ToServerEvents } from "common/messages/sceneWaitingRoom";
 import { WebFontFile } from "../plugins/WebFontFile";
 
-type SocketStartGame = Socket<ToClientEvents, ToServerEvents>;
+type SocketWaitingRoom = Socket<ToClientEvents, ToServerEvents>;
 
-export class SceneStartGame extends Phaser.Scene {
+export class SceneWaitingRoom extends Phaser.Scene {
     private playersNeededText!: Phaser.GameObjects.Text;
     private button!: Phaser.GameObjects.Text;
     private gameState!: GameState;
-    private socket!: SocketStartGame;
+    private socket!: SocketWaitingRoom;
     private sharedData!: SharedState;
 
     constructor () {
         super({
-            key: "SceneStartGame"
+            key: "SceneWaitingRoom"
         });
     }
 
@@ -30,7 +30,7 @@ export class SceneStartGame extends Phaser.Scene {
     }
 
     preload() {
-        this.load.addFile(new WebFontFile(this.load, 'VT323')) 
+        this.load.addFile(new WebFontFile(this.load, 'VT323'))
     }
 
     create() {
@@ -54,7 +54,7 @@ export class SceneStartGame extends Phaser.Scene {
     }
 
     initListeners () {
-        this.socket.on("updateRemainingPlayers", (remainingPlayers) => {
+        this.socket.on("updateRemainingPlayers", (remainingPlayers: number) => {
             console.log("update remaining: ", remainingPlayers)
             this.playersNeededText.setText(`Waiting on ${remainingPlayers} more player(s)`);
 

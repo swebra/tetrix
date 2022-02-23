@@ -74,9 +74,9 @@ export function broadcastToSceneFullscreenScoreboard(msg: Array<ColoredScore>) {
 }
 
 // Emit to all sockets.
-export function broadcastToSceneStartGame() {
+export function broadcastToSceneWaitingRoom() {
   queue.resetCounter();
-  io.sockets.emit("toSceneStartGame");
+  io.sockets.emit("toSceneWaitingRoom");
 }
 
 // Emit to all sockets.

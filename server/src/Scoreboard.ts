@@ -1,6 +1,6 @@
 import { Player } from "./PlayerAttributes";
 import { Level } from "./Level";
-import { broadcastUpdateScoreboard, broadcastToSceneStartGame, broadcastToSceneFullscreenScoreboard } from "../index";
+import { broadcastUpdateScoreboard, broadcastToSceneWaitingRoom, broadcastToSceneFullscreenScoreboard } from "../index";
 
 import { ToServerEvents, ToClientEvents } from "common/messages/scoreboard";
 import { ColoredScore } from "common/shared";
@@ -230,7 +230,7 @@ export class Scoreboard {
 
         // Return to starting sequence after 30 seconds.
         setTimeout(() => {
-            broadcastToSceneStartGame();
+            broadcastToSceneWaitingRoom();
             this.resetScores();
         }, 10000);
     }
