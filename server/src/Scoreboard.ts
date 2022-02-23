@@ -2,6 +2,11 @@ import { Player } from "./PlayerAttributes";
 import { Level } from "./Level";
 import { broadcastUpdateScoreboard, broadcastStartSequence, broadcastEndSequence } from "../index";
 
+import { UpEvents, DownEvents } from "common/messages/scoreboard";
+import {Socket} from "socket.io";
+
+type SocketScoreboard = Socket<UpEvents, DownEvents>;
+
 export class Scoreboard {
     private _orangeScore: number;
     private _greenScore: number;
@@ -41,6 +46,19 @@ export class Scoreboard {
             hex: 0x00BFFF,
             points: this.blueScore
         });
+    }
+
+    initSocketListeners(socket: SocketScoreboard, level: Level) {
+      socket.on("requestScoreboardData", () => {
+        let clonedData = Object.assign([], this.scoreMap);
+        clonedData.push({
+          color: "Level",
+          hex: 0xFFFFFF,
+          points: level.currentLevel
+        });
+
+        socket.emit("updateScoreboard", clonedData)
+      });
     }
 
     get orangeScore(): number {

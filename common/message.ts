@@ -1,46 +1,25 @@
 import {TetrominoType} from "./TetrominoType"
+import { UpEvents as GameUp, DownEvents as GameDown } from "./messages/game"
+import { UpEvents as SceneStartUp, DownEvents as SceneStartDown } from "./messages/sceneStartGame"
+import { UpEvents as SceneGameUp, DownEvents as SceneGameDown } from "./messages/sceneGameArena"
+import { UpEvents as ScoreboardUp, DownEvents as ScoreboardDown } from "./messages/scoreboard"
+import { UpEvents as SpectatorUp, DownEvents as SpectatorDown } from "./messages/spectator"
 
-interface ServerToClientEvents {
-  initPlayer: (playerId: 0 | 1 | 2 | 3) => void;
-  updateScoreboard: (data: Array<{ color: string, hex: number, points: number }>) => void;
-  endSequence: (data: Array<{ color: string, hex: number, points: number }>) => void;
-  playerMove: (playerId: PlayerID, moveEvent: MoveEvent, position: PlayerPosition) => void; // position: the position after this event, for verification purposes?
-  playerFall: (playerId: PlayerID, position: PlayerPosition) => void;
-  playerPlace: (playerId: PlayerID, position: PlayerPosition) => void;
-  startSequence: () => void;
-  showVotingSequence: (votingSequence: string) => void;
-  hideVotingSequence: () => void;
-  sendVotingCountdown: (secondsLeft: number) => void;
-  sendRemainingPlayers: (remainingPlayers: number) => void;
-  startGame: () => void;
-}
-
-type PlayerID = 0 | 1 | 2 | 3;
-
-enum MoveEvent {
+export enum MoveEvent {
   Up,
   Down,
   Left,
   Right
 }
 
-interface PlayerPosition {
+export type ServerToClientEvents = GameDown & SceneStartDown & SceneGameDown & ScoreboardDown & SpectatorDown;
+export type ClientToServerEvents = GameUp & SceneStartUp & SceneGameUp & ScoreboardUp & SpectatorUp;
+
+export type PlayerID = 0 | 1 | 2 | 3;
+
+export interface PlayerPosition {
     tetroPosition: [number, number];
     rotation: 0 | 1 | 2 | 3;
     tetroType: TetrominoType
 }
 
-interface ClientToServerEvents {
-  hello: () => void;
-  playerMove: (playerId: PlayerID, moveEvent: MoveEvent, position: PlayerPosition) => void; // position: the position after this event, for verification purposes?
-  playerFall: (playerId: PlayerID, position: PlayerPosition) => void;
-  playerPlace: (playerId: PlayerID, position: PlayerPosition) => void;
-  requestScoreboardData: () => void;
-  requestVotingSequence: () => void;
-  vote: (playerVote: "option1" | "option2" | "option3" | "noAction") => void;
-  requestVotingCountdown: () => void;
-  requestRemainingPlayers: () => void;
-  joinGame: () => void;
-}
-
-export { ServerToClientEvents, ClientToServerEvents, MoveEvent, PlayerPosition };

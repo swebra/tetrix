@@ -1,17 +1,26 @@
 import { SceneGameArena } from "./SceneGameArena";
-import { BOARD_SIZE } from "../../common/shared";
+import { BOARD_SIZE } from "common/shared";
 import { SceneFullscreenScoreboard } from "./SceneFullscreenScoreboard";
-import { TextConfig } from "./TextConfig";
+import { TextConfig } from "../TextConfig";
+
+import { Socket } from "socket.io-client";
+import { UpEvents, DownEvents, ColoredScore } from "common/messages/scoreboard"
+
+type SocketScoreboard = Socket<DownEvents, UpEvents>;
 
 export class ScoreboardUI {
     private scene: SceneGameArena | SceneFullscreenScoreboard;
     private listOfScores: Array<Phaser.GameObjects.Text>;
     private headerTextConfig: TextConfig;
     private regularTextConfig: TextConfig;
+    private socket: SocketScoreboard;
 
-    constructor(SceneGameArena: SceneGameArena | SceneFullscreenScoreboard, shouldLoadScoreboard: boolean = false) {
+    constructor(SceneGameArena: SceneGameArena | SceneFullscreenScoreboard, socket: SocketScoreboard, shouldLoadScoreboard: boolean = false) {
         this.scene = SceneGameArena;
         this.listOfScores = [];
+        this.socket = socket;
+        this.initListeners();
+        console.log("init scoreboard: ", this.socket)
 
         // Configs used for the different text's.
         this.headerTextConfig = {
@@ -26,6 +35,20 @@ export class ScoreboardUI {
         if (shouldLoadScoreboard) {
             this.loadScoreboard();
         }
+    }
+
+    requestScoreboardData() {
+        this.socket.emit("requestScoreboardData");
+    }
+
+    initListeners() {
+        if (this.socket == null) {
+            return;
+        }
+
+        this.socket.on("updateScoreboard", (scores) => {
+            this.updateScoreboard(scores)
+        })
     }
 
     /**
@@ -64,7 +87,7 @@ export class ScoreboardUI {
      * Update the mini scoreboard found on the main game arena.
      * @param playerPts The array of objects containing player data (name + points + hex-color).
      */
-    public updateScoreboard(playerPts: Array<{ color: string, hex: number, points: number }>) {
+    public updateScoreboard(playerPts: Array<ColoredScore>) {
         for (let i = 0; i < playerPts.length; i++) {
             let text = `${playerPts[i].color}`.padEnd(10) + `${playerPts[i].points}`;
             this.listOfScores[i]

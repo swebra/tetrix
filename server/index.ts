@@ -55,7 +55,7 @@ const io = new Server<
   },
 });
 
-console.log("Server started");
+console.log(`Server started at port ${port}`);
 let playerCounter: 0 | 1 | 2 | 3 = 0;  // FIXME: Remove this on final version.
 let scoreboard = new Scoreboard();
 let level = new Level();
@@ -106,45 +106,14 @@ io.on("connection", (socket) => {
   //   scoreboard.displayFullScreenUI();
   // }, 2000);
 
-  // works when broadcast to all
-  // io.emit("noArg");
-  // works when broadcasting to a room
-  // io.to("room1").emit("basicEmit", 1, "2", Buffer.from([3]));
-
   socket.on("playerMove", (...args) => {
     socket.broadcast.emit("playerMove", ...args);
   });
-
-  socket.on("requestScoreboardData", () => {
-    let clonedData = Object.assign([], scoreboard.scoreMap);
-    clonedData.push({
-      color: "Level",
-      hex: 0xFFFFFF,
-      points: level.currentLevel
-    });
-
-    socket.emit("updateScoreboard", clonedData)
-  });
-
-  socket.on("vote", (votingResult: string) => {
-    spectator.getResult(votingResult);
-  });
-
-  socket.on("requestVotingSequence", () => {
-    let currentSequence = spectator.isVoteRunning();
-    if (currentSequence) {
-      socket.emit("showVotingSequence", currentSequence);
-    }
-  });
-
-  socket.on("requestVotingCountdown", () => {
-    if (spectator.isVoteRunning()) {
-      socket.emit("sendVotingCountdown", spectator.countdownValue);
-    }
-  });
+  scoreboard.initSocketListeners(socket, level)
+  spectator.initSocketListeners(socket)
 
   socket.on("requestRemainingPlayers", () => {
-    socket.emit("sendRemainingPlayers", queue.getRemainingPlayers());
+    socket.emit("updateRemainingPlayers", queue.getRemainingPlayers());
   });
 
   socket.on("joinGame", () => {
@@ -153,7 +122,7 @@ io.on("connection", (socket) => {
     // If there was room in the queue, notify the client of their player index value.
     if (playerIndex < 4) {
       socket.emit("initPlayer", playerIndex as 0 | 1 | 2 | 3);
-      io.sockets.emit("sendRemainingPlayers", queue.getRemainingPlayers());
+      io.sockets.emit("updateRemainingPlayers", queue.getRemainingPlayers());
 
       // 4 players have joined. Start the game.
       if (playerIndex == 3) {
@@ -162,8 +131,5 @@ io.on("connection", (socket) => {
     }
   });
 
-  // socket.on("playerAction", ({event, playerId}) => {
-  //   console.log(`received event: `, event, ", from id: ", playerId)
-  //   socket.broadcast.emit("playerAction", {event, playerId})
-  // })
+  // FIXME need a state machine to tell which scene the game is at, conditionally tackle disconnections?
 });

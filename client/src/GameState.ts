@@ -3,13 +3,15 @@ import { TetrominoType } from "common/TetrominoType";
 import { Tetromino } from "./Tetromino";
 import { BOARD_SIZE } from "common/shared";
 import {
-    ServerToClientEvents,
-    ClientToServerEvents,
-} from "../../common/message";
+    UpEvents as GameUpEvents,
+    DownEvents as GameDownEvents,
+} from "common/messages/game";
+
+type GameSocket = Socket<GameDownEvents, GameUpEvents>;
 
 export class GameState {
     // used for synchronization. not related to rendering (no sprites, scene, phaser3 stuff)
-    socket!: Socket<ServerToClientEvents, ClientToServerEvents>;
+    socket: GameSocket;
 
     // frozen board is the board without moving players, NOTE: frozenBoard is the truth of placed blocks
     frozenBoard: Array<Array<TetrominoType>>;
@@ -34,7 +36,8 @@ export class GameState {
         return board;
     }
 
-    constructor() {
+    constructor(socket: GameSocket) {
+        this.socket = socket;
         this.board = this.blankBoard();
         this.frozenBoard = this.blankBoard();
 
@@ -47,12 +50,6 @@ export class GameState {
             new Tetromino(TetrominoType.T),
             new Tetromino(TetrominoType.T),
         ];
-
-        this.socket = io(
-            (import.meta.env.PROD && window.location.origin) ||
-            "http://localhost:3001/"
-        );
-        console.log(this.socket);
 
         this.socket.on("initPlayer", (playerId) => {
             this.playerId = playerId;
@@ -68,75 +65,6 @@ export class GameState {
             this.otherPieces[otherPlayerIndex].position = position.tetroPosition;
             this.otherPieces[otherPlayerIndex].rotation = position.rotation;
             this.otherPieces[otherPlayerIndex].type = position.tetroType;
-            this.onRemoteUpdate();
         });
-
-        this.socket.on("updateScoreboard", (playerScores) => {
-            this.updateScoreboard(playerScores);
-        });
-
-        this.socket.on("endSequence", (playerScores) => {
-            this.fullScoreboard(playerScores);
-        });
-
-        this.socket.on("startSequence", () => {
-            this.startSequence();
-        });
-
-        this.socket.on("showVotingSequence", (valFromServer) => {
-            this.showVotingSequence(valFromServer);
-        });
-
-        this.socket.on("hideVotingSequence", () => {
-            this.hideVotingSequence();
-        });
-
-        this.socket.on("sendVotingCountdown", (secondsLeft) => {
-            this.sendVotingCountdown(secondsLeft);
-        });
-
-        this.socket.on("sendRemainingPlayers", (remainingPlayers) => {
-            this.updateRemainingPlayers(remainingPlayers);
-        });
-
-        this.socket.on("startGame", () => {
-            this.startGame();
-        })
-    }
-
-    // Events received from server.
-    onRemoteUpdate: () => void = () => { };
-    updateScoreboard!: (data: Array<{ color: string, hex: number, points: number }>) => void;
-    fullScoreboard!: (data: Array<{ color: string, hex: number, points: number }>) => void;
-    startSequence!: () => void;
-    showVotingSequence!: (data: string) => void;
-    hideVotingSequence!: () => void;
-    sendVotingCountdown!: (secondsLeft: number) => void;
-    updateRemainingPlayers!: (remainingPlayers: number) => void;
-    startGame!: () => void;
-
-    // Events sent to server.
-    public requestScoreboardData() {
-        this.socket.emit("requestScoreboardData");
-    }
-
-    public requestVotingSequence() {
-        this.socket.emit("requestVotingSequence");
-    }
-
-    public sendVotingSubmission(vote: "option1" | "option2" | "option3" | "noAction") {
-        this.socket.emit("vote", vote);
-    }
-
-    public requestVotingCountdown() {
-        this.socket.emit("requestVotingCountdown");
-    }
-
-    public requestRemainingPlayers() {
-        this.socket.emit("requestRemainingPlayers");
-    }
-
-    public joinGame() {
-        this.socket.emit("joinGame");
     }
 }
