@@ -14,6 +14,13 @@ import { Socket } from "socket.io-client";
 
 import { ToClientEvents, ToServerEvents } from "common/messages/sceneGameArena";
 import { TILE_SIZE } from "common/shared";
+import { ControlsUI } from "./ControlsUI";
+
+import KEY_A from "../assets/controls/KEY_A.svg";
+import KEY_D from "../assets/controls/KEY_D.svg";
+import KEY_S from "../assets/controls/KEY_S.svg";
+import KEY_Q from "../assets/controls/KEY_Q.svg";
+import KEY_E from "../assets/controls/KEY_E.svg";
 
 type SocketGame = Socket<ToClientEvents, ToServerEvents>;
 
@@ -42,6 +49,12 @@ export class SceneGameArena extends Phaser.Scene {
 
     preload() {
         this.load.addFile(new WebFontFile(this.load, 'VT323'));
+
+        this.load.svg("keyA", KEY_A);
+        this.load.svg("keyD", KEY_D);
+        this.load.svg("keyS", KEY_S);
+        this.load.svg("keyE", KEY_E);
+        this.load.svg("keyQ", KEY_Q);
     }
 
     init(data: SharedState) {
@@ -52,9 +65,8 @@ export class SceneGameArena extends Phaser.Scene {
 
     create() {
         this.scoreboard = new ScoreboardUI(this, this.sharedState.socket, true);
-        this.scoreboard.requestScoreboardData();
-
         this.spectator = new SpectatorUI(this, this.sharedState.socket);
+        new ControlsUI(this, this.gameState.playerId, ["keyA", "keyD", "keyS", "keyQ", "keyE"]);
 
         // initialize an empty rendered board
         this.renderedBoard = [];
