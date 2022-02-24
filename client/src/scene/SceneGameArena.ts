@@ -5,7 +5,6 @@ import { BOARD_SIZE } from "common/shared";
 import { cloneDeep } from "lodash";
 import { TetrominoType } from "common/TetrominoType";
 import { Tetromino } from "../Tetromino";
-import { rotateCoords } from "../utils";
 import { ScoreboardUI } from "../scene/ScoreboardUI";
 import { SpectatorUI } from "../scene/SpectatorUI";
 import { SharedState } from "..";
@@ -112,12 +111,10 @@ export class SceneGameArena extends Phaser.Scene {
     private updateBoardFromFrozen(scene: SceneGameArena) {
         scene.gameState.board = cloneDeep(scene.gameState.frozenBoard);
         for (let i = 0; i < 3; i++) {
-            //putTetroOnBoard(scene.otherTetros[i].inner, scene.gameState.board)
             let tetro = scene.otherTetros[i].inner;
             for (let cell of tetro.cells) {
-                const rowAbsolute = cell[0] + tetro.position[0];
-                const colAbsolute = cell[1] + tetro.position[1];
-                let [row, col] = rotateCoords([rowAbsolute, colAbsolute], BOARD_SIZE, i);
+                const row = cell[0] + tetro.position[0];
+                const col = cell[1] + tetro.position[1];
                 scene.gameState.board[row][col] = tetro.type;
             }
         }

@@ -34,19 +34,40 @@ export class Tetromino {
 
     reportPosition(): TetrominoState {
         return {
+            type: this.type,
             position: this.position,
             rotation: this.rotation,
-            type: this.type,
         };
+    }
+
+    setType(type: TetrominoType) {
+        if (this.type == type) { return; }
+        this.type = type;
+        this.cells = cloneDeep(Tetromino.shapes[type].tiles);
+    }
+
+    setRotatedPosition(position: [number, number], ccRotations: number) {
+        ccRotations %= 4;
+        let [row, col] = rotateCoords(position, BOARD_SIZE, ccRotations);
+        // Compensate for position needing to be at top left
+        let adjustment = Tetromino.shapes[this.type].width - 1;
+        if (ccRotations == 1 || ccRotations == 2) {
+            col -= adjustment;
+        }
+        if (ccRotations == 3 || ccRotations == 2) {
+            row -= adjustment;
+        }
+        this.position = [row, col];
     }
 
     setRotation(rotation: number): boolean {
         if (!this.canRotate()) { return false; }
+        if (this.rotation == rotation % 4) { return true; }
         for (let i = 0; i < this.cells.length; i++) {
             this.cells[i] = rotateCoords(
                 this.cells[i],
                 Tetromino.shapes[this.type].width,
-                4 - this.rotation + rotation
+                4 - this.rotation + rotation // circular distance
             );
         }
         this.rotation = <0 | 1 | 2 | 3> (rotation % 4);

@@ -17,7 +17,8 @@ export class GameState {
 
     // synced to server
     currentTetromino: Tetromino;
-    // synced from server
+    // synced from server, ordered by increasing, circular player numbers
+    // i.e. if you are player 1, these are of player 2, then 3, then 0
     otherPieces: Array<Tetromino>;
     playerId!: 0 | 1 | 2 | 3;
 
@@ -53,12 +54,11 @@ export class GameState {
             console.log("playerId: ", playerId);
         });
 
-        // other player is sending in some action, should re-render using onPlayerAction
-        this.socket.on("playerMove", (playerId, position) => {
-            let otherPlayerIndex = ((playerId + 4 - this.playerId) % 4) - 1; // FIXME hack.
-            this.otherPieces[otherPlayerIndex].position = position.position;
-            this.otherPieces[otherPlayerIndex].rotation = position.rotation;
-            this.otherPieces[otherPlayerIndex].type = position.type;
+        this.socket.on("playerMove", (playerId, state) => {
+            let i = (3 - this.playerId + playerId) % 4 // Circular distance
+            this.otherPieces[i].setType(state.type);
+            this.otherPieces[i].setRotatedPosition(state.position, i + 1);
+            this.otherPieces[i].setRotation(i + 1 + state.rotation);
         });
     }
 }
