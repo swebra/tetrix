@@ -112,9 +112,9 @@ export class SceneGameArena extends Phaser.Scene {
         scene.gameState.board = cloneDeep(scene.gameState.frozenBoard);
         for (let i = 0; i < 3; i++) {
             let tetro = scene.otherTetros[i].inner;
-            for (let cell of tetro.cells) {
-                const row = cell[0] + tetro.position[0];
-                const col = cell[1] + tetro.position[1];
+            for (let tile of tetro.tiles) {
+                const row = tile[0] + tetro.position[0];
+                const col = tile[1] + tetro.position[1];
                 scene.gameState.board[row][col] = tetro.type;
             }
         }
@@ -201,15 +201,15 @@ export class SceneGameArena extends Phaser.Scene {
         board: Array<Array<TetrominoType | null>>
     ): Boolean {
         // if the blocks right below this tetro are all empty, it can fall.
-        const bottomRelative = Math.max(...tetro.cells.map((cell) => cell[0])); // the lowest block in the tetro cells, ranging from 0-3
+        const bottomRelative = Math.max(...tetro.tiles.map((tile) => tile[0])); // the lowest block in the tetro tiles, ranging from 0-3
         const bottomAbsolute = tetro.position[0] + bottomRelative; // the row of which the lowest block of the tetro is at in the board
 
         if (bottomAbsolute + 1 >= board.length) return false;
 
-        return tetro.cells.every(
-            (cell: any) =>
-                cell[0] < bottomRelative || // either the cell is not the bottom cells which we don't care
-                board[bottomAbsolute + 1][tetro.position[1] + cell[1]] == null // or the room below it has to be empty
+        return tetro.tiles.every(
+            (tile: any) =>
+                tile[0] < bottomRelative || // either the tile is not the bottom tiles which we don't care
+                board[bottomAbsolute + 1][tetro.position[1] + tile[1]] == null // or the room below it has to be empty
         );
     }
 }

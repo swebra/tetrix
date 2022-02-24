@@ -42,11 +42,11 @@ export class Tetromino {
     type: TetrominoType;
     position: [number, number];
     rotation: 0 | 1 | 2 | 3;
-    cells: Array<[number, number]>;
+    tiles: Array<[number, number]>;
 
     constructor(type: TetrominoType) {
         this.type = type;
-        this.cells = cloneDeep(Tetromino.shapes[type].tiles);
+        this.tiles = cloneDeep(Tetromino.shapes[type].tiles);
         this.position = [0, Math.round((BOARD_SIZE - Tetromino.shapes[type].width) / 2)];
         this.rotation = 0; // default (no rotation)
     }
@@ -62,7 +62,7 @@ export class Tetromino {
     setType(type: TetrominoType) {
         if (this.type == type) { return; }
         this.type = type;
-        this.cells = cloneDeep(Tetromino.shapes[type].tiles);
+        this.tiles = cloneDeep(Tetromino.shapes[type].tiles);
     }
 
     setRotatedPosition(position: [number, number], ccRotations: number) {
@@ -81,9 +81,9 @@ export class Tetromino {
 
     setRotation(rotation: number) {
         if (this.rotation == rotation % 4) { return; }
-        for (let i = 0; i < this.cells.length; i++) {
-            this.cells[i] = Tetromino.rotateCoords(
-                this.cells[i],
+        for (let i = 0; i < this.tiles.length; i++) {
+            this.tiles[i] = Tetromino.rotateCoords(
+                this.tiles[i],
                 Tetromino.shapes[this.type].width,
                 4 - this.rotation + rotation // circular distance
             );

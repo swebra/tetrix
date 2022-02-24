@@ -6,15 +6,15 @@ export class RenderedTetromino {
     // used to wrap around Tetromino and link blocks with sprites, used for rendering and colliding
 
     inner: Tetromino;
-    cellSprites!: Array<Phaser.GameObjects.Rectangle>; // each representing one unit block.
+    tileSprites!: Array<Phaser.GameObjects.Rectangle>; // each representing one unit block.
 
     constructor(tetromino: Tetromino) {
         this.inner = tetromino;
     }
 
     draw(scene: Scene) {
-        if (this.cellSprites) this.cellSprites.forEach((rec) => rec.destroy());
-        this.cellSprites = this.inner.cells.map(([row, col]) => {
+        if (this.tileSprites) this.tileSprites.forEach((rec) => rec.destroy());
+        this.tileSprites = this.inner.tiles.map(([row, col]) => {
             // transform relative block position on top of tetromino position
             let x = (this.inner.position[1] + col + 0.5) * TILE_SIZE;
             let y = (this.inner.position[0] + row + 0.5) * TILE_SIZE;
