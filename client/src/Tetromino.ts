@@ -1,6 +1,6 @@
 import { TetrominoType } from "common/TetrominoType";
 import { BOARD_SIZE } from "common/shared";
-import { PlayerPosition } from "common/message";
+import { TetrominoState } from "common/message";
 
 export class Tetromino {
     type: TetrominoType;
@@ -23,11 +23,11 @@ export class Tetromino {
         ];
     }
 
-    reportPosition(): PlayerPosition {
+    reportPosition(): TetrominoState {
         return {
-            tetroPosition: this.position,
+            position: this.position,
             rotation: this.rotation,
-            tetroType: this.type,
+            type: this.type,
         };
     }
 }
