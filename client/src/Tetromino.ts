@@ -1,7 +1,6 @@
 import { TetrominoType } from "common/TetrominoType";
 import { BOARD_SIZE } from "common/shared";
 import { TetrominoState } from "common/message";
-import { rotateCoords } from "./utils"
 import { cloneDeep } from "lodash";
 
 type Shape = {
@@ -19,6 +18,26 @@ export class Tetromino {
         [TetrominoType.T]: {width: 3, tiles: [[0, 1], [1, 0], [1, 1], [1, 2]]},
         [TetrominoType.Z]: {width: 3, tiles: [[0, 0], [0, 1], [1, 1], [1, 2]]}
     };
+
+    /**
+     * @param coords A `[row, column]` coordinate pair
+     * @param size The grid size in which the coordinates exist
+     * @param ccRotations The number of clockwise rotations to perform
+     * @returns The rotated coordinates
+     */
+    static rotateCoords(coords: [number, number], size: number, ccRotations: number): [number, number] {
+        let maxCoord = size - 1;
+        switch (ccRotations % 4) {
+            case 1: // 90 degree clockwise
+                return [coords[1], maxCoord - coords[0]];
+            case 2: // 180 degree
+                return [maxCoord - coords[0], maxCoord - coords[1]];
+            case 3: // 90 degree counterclockwise
+                return [maxCoord - coords[1], coords[0]];
+            default: // 0 degree
+                return coords;
+        }
+    }
 
     type: TetrominoType;
     position: [number, number];
@@ -48,7 +67,7 @@ export class Tetromino {
 
     setRotatedPosition(position: [number, number], ccRotations: number) {
         ccRotations %= 4;
-        let [row, col] = rotateCoords(position, BOARD_SIZE, ccRotations);
+        let [row, col] = Tetromino.rotateCoords(position, BOARD_SIZE, ccRotations);
         // Compensate for position needing to be at top left
         let adjustment = Tetromino.shapes[this.type].width - 1;
         if (ccRotations == 1 || ccRotations == 2) {
@@ -63,7 +82,7 @@ export class Tetromino {
     setRotation(rotation: number) {
         if (this.rotation == rotation % 4) { return; }
         for (let i = 0; i < this.cells.length; i++) {
-            this.cells[i] = rotateCoords(
+            this.cells[i] = Tetromino.rotateCoords(
                 this.cells[i],
                 Tetromino.shapes[this.type].width,
                 4 - this.rotation + rotation // circular distance
