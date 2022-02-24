@@ -60,9 +60,8 @@ export class Tetromino {
         this.position = [row, col];
     }
 
-    setRotation(rotation: number): boolean {
-        if (!this.canRotate()) { return false; }
-        if (this.rotation == rotation % 4) { return true; }
+    setRotation(rotation: number) {
+        if (this.rotation == rotation % 4) { return; }
         for (let i = 0; i < this.cells.length; i++) {
             this.cells[i] = rotateCoords(
                 this.cells[i],
@@ -71,19 +70,32 @@ export class Tetromino {
             );
         }
         this.rotation = <0 | 1 | 2 | 3> (rotation % 4);
+    }
+
+    // TODO: Properly verify movement is possible before allowing it
+    move(colDelta: number): boolean {
+        let newCol = this.position[1] + colDelta;
+        if (newCol < 0 || newCol >= BOARD_SIZE) {
+            return false;
+        }
+        this.position[1] = newCol;
+        return true;
+    }
+
+    // TODO: Verify rotation is possible before allowing it
+    private canRotate(): boolean {
         return true;
     }
 
     rotateCW(): boolean {
-        return this.setRotation(this.rotation + 1);
+        if (!this.canRotate()) { return false; }
+        this.setRotation(this.rotation + 1);
+        return true;
     }
 
     rotateCCW(): boolean {
-        return this.setRotation(4 + this.rotation - 1);
-    }
-
-    // TODO
-    private canRotate(): boolean {
+        if (!this.canRotate()) { return false; }
+        this.setRotation(4 + this.rotation - 1);
         return true;
     }
 }

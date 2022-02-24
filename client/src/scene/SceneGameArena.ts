@@ -124,36 +124,23 @@ export class SceneGameArena extends Phaser.Scene {
     // 1. these update functions can have unified interface
     // 2. they have duplicate logic with the Phaser.Scene.time.addEvent, consider moving the falling down here, but we need a internal state/class instance for each of them to track time delta in order to have a different function
     private updateUserInput(scene: SceneGameArena) {
+        let moved = false;
         if (scene.keys.a.isDown || scene.keys.left.isDown) {
-            let [row, col] = scene.gameState.currentTetromino.position;
-
-            scene.gameState.currentTetromino.position = [row, Math.max(0, col - 1)]; // TODO
-
-            scene.gameState.socket.emit(
-                "playerMove",
-                scene.gameState.playerId,
-                scene.gameState.currentTetromino.reportPosition()
-            );
+            moved = scene.gameState.currentTetromino.move(-1);
         } else if (scene.keys.d.isDown || scene.keys.right.isDown) {
-            let [row, col] = scene.gameState.currentTetromino.position;
-            scene.gameState.currentTetromino.position = [
-                row,
-                Math.min(BOARD_SIZE, col + 1),
-            ]; // TODO
+            moved = scene.gameState.currentTetromino.move(1);
+        } else if (scene.keys.q.isDown || scene.keys.z.isDown) {
+            moved = scene.gameState.currentTetromino.rotateCCW();
+        } else if (scene.keys.e.isDown || scene.keys.x.isDown) {
+            moved = scene.gameState.currentTetromino.rotateCW();
+        }
 
+        if (moved) {
             scene.gameState.socket.emit(
                 "playerMove",
                 scene.gameState.playerId,
                 scene.gameState.currentTetromino.reportPosition()
             );
-        } else if (scene.keys.q.isDown || scene.keys.z.isDown) {
-            if (scene.gameState.currentTetromino.rotateCCW()) {
-                // TODO: emit
-            };
-        } else if (scene.keys.e.isDown || scene.keys.x.isDown) {
-            if (scene.gameState.currentTetromino.rotateCW()) {
-                // TODO: emit
-            };
         }
     }
 
