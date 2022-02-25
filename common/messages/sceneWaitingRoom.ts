@@ -7,5 +7,4 @@ export interface ToClientEvents {
 export interface ToServerEvents {
   requestRemainingPlayers: () => void;
   joinQueue: () => void;
-  leaveQueue: () => void;
 }

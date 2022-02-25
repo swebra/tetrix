@@ -15,7 +15,6 @@ export class PlayerQueue {
 
     public initSocketListeners(socket: SocketQueue) {
         socket.on("joinQueue", () => {
-            this.clearClosedConnections();
             this.addToQueue(socket);
 
             broadcastRemainingPlayers(this.getRemainingPlayers());
@@ -33,29 +32,10 @@ export class PlayerQueue {
             socket.emit("updateRemainingPlayers", this.getRemainingPlayers());
         });
 
-        socket.on("leaveQueue", () => {
+        socket.on("disconnect", () => {
             this.removeFromQueue(socket);
             broadcastRemainingPlayers(this.getRemainingPlayers());
         });
-    }
-
-    /**
-     * Wipe any closed connections from the queue.
-     */
-    private clearClosedConnections() {
-        let maxIndex: number = Math.min(4, this.queue.length);
-
-        for (let i = 0; i < maxIndex; i++) {
-            if (!this.queue[i].connected) {
-                this.connectionsToRemove.push(this.queue[i]);
-            }
-        }
-
-        for (let connection of this.connectionsToRemove) {
-            this.removeFromQueue(connection);
-        }
-
-        this.resetConnToRemove();
     }
 
     /**
