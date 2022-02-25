@@ -38,6 +38,7 @@ export class SceneGameArena extends Phaser.Scene {
 
     scoreboard!: ScoreboardUI;
     spectator!: SpectatorUI;
+    controls!: ControlsUI;
 
     frameTimeElapsed: number = 0; // the ms time since the last frame is drawn
 
@@ -66,7 +67,6 @@ export class SceneGameArena extends Phaser.Scene {
     create() {
         this.scoreboard = new ScoreboardUI(this, this.sharedState.socket, true);
         this.spectator = new SpectatorUI(this, this.sharedState.socket);
-        new ControlsUI(this, this.gameState.playerId, ["keyA", "keyD", "keyS", "keyQ", "keyE"]);
 
         // initialize an empty rendered board
         this.renderedBoard = [];
@@ -105,6 +105,11 @@ export class SceneGameArena extends Phaser.Scene {
 
     update(time: number, delta: number) {
         this.frameTimeElapsed += delta;
+
+        // Load in the controlsUI for players. Placed here due to a potential time delay for receiving the playerID.
+        if (this.controls == null && this.gameState.playerId != null) {
+            this.controls = new ControlsUI(this, ["keyA", "keyD", "keyS", "keyQ", "keyE"]);
+        }
 
         // 12 fps
         if (this.frameTimeElapsed > 1000 / this.FRAMERATE) {

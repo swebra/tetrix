@@ -22,7 +22,7 @@ export class SpectatorUI {
     constructor(scene: SceneGameArena, socket: SocketSpectator) {
         this.cookieTracker = new CookieTracker();
         this.socket = socket;
-        this.initListeners()
+        this.initListeners();
 
         this.scene = scene;
         this.countdownConfig = {
@@ -62,31 +62,35 @@ export class SpectatorUI {
             .text(14 * BOARD_SIZE + 20, y + 150, "", this.buttonConfig)
             .setTint(0xe6e4da);
 
-        console.log("spectator ui: ", this.socket)
         // Request info on any on-going voting sequences.
         this.socket.emit("requestVotingSequence");
     }
 
-    initListeners() {
-        // FIXME: Only show spectator things to "spectators" (not players).
+    /**
+     * Initalize the listeners for events received from the server.
+     */
+    private initListeners() {
         this.socket.on("showVotingSequence", (votingSequence) => {
-            this.generateTimedEvent(votingSequence);
-        })
+            // Only display the voting sequence for spectators.
+            if (this.scene.gameState.playerId == null) {
+                this.generateTimedEvent(votingSequence);
+            }
+        });
 
         this.socket.on("hideVotingSequence", () => {
             this.removeTimedEvent();
-        })
+        });
 
         this.socket.on("sendVotingCountdown", (secondsLeft) => {
             this.syncCountdown(secondsLeft);
-        })
+        });
     }
 
     /**
      * Generate the spectator voting section.
      * @param valFromServer Specifies which buttons to be loading in for this sequence.
      */
-    public generateTimedEvent(valFromServer: string) {
+    private generateTimedEvent(valFromServer: string) {
         this.removeTimedEvent();
         this.createOptions(valFromServer);
     }
@@ -94,7 +98,7 @@ export class SpectatorUI {
     /**
      * Remove the spectator voting section.
      */
-    public removeTimedEvent() {
+    private removeTimedEvent() {
         this.countdown.setText("");
         this.alreadyVoted.setText("");
 
@@ -208,7 +212,7 @@ export class SpectatorUI {
      * Update the seconds on the counter.
      * @param secondsLeft The number of seconds left on the voting sequence (received from the server).
      */
-    public syncCountdown(secondsLeft: number) {
+    private syncCountdown(secondsLeft: number) {
         this.updateCountdown(secondsLeft);
 
         // Start the countdown.

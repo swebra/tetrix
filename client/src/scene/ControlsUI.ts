@@ -1,11 +1,7 @@
 import { SceneGameArena } from "./SceneGameArena";
 
 export class ControlsUI {
-    constructor(scene: SceneGameArena, playerId: 0 | 1 | 2 | 3, keys: Array<string>) {
-        if (playerId == null) {
-            return;
-        }
-
+    constructor(scene: SceneGameArena, keys: Array<string>) {
         let y: number = 600;
         let index: number = 0;
         let controlInfo = [
