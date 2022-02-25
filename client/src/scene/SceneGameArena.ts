@@ -106,6 +106,8 @@ export class SceneGameArena extends Phaser.Scene {
     update(time: number, delta: number) {
         this.frameTimeElapsed += delta;
 
+        // FIXME: Is this still needed after a proper queue is implemented? We can call the startGameArena event after
+        // the player has received their playerID & guarantee the scene has that data.
         // Load in the controlsUI for players. Placed here due to a potential time delay for receiving the playerID.
         if (this.controls == null && this.gameState.playerId != null) {
             this.controls = new ControlsUI(this, ["keyA", "keyD", "keyS", "keyQ", "keyE"]);
