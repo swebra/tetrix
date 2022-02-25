@@ -1,5 +1,4 @@
 import Phaser from "phaser";
-import { GameState } from "../GameState";
 import { BOARD_SIZE } from "common/shared";
 import { SharedState } from "..";
 import { Socket } from "socket.io-client";
@@ -11,8 +10,8 @@ type SocketWaitingRoom = Socket<ToClientEvents, ToServerEvents>;
 
 export class SceneWaitingRoom extends Phaser.Scene {
     private playersNeededText!: Phaser.GameObjects.Text;
+    private headerText!: Phaser.GameObjects.Text;
     private button!: Phaser.GameObjects.Text;
-    private gameState!: GameState;
     private socket!: SocketWaitingRoom;
     private sharedData!: SharedState;
 
@@ -24,9 +23,8 @@ export class SceneWaitingRoom extends Phaser.Scene {
 
     init(data: SharedState) {
         this.sharedData = data;
-        this.gameState = data.gameState;
         this.socket = data.socket;
-        this.initListeners()
+        this.initListeners();
     }
 
     preload() {
@@ -36,7 +34,7 @@ export class SceneWaitingRoom extends Phaser.Scene {
     create() {
         this.add.text(BOARD_SIZE * 2.5, BOARD_SIZE * 5, "A new game is starting soon", { fontSize: "52px", fontFamily: "VT323" })
             .setTint(0xFF0000);
-        this.add.text(BOARD_SIZE * 4.5, BOARD_SIZE * 6.5, "Click the button below to join!", { fontSize: "32px", fontFamily: "VT323" })
+        this.headerText = this.add.text(BOARD_SIZE * 4.5, BOARD_SIZE * 6.5, "Click the button below to join!", { fontSize: "32px", fontFamily: "VT323" })
             .setTint(0xFF0000);
 
         this.button = this.add.text(BOARD_SIZE * 6.5, BOARD_SIZE * 9, "> Join <", { fontSize: "82px", fontFamily: "VT323" })
@@ -51,9 +49,14 @@ export class SceneWaitingRoom extends Phaser.Scene {
 
         // Request the # of remaining players needed to start the game.
         this.socket.emit("requestRemainingPlayers");
+
+        // If the user leaves/refreshes the page, remove them from queue.
+        window.addEventListener("beforeunload", (event) => {
+            this.socket.emit("leaveQueue");
+        });
     }
 
-    initListeners () {
+    private initListeners () {
         this.socket.on("updateRemainingPlayers", (remainingPlayers: number) => {
             console.log("update remaining: ", remainingPlayers)
             this.playersNeededText.setText(`Waiting on ${remainingPlayers} more player(s)`);
@@ -62,12 +65,12 @@ export class SceneWaitingRoom extends Phaser.Scene {
             if (remainingPlayers <= 0) {
                 this.button.setText("");
             }
-        })
+        });
 
         // If the queue is full, we should receive the signal from the server to start the game.
         this.socket.on("toSceneGameArena", () => {
             this.scene.start("SceneGameArena", this.sharedData);
-        })
+        });
     }
 
     /**
@@ -88,6 +91,7 @@ export class SceneWaitingRoom extends Phaser.Scene {
      */
     private requestJoinGame() {
         this.button.setText("");
-        this.socket.emit("joinGame");
+        this.socket.emit("joinQueue");
+        this.headerText.setText("Your request has been sent!");
     }
 }
