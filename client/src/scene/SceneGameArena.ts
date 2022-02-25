@@ -264,7 +264,7 @@ export class SceneGameArena extends Phaser.Scene {
         if (bottomAbsolute + 1 >= board.length) return false;
 
         return tetro.cells.every(
-            (cell: any) =>
+            (cell: [number, number]) =>
                 cell[0] < bottomRelative || // either the cell is not the bottom cells which we don't care
                 board[bottomAbsolute + 1][tetro.position[1] + cell[1]] ==
                     TetrominoType.Empty // or the room below it has to be empty

@@ -1,4 +1,4 @@
-import { Player } from "./PlayerAttributes";
+import { PlayerColor } from "./PlayerAttributes";
 import { Level } from "./Level";
 import {
     broadcastUpdateScoreboard,
@@ -120,16 +120,16 @@ export class Scoreboard {
         this._totalScore += value;
 
         switch (playerIndex) {
-            case Player.Color.Orange:
+            case PlayerColor.Orange:
                 this._orangeScore += value;
                 break;
-            case Player.Color.Green:
+            case PlayerColor.Green:
                 this._greenScore += value;
                 break;
-            case Player.Color.Pink:
+            case PlayerColor.Pink:
                 this._pinkScore += value;
                 break;
-            case Player.Color.Blue:
+            case PlayerColor.Blue:
                 this._blueScore += value;
                 break;
         }
@@ -150,25 +150,25 @@ export class Scoreboard {
         currentLevel: number
     ) {
         switch (playerIndex) {
-            case Player.Color.Orange:
+            case PlayerColor.Orange:
                 this._orangeScore -= value;
                 if (this._orangeScore <= 0) {
                     this._orangeScore = 0;
                 }
                 break;
-            case Player.Color.Green:
+            case PlayerColor.Green:
                 this._greenScore -= value;
                 if (this._greenScore <= 0) {
                     this._greenScore = 0;
                 }
                 break;
-            case Player.Color.Pink:
+            case PlayerColor.Pink:
                 this._pinkScore -= value;
                 if (this._pinkScore <= 0) {
                     this._pinkScore = 0;
                 }
                 break;
-            case Player.Color.Blue:
+            case PlayerColor.Blue:
                 this._blueScore -= value;
                 if (this._blueScore <= 0) {
                     this._blueScore = 0;

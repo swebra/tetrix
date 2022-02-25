@@ -180,7 +180,7 @@ export class Spectator {
 
         // Get value of the most voted option.
         const array: number[] = Object.values(this._votingMap);
-        const maxVal = Math.max.apply(Math, array);
+        const maxVal = Math.max(...array);
 
         // Collect all keys that have a matching value (need to tie-break).
         const allOptions = [];
