@@ -14,11 +14,14 @@ export class SceneWaitingRoom extends Phaser.Scene {
     private button!: Phaser.GameObjects.Text;
     private socket!: SocketWaitingRoom;
     private sharedData!: SharedState;
+    private inQueue: boolean;
 
     constructor () {
         super({
             key: "SceneWaitingRoom"
         });
+
+        this.inQueue = false;
     }
 
     init(data: SharedState) {
@@ -49,11 +52,6 @@ export class SceneWaitingRoom extends Phaser.Scene {
 
         // Request the # of remaining players needed to start the game.
         this.socket.emit("requestRemainingPlayers");
-
-        // If the user leaves/refreshes the page, remove them from queue.
-        window.addEventListener("beforeunload", (event) => {
-            this.socket.emit("leaveQueue");
-        });
     }
 
     private initListeners () {
@@ -61,9 +59,14 @@ export class SceneWaitingRoom extends Phaser.Scene {
             console.log("update remaining: ", remainingPlayers)
             this.playersNeededText.setText(`Waiting on ${remainingPlayers} more player(s)`);
 
+            if (this.inQueue && remainingPlayers > 0) {
+                this.headerText.setText("Your request has been sent!");
+            }
+
             // Hide the join button if all player positions are occupied.
             if (remainingPlayers <= 0) {
                 this.button.setText("");
+                this.headerText.setText("Game starting in 5 seconds!");
             }
         });
 
@@ -93,5 +96,6 @@ export class SceneWaitingRoom extends Phaser.Scene {
         this.button.setText("");
         this.socket.emit("joinQueue");
         this.headerText.setText("Your request has been sent!");
+        this.inQueue = true;
     }
 }

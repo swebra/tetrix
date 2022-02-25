@@ -6,28 +6,26 @@ type SocketQueue = Socket<ToServerEvents, ToClientEvents>;
 
 export class PlayerQueue {
     private queue: Array<SocketQueue>;
+    private connectionsToRemove: Array<SocketQueue>;
 
     constructor() {
         this.queue = [];
+        this.connectionsToRemove = [];
     }
 
     public initSocketListeners(socket: SocketQueue) {
         socket.on("joinQueue", () => {
+            this.clearClosedConnections();
             this.addToQueue(socket);
 
-            let playersNeeded: number = this.getRemainingPlayers();
-            if (playersNeeded < 4) {
-                broadcastRemainingPlayers(playersNeeded);
+            broadcastRemainingPlayers(this.getRemainingPlayers());
 
-                // 4 players have joined. Start the game.
-                if (playersNeeded === 0) {
-                    // Notify the first 4 players in queue their playerID's.
-                    for (let playerIndex = 0; playerIndex < 4; playerIndex++) {
-                        this.queue[playerIndex].emit("initPlayer", playerIndex as 0 | 1 | 2 | 3);
-                    }
-
-                    broadcastToSceneGameArena();
+            // 4 valid connections are found. Start the game.
+            if (this.getRemainingPlayers() === 0) {
+                for (let playerIndex = 0; playerIndex < 4; playerIndex++) {
+                    this.queue[playerIndex].emit("initPlayer", playerIndex as 0 | 1 | 2 | 3);
                 }
+                broadcastToSceneGameArena();
             }
         });
 
@@ -39,6 +37,25 @@ export class PlayerQueue {
             this.removeFromQueue(socket);
             broadcastRemainingPlayers(this.getRemainingPlayers());
         });
+    }
+
+    /**
+     * Wipe any closed connections from the queue.
+     */
+    private clearClosedConnections() {
+        let maxIndex: number = Math.min(4, this.queue.length);
+
+        for (let i = 0; i < maxIndex; i++) {
+            if (!this.queue[i].connected) {
+                this.connectionsToRemove.push(this.queue[i]);
+            }
+        }
+
+        for (let connection of this.connectionsToRemove) {
+            this.removeFromQueue(connection);
+        }
+
+        this.resetConnToRemove();
     }
 
     /**
@@ -64,6 +81,14 @@ export class PlayerQueue {
      */
     public resetQueue() {
         this.queue = [];
+        this.connectionsToRemove = [];
+    }
+
+    /**
+     * Wipe the connections queue.
+     */
+    private resetConnToRemove() {
+        this.connectionsToRemove = [];
     }
 
     /**
