@@ -6,11 +6,9 @@ type SocketQueue = Socket<ToServerEvents, ToClientEvents>;
 
 export class PlayerQueue {
     private queue: Array<SocketQueue>;
-    private connectionsToRemove: Array<SocketQueue>;
 
     constructor() {
         this.queue = [];
-        this.connectionsToRemove = [];
     }
 
     public initSocketListeners(socket: SocketQueue) {
@@ -61,14 +59,6 @@ export class PlayerQueue {
      */
     public resetQueue() {
         this.queue = [];
-        this.connectionsToRemove = [];
-    }
-
-    /**
-     * Wipe the connections queue.
-     */
-    private resetConnToRemove() {
-        this.connectionsToRemove = [];
     }
 
     /**
