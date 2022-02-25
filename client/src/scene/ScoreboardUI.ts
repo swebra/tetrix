@@ -37,13 +37,21 @@ export class ScoreboardUI {
         if (shouldLoadScoreboard) {
             this.loadScoreboard();
         }
+
+        this.requestScoreboardData();
     }
 
-    requestScoreboardData() {
+    /**
+     * Request scoreboard data from the server.
+     */
+    private requestScoreboardData() {
         this.socket.emit("requestScoreboardData");
     }
 
-    initListeners() {
+    /**
+     * Initialize listeners
+     */
+    private initListeners() {
         if (this.socket == null) {
             return;
         }

@@ -14,6 +14,13 @@ import { Socket } from "socket.io-client";
 
 import { ToClientEvents, ToServerEvents } from "common/messages/sceneGameArena";
 import { TILE_SIZE } from "common/shared";
+import { ControlsUI } from "./ControlsUI";
+
+import KEY_A from "../assets/controls/KEY_A.svg";
+import KEY_D from "../assets/controls/KEY_D.svg";
+import KEY_S from "../assets/controls/KEY_S.svg";
+import KEY_Q from "../assets/controls/KEY_Q.svg";
+import KEY_E from "../assets/controls/KEY_E.svg";
 
 type SocketGame = Socket<ToClientEvents, ToServerEvents>;
 
@@ -31,6 +38,7 @@ export class SceneGameArena extends Phaser.Scene {
 
     scoreboard!: ScoreboardUI;
     spectator!: SpectatorUI;
+    controls!: ControlsUI;
 
     frameTimeElapsed: number = 0; // the ms time since the last frame is drawn
 
@@ -42,6 +50,12 @@ export class SceneGameArena extends Phaser.Scene {
 
     preload() {
         this.load.addFile(new WebFontFile(this.load, 'VT323'));
+
+        this.load.svg("keyA", KEY_A);
+        this.load.svg("keyD", KEY_D);
+        this.load.svg("keyS", KEY_S);
+        this.load.svg("keyE", KEY_E);
+        this.load.svg("keyQ", KEY_Q);
     }
 
     init(data: SharedState) {
@@ -52,8 +66,6 @@ export class SceneGameArena extends Phaser.Scene {
 
     create() {
         this.scoreboard = new ScoreboardUI(this, this.sharedState.socket, true);
-        this.scoreboard.requestScoreboardData();
-
         this.spectator = new SpectatorUI(this, this.sharedState.socket);
 
         // initialize an empty rendered board
@@ -93,6 +105,13 @@ export class SceneGameArena extends Phaser.Scene {
 
     update(time: number, delta: number) {
         this.frameTimeElapsed += delta;
+
+        // FIXME: Is this still needed after a proper queue is implemented? We can call the startGameArena event after
+        // the player has received their playerID & guarantee the scene has that data.
+        // Load in the controlsUI for players. Placed here due to a potential time delay for receiving the playerID.
+        if (this.controls == null && this.gameState.playerId != null) {
+            this.controls = new ControlsUI(this, ["keyA", "keyD", "keyS", "keyQ", "keyE"]);
+        }
 
         // 12 fps
         if (this.frameTimeElapsed > 1000 / this.FRAMERATE) {
