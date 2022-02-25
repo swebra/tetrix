@@ -11,11 +11,11 @@ import path from "path";
 import { ServerToClientEvents, ClientToServerEvents } from "common/message";
 import { ColoredScore } from "common/shared";
 
-export interface InterServerEvents {
+interface InterServerEvents {
   ping: () => void;
 }
 
-export interface SocketData {
+interface SocketData {
   name: string;
   age: number;
 }
