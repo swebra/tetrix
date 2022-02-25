@@ -1,6 +1,5 @@
 export interface ToClientEvents {
-  toSceneWaitingRoom: () => void;
+    toSceneWaitingRoom: () => void;
 }
 
-export interface ToServerEvents {
-}
+export interface ToServerEvents {}

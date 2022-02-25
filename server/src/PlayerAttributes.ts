@@ -3,6 +3,6 @@ export namespace Player {
         Orange = 0,
         Green = 1,
         Pink = 2,
-        Blue = 3
+        Blue = 3,
     }
 }

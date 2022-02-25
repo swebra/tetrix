@@ -1,9 +1,9 @@
 export interface ToClientEvents {
-  updateRemainingPlayers: (remainingPlayers: number) => void;
-  toSceneGameArena: () => void;
+    updateRemainingPlayers: (remainingPlayers: number) => void;
+    toSceneGameArena: () => void;
 }
 
 export interface ToServerEvents {
-  requestRemainingPlayers: () => void;
-  joinGame: () => void;
+    requestRemainingPlayers: () => void;
+    joinGame: () => void;
 }

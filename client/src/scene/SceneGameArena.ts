@@ -25,7 +25,7 @@ import KEY_E from "../assets/controls/KEY_E.svg";
 type SocketGame = Socket<ToClientEvents, ToServerEvents>;
 
 export class SceneGameArena extends Phaser.Scene {
-    FRAMERATE: number = 12;
+    FRAMERATE = 12;
 
     cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
     sharedState!: SharedState;
@@ -40,16 +40,16 @@ export class SceneGameArena extends Phaser.Scene {
     spectator!: SpectatorUI;
     controls!: ControlsUI;
 
-    frameTimeElapsed: number = 0; // the ms time since the last frame is drawn
+    frameTimeElapsed = 0; // the ms time since the last frame is drawn
 
     constructor() {
         super({
-            key: "SceneGameArena"
+            key: "SceneGameArena",
         });
     }
 
     preload() {
-        this.load.addFile(new WebFontFile(this.load, 'VT323'));
+        this.load.addFile(new WebFontFile(this.load, "VT323"));
 
         this.load.svg("keyA", KEY_A);
         this.load.svg("keyD", KEY_D);
@@ -71,7 +71,7 @@ export class SceneGameArena extends Phaser.Scene {
         // initialize an empty rendered board
         this.renderedBoard = [];
         for (let row = 0; row < BOARD_SIZE; row++) {
-            let r = [];
+            const r = [];
             for (let col = 0; col < BOARD_SIZE; col++) {
                 r.push(null);
             }
@@ -82,7 +82,9 @@ export class SceneGameArena extends Phaser.Scene {
         this.cursors = this.input.keyboard.createCursorKeys();
 
         // falling, controllable tetromino
-        this.currentTetro = new RenderedTetromino(this.gameState.currentTetromino);
+        this.currentTetro = new RenderedTetromino(
+            this.gameState.currentTetromino
+        );
         this.otherTetros = [];
         for (let i = 0; i < 3; i++) {
             this.otherTetros.push(
@@ -98,9 +100,12 @@ export class SceneGameArena extends Phaser.Scene {
         });
 
         this.socket.on("toSceneGameOver", (playerPoints) => {
-            this.scene.start("SceneGameOver", { ...this.sharedState, playerPoints: playerPoints, gameState: this.gameState });
+            this.scene.start("SceneGameOver", {
+                ...this.sharedState,
+                playerPoints: playerPoints,
+                gameState: this.gameState,
+            });
         });
-
     }
 
     update(time: number, delta: number) {
@@ -110,7 +115,13 @@ export class SceneGameArena extends Phaser.Scene {
         // the player has received their playerID & guarantee the scene has that data.
         // Load in the controlsUI for players. Placed here due to a potential time delay for receiving the playerID.
         if (this.controls == null && this.gameState.playerId != null) {
-            this.controls = new ControlsUI(this, ["keyA", "keyD", "keyS", "keyQ", "keyE"]);
+            this.controls = new ControlsUI(this, [
+                "keyA",
+                "keyD",
+                "keyS",
+                "keyQ",
+                "keyE",
+            ]);
         }
 
         // 12 fps
@@ -131,17 +142,21 @@ export class SceneGameArena extends Phaser.Scene {
         scene.gameState.board = cloneDeep(scene.gameState.frozenBoard);
         for (let i = 0; i < 3; i++) {
             //putTetroOnBoard(scene.otherTetros[i].inner, scene.gameState.board)
-            let tetro = scene.otherTetros[i].inner;
-            for (let cell of tetro.cells) {
+            const tetro = scene.otherTetros[i].inner;
+            for (const cell of tetro.cells) {
                 const rowAbsolute = cell[0] + tetro.position[0];
                 const colAbsolute = cell[1] + tetro.position[1];
-                let [row, col] = xyTransform(rowAbsolute, colAbsolute, i);
+                const [row, col] = xyTransform(rowAbsolute, colAbsolute, i);
                 scene.gameState.board[row][col] = tetro.type;
             }
         }
 
         // given row,col of a tetro coordinate, rotate it to the relative view of the local player
-        function xyTransform(row: number, col: number, i: number): [number, number] {
+        function xyTransform(
+            row: number,
+            col: number,
+            i: number
+        ): [number, number] {
             if (i === 0) {
                 return [col, BOARD_SIZE - row];
             } else if (i === 1) {
@@ -159,9 +174,12 @@ export class SceneGameArena extends Phaser.Scene {
     // 2. they have duplicate logic with the Phaser.Scene.time.addEvent, consider moving the falling down here, but we need a internal state/class instance for each of them to track time delta in order to have a different function
     private updateUserInput(scene: SceneGameArena) {
         if (scene.cursors.left.isDown) {
-            let [row, col] = scene.gameState.currentTetromino.position;
+            const [row, col] = scene.gameState.currentTetromino.position;
 
-            scene.gameState.currentTetromino.position = [row, Math.max(0, col - 1)]; // TODO
+            scene.gameState.currentTetromino.position = [
+                row,
+                Math.max(0, col - 1),
+            ]; // TODO
 
             scene.gameState.socket.emit(
                 "playerMove",
@@ -169,7 +187,7 @@ export class SceneGameArena extends Phaser.Scene {
                 scene.gameState.currentTetromino.reportPosition()
             );
         } else if (scene.cursors.right.isDown) {
-            let [row, col] = scene.gameState.currentTetromino.position;
+            const [row, col] = scene.gameState.currentTetromino.position;
             scene.gameState.currentTetromino.position = [
                 row,
                 Math.min(BOARD_SIZE, col + 1),
@@ -190,8 +208,8 @@ export class SceneGameArena extends Phaser.Scene {
             for (let col = 0; col < BOARD_SIZE; col++) {
                 scene.renderedBoard[row][col]?.destroy();
                 if (board[row][col] != TetrominoType.Empty) {
-                    let x = (col + 0.5) * TILE_SIZE;
-                    let y = (row + 0.5) * TILE_SIZE;
+                    const x = (col + 0.5) * TILE_SIZE;
+                    const y = (row + 0.5) * TILE_SIZE;
                     scene.renderedBoard[row][col] = scene.add.rectangle(
                         x,
                         y,
@@ -238,7 +256,7 @@ export class SceneGameArena extends Phaser.Scene {
     private canTetroFall(
         tetro: Tetromino,
         board: Array<Array<TetrominoType>>
-    ): Boolean {
+    ): boolean {
         // if the blocks right below this tetro are all empty, it can fall.
         const bottomRelative = Math.max(...tetro.cells.map((cell) => cell[0])); // the lowest block in the tetro cells, ranging from 0-3
         const bottomAbsolute = tetro.position[0] + bottomRelative; // the row of which the lowest block of the tetro is at in the board
@@ -249,7 +267,7 @@ export class SceneGameArena extends Phaser.Scene {
             (cell: any) =>
                 cell[0] < bottomRelative || // either the cell is not the bottom cells which we don't care
                 board[bottomAbsolute + 1][tetro.position[1] + cell[1]] ==
-                TetrominoType.Empty // or the room below it has to be empty
+                    TetrominoType.Empty // or the room below it has to be empty
         );
     }
 }

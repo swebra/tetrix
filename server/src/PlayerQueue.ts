@@ -30,7 +30,7 @@ export class PlayerQueue {
      * @returns The number of players needed to start the game.
      */
     public getRemainingPlayers(): number {
-        let remainingPlayers = 4 - this.playerCounter;
+        const remainingPlayers = 4 - this.playerCounter;
         if (remainingPlayers < 0) {
             return 0;
         }

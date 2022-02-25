@@ -1,8 +1,7 @@
-import {ColoredScore} from "../shared";
+import { ColoredScore } from "../shared";
 
 export interface ToClientEvents {
-  toSceneGameOver: (data: Array<ColoredScore>) => void;
+    toSceneGameOver: (data: Array<ColoredScore>) => void;
 }
 
-export interface ToServerEvents {
-}
+export interface ToServerEvents {}

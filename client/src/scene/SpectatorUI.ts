@@ -4,7 +4,7 @@ import { SceneGameArena } from "./SceneGameArena";
 import { TextConfig } from "../TextConfig";
 
 import { Socket } from "socket.io-client";
-import { ToServerEvents, ToClientEvents } from "common/messages/spectator"
+import { ToServerEvents, ToClientEvents } from "common/messages/spectator";
 
 type SocketSpectator = Socket<ToClientEvents, ToServerEvents>;
 
@@ -26,18 +26,18 @@ export class SpectatorUI {
 
         this.scene = scene;
         this.countdownConfig = {
-            fontSize: `${BOARD_SIZE/1.5}px`,
-            fontFamily: "VT323"
+            fontSize: `${BOARD_SIZE / 1.5}px`,
+            fontFamily: "VT323",
         };
         this.buttonConfig = {
-            fontSize: `${BOARD_SIZE/1.7}px`,
-            fontFamily: "VT323"
+            fontSize: `${BOARD_SIZE / 1.7}px`,
+            fontFamily: "VT323",
         };
 
         this.buttons = [];
 
         // Creating a blank text object(s).
-        let y: number = BOARD_SIZE * 14;
+        const y: number = BOARD_SIZE * 14;
         this.countdown = this.scene.add
             .text(14 * BOARD_SIZE, y, "", this.countdownConfig)
             .setTint(0x53bb74);
@@ -112,7 +112,9 @@ export class SpectatorUI {
      * @param votingOption This value is received from the server. Based off the value obtained, display a different set of buttons.
      */
     private createOptions(votingOption: string) {
-        this.countdown.setText("Vote on what happens!\n  Time left: 10").setTint(0x53bb74);
+        this.countdown
+            .setText("Vote on what happens!\n  Time left: 10")
+            .setTint(0x53bb74);
 
         this.socket.emit("requestVotingCountdown");
 
@@ -125,15 +127,39 @@ export class SpectatorUI {
         switch (votingOption) {
             case "initialDisplay":
                 // Initial voting step. Generate round 1 of votes.
-                this.setVotingButton(this.buttons[0], "> Change Fall Rate", "option1");
-                this.setVotingButton(this.buttons[1], "> Choose Next Block", "option2");
-                this.setVotingButton(this.buttons[2], "> Randomize Their Blocks", "option3");
-                this.setVotingButton(this.buttons[3], "> No Action", "noAction");
+                this.setVotingButton(
+                    this.buttons[0],
+                    "> Change Fall Rate",
+                    "option1"
+                );
+                this.setVotingButton(
+                    this.buttons[1],
+                    "> Choose Next Block",
+                    "option2"
+                );
+                this.setVotingButton(
+                    this.buttons[2],
+                    "> Randomize Their Blocks",
+                    "option3"
+                );
+                this.setVotingButton(
+                    this.buttons[3],
+                    "> No Action",
+                    "noAction"
+                );
                 break;
             case "fallRate":
                 // Second voting step. Generate Fall rate options.
-                this.setVotingButton(this.buttons[0], "> Increase Fall Rate", "option1");
-                this.setVotingButton(this.buttons[1], "> Decrease Fall Rate", "option2");
+                this.setVotingButton(
+                    this.buttons[0],
+                    "> Increase Fall Rate",
+                    "option1"
+                );
+                this.setVotingButton(
+                    this.buttons[1],
+                    "> Decrease Fall Rate",
+                    "option2"
+                );
                 break;
             case "tetrominoSelection":
                 // Second voting step. Generate next block options.
@@ -150,11 +176,20 @@ export class SpectatorUI {
      * @param buttonText The new text to set for the button.
      * @param valForServer The value to send to the server if the button is clicked.
      */
-    private setVotingButton(button: Phaser.GameObjects.Text, buttonText: string, valForServer: "option1" | "option2" | "option3" | "noAction") {
-        button.setText(buttonText)
+    private setVotingButton(
+        button: Phaser.GameObjects.Text,
+        buttonText: string,
+        valForServer: "option1" | "option2" | "option3" | "noAction"
+    ) {
+        button
+            .setText(buttonText)
             .setInteractive({ useHandCursor: true })
-            .on("pointerover", () => { this.isHovered(button, true) })
-            .on("pointerout", () => { this.isHovered(button, false) })
+            .on("pointerover", () => {
+                this.isHovered(button, true);
+            })
+            .on("pointerout", () => {
+                this.isHovered(button, false);
+            })
             .on("pointerup", () => {
                 this.hideOptions();
                 this.socket.emit("vote", valForServer);
@@ -180,7 +215,7 @@ export class SpectatorUI {
      * Hide the voting sequence.
      */
     private hideOptions() {
-        for (let element of this.buttons) {
+        for (const element of this.buttons) {
             element.setText("");
         }
     }
@@ -191,16 +226,18 @@ export class SpectatorUI {
      * @returns Whether to stop the 1second interval that the countdown runs on.
      */
     private updateCountdown(secondsLeft: number) {
-        this.countdown.setText(`Vote on what happens!\n Time left: ${secondsLeft}`);
+        this.countdown.setText(
+            `Vote on what happens!\n Time left: ${secondsLeft}`
+        );
 
         if (secondsLeft < 0) {
             this.removeTimedEvent();
             this.cookieTracker.deleteCookie("hasVoted");
             return true;
-        } else if (secondsLeft < 4)  {
+        } else if (secondsLeft < 4) {
             // Add the Red background.
             this.countdown.setTint(0xe5554e);
-        } else if (secondsLeft < 7)  {
+        } else if (secondsLeft < 7) {
             // Add the Yellow background.
             this.countdown.setTint(0xebc85d);
         }
@@ -216,7 +253,7 @@ export class SpectatorUI {
         this.updateCountdown(secondsLeft);
 
         // Start the countdown.
-        let interval = setInterval(() => {
+        const interval = setInterval(() => {
             if (this.updateCountdown(secondsLeft)) {
                 clearInterval(interval);
             }

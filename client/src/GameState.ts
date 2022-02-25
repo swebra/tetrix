@@ -22,9 +22,9 @@ export class GameState {
     playerId!: 0 | 1 | 2 | 3;
 
     private blankBoard() {
-        let board = [];
+        const board = [];
         for (let r = 0; r < BOARD_SIZE; r++) {
-            let row = [];
+            const row = [];
             for (let c = 0; c < BOARD_SIZE; c++) {
                 row.push(TetrominoType.Empty);
             }
@@ -55,7 +55,7 @@ export class GameState {
 
         // other player is sending in some action, should re-render using onPlayerAction
         this.socket.on("playerMove", (playerId, position) => {
-            let otherPlayerIndex = ((playerId + 4 - this.playerId) % 4) - 1; // FIXME hack.
+            const otherPlayerIndex = ((playerId + 4 - this.playerId) % 4) - 1; // FIXME hack.
             this.otherPieces[otherPlayerIndex].position = position.position;
             this.otherPieces[otherPlayerIndex].rotation = position.rotation;
             this.otherPieces[otherPlayerIndex].type = position.type;

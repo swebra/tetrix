@@ -19,20 +19,18 @@ export class Level {
     public spectatorIncrementLevel() {
         this._currentLevel++;
         // FIXME: Increase block fall rate.
-        setTimeout(
-            () => {
-                this._currentLevel--;
-                // FIXME: Decrease block fall rate.
-            }, 20000);
+        setTimeout(() => {
+            this._currentLevel--;
+            // FIXME: Decrease block fall rate.
+        }, 20000);
     }
 
     public spectatorDecrementLevel() {
         this._currentLevel--;
         // FIXME: Decrease block fall rate.
-        setTimeout(
-            () => {
-                this._currentLevel++;
-                // FIXME: Increase block fall rate.
-            }, 20000);
+        setTimeout(() => {
+            this._currentLevel++;
+            // FIXME: Increase block fall rate.
+        }, 20000);
     }
 }
