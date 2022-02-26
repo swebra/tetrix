@@ -44,12 +44,12 @@ export class SceneGameArena extends Phaser.Scene {
 
     constructor() {
         super({
-            key: "SceneGameArena"
+            key: "SceneGameArena",
         });
     }
 
     preload() {
-        this.load.addFile(new WebFontFile(this.load, 'VT323'));
+        this.load.addFile(new WebFontFile(this.load, "VT323"));
 
         this.load.svg("keyA", KEY_A);
         this.load.svg("keyD", KEY_D);
@@ -71,7 +71,7 @@ export class SceneGameArena extends Phaser.Scene {
         // initialize an empty rendered board
         this.renderedBoard = [];
         for (let row = 0; row < BOARD_SIZE; row++) {
-            let r = [];
+            const r = [];
             for (let col = 0; col < BOARD_SIZE; col++) {
                 r.push(null);
             }
@@ -79,10 +79,14 @@ export class SceneGameArena extends Phaser.Scene {
         }
 
         // keyboard input
-        this.keys = this.input.keyboard.addKeys("w,up,a,left,s,down,d,right,q,z,e,x");
+        this.keys = this.input.keyboard.addKeys(
+            "w,up,a,left,s,down,d,right,q,z,e,x"
+        );
 
         // falling, controllable tetromino
-        this.currentTetro = new RenderedTetromino(this.gameState.currentTetromino);
+        this.currentTetro = new RenderedTetromino(
+            this.gameState.currentTetromino
+        );
         this.otherTetros = [];
         for (let i = 0; i < 3; i++) {
             this.otherTetros.push(
@@ -98,9 +102,12 @@ export class SceneGameArena extends Phaser.Scene {
         });
 
         this.socket.on("toSceneGameOver", (playerPoints) => {
-            this.scene.start("SceneGameOver", { ...this.sharedState, playerPoints: playerPoints, gameState: this.gameState });
+            this.scene.start("SceneGameOver", {
+                ...this.sharedState,
+                playerPoints: playerPoints,
+                gameState: this.gameState,
+            });
         });
-
     }
 
     update(time: number, delta: number) {
@@ -110,7 +117,13 @@ export class SceneGameArena extends Phaser.Scene {
         // the player has received their playerID & guarantee the scene has that data.
         // Load in the controlsUI for players. Placed here due to a potential time delay for receiving the playerID.
         if (this.controls == null && this.gameState.playerId != null) {
-            this.controls = new ControlsUI(this, ["keyA", "keyD", "keyS", "keyQ", "keyE"]);
+            this.controls = new ControlsUI(this, [
+                "keyA",
+                "keyD",
+                "keyS",
+                "keyQ",
+                "keyE",
+            ]);
         }
 
         // 12 fps
@@ -130,8 +143,8 @@ export class SceneGameArena extends Phaser.Scene {
     private updateBoardFromFrozen(scene: SceneGameArena) {
         scene.gameState.board = cloneDeep(scene.gameState.frozenBoard);
         for (let i = 0; i < 3; i++) {
-            let tetro = scene.otherTetros[i].inner;
-            for (let tile of tetro.tiles) {
+            const tetro = scene.otherTetros[i].inner;
+            for (const tile of tetro.tiles) {
                 const row = tile[0] + tetro.position[0];
                 const col = tile[1] + tetro.position[1];
                 scene.gameState.board[row][col] = tetro.type;
@@ -170,8 +183,8 @@ export class SceneGameArena extends Phaser.Scene {
             for (let col = 0; col < BOARD_SIZE; col++) {
                 scene.renderedBoard[row][col]?.destroy();
                 if (board[row][col]) {
-                    let x = (col + 0.5) * TILE_SIZE;
-                    let y = (row + 0.5) * TILE_SIZE;
+                    const x = (col + 0.5) * TILE_SIZE;
+                    const y = (row + 0.5) * TILE_SIZE;
                     scene.renderedBoard[row][col] = scene.add.rectangle(
                         x,
                         y,
@@ -218,7 +231,7 @@ export class SceneGameArena extends Phaser.Scene {
     private canTetroFall(
         tetro: Tetromino,
         board: Array<Array<TetrominoType | null>>
-    ): Boolean {
+    ): boolean {
         // if the blocks right below this tetro are all empty, it can fall.
         const bottomRelative = Math.max(...tetro.tiles.map((tile) => tile[0])); // the lowest block in the tetro tiles, ranging from 0-3
         const bottomAbsolute = tetro.position[0] + bottomRelative; // the row of which the lowest block of the tetro is at in the board

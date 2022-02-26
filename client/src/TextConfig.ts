@@ -1,4 +1,4 @@
 export interface TextConfig {
-    fontSize: string,
-    fontFamily: string
+    fontSize: string;
+    fontFamily: string;
 }

@@ -17,21 +17,25 @@ export class ScoreboardUI {
     private regularTextConfig: TextConfig;
     private socket: SocketScoreboard;
 
-    constructor(SceneGameArena: SceneGameArena | SceneGameOver, socket: SocketScoreboard, shouldLoadScoreboard: boolean = false) {
+    constructor(
+        SceneGameArena: SceneGameArena | SceneGameOver,
+        socket: SocketScoreboard,
+        shouldLoadScoreboard = false
+    ) {
         this.scene = SceneGameArena;
         this.listOfScores = [];
         this.socket = socket;
         this.initListeners();
-        console.log("init scoreboard: ", this.socket)
+        console.log("init scoreboard: ", this.socket);
 
         // Configs used for the different text's.
         this.headerTextConfig = {
             fontSize: `${BOARD_SIZE}px`,
-            fontFamily: "VT323"
+            fontFamily: "VT323",
         };
         this.regularTextConfig = {
             fontSize: `${BOARD_SIZE / 2}px`,
-            fontFamily: "VT323"
+            fontFamily: "VT323",
         };
 
         if (shouldLoadScoreboard) {
@@ -58,7 +62,7 @@ export class ScoreboardUI {
 
         this.socket.on("updateScoreboard", (scores) => {
             this.updateScoreboard(scores);
-        })
+        });
     }
 
     /**
@@ -67,30 +71,60 @@ export class ScoreboardUI {
     public loadScoreboard() {
         // Add in the 'leaderboard' header.
         this.scene.add
-            .text(14 * BOARD_SIZE + 25, 16, "Leaderboard", this.headerTextConfig)
-            .setTint(0xFF0000);
+            .text(
+                14 * BOARD_SIZE + 25,
+                16,
+                "Leaderboard",
+                this.headerTextConfig
+            )
+            .setTint(0xff0000);
 
         // Add in the individual player scores (initially 0).
-        let y: number = BOARD_SIZE * 1.5;
+        const y: number = BOARD_SIZE * 1.5;
         this.listOfScores[0] = this.scene.add
-            .text(14 * BOARD_SIZE + 60, y, "Orange".padEnd(10) + "0", this.regularTextConfig)
-            .setTint(0xFFA500);
+            .text(
+                14 * BOARD_SIZE + 60,
+                y,
+                "Orange".padEnd(10) + "0",
+                this.regularTextConfig
+            )
+            .setTint(0xffa500);
 
         this.listOfScores[1] = this.scene.add
-            .text(14 * BOARD_SIZE + 60, y + 30, "Green".padEnd(10) + "0", this.regularTextConfig)
-            .setTint(0x00FF00);
+            .text(
+                14 * BOARD_SIZE + 60,
+                y + 30,
+                "Green".padEnd(10) + "0",
+                this.regularTextConfig
+            )
+            .setTint(0x00ff00);
 
         this.listOfScores[2] = this.scene.add
-            .text(14 * BOARD_SIZE + 60, y + 60, "Pink".padEnd(10) + "0", this.regularTextConfig)
-            .setTint(0xFF00FF);
+            .text(
+                14 * BOARD_SIZE + 60,
+                y + 60,
+                "Pink".padEnd(10) + "0",
+                this.regularTextConfig
+            )
+            .setTint(0xff00ff);
 
         this.listOfScores[3] = this.scene.add
-            .text(14 * BOARD_SIZE + 60, y + 90, "Blue".padEnd(10) + "0", this.regularTextConfig)
-            .setTint(0x00BFFF);
+            .text(
+                14 * BOARD_SIZE + 60,
+                y + 90,
+                "Blue".padEnd(10) + "0",
+                this.regularTextConfig
+            )
+            .setTint(0x00bfff);
 
         this.listOfScores[4] = this.scene.add
-            .text(14 * BOARD_SIZE + 60, y + 120, "Level".padEnd(10) + "1", this.regularTextConfig)
-            .setTint(0xFFFFFF);
+            .text(
+                14 * BOARD_SIZE + 60,
+                y + 120,
+                "Level".padEnd(10) + "1",
+                this.regularTextConfig
+            )
+            .setTint(0xffffff);
     }
 
     /**
@@ -99,10 +133,9 @@ export class ScoreboardUI {
      */
     public updateScoreboard(playerPts: Array<ColoredScore>) {
         for (let i = 0; i < playerPts.length; i++) {
-            let text = `${playerPts[i].color}`.padEnd(10) + `${playerPts[i].points}`;
-            this.listOfScores[i]
-                .setText(text)
-                .setTint(playerPts[i].hex);
+            const text =
+                `${playerPts[i].color}`.padEnd(10) + `${playerPts[i].points}`;
+            this.listOfScores[i].setText(text).setTint(playerPts[i].hex);
         }
     }
 
@@ -113,20 +146,31 @@ export class ScoreboardUI {
      */
     public createFullscreenScoreboard(playerData: Array<ColoredScore>) {
         this.scene.add
-            .text(BOARD_SIZE * TILE_SIZE / 4, BOARD_SIZE * TILE_SIZE / 4, "Game Over!", { fontSize: "82px", fontFamily: "VT323" })
-            .setTint(0xFF0000);
+            .text(
+                (BOARD_SIZE * TILE_SIZE) / 4,
+                (BOARD_SIZE * TILE_SIZE) / 4,
+                "Game Over!",
+                { fontSize: "82px", fontFamily: "VT323" }
+            )
+            .setTint(0xff0000);
 
         let y: number = 12 * TILE_SIZE;
-        for (let element of playerData) {
+        for (const element of playerData) {
             y += 50;
-            let text = `${element.color}`.padEnd(20) + `${element.points}`;
+            const text = `${element.color}`.padEnd(20) + `${element.points}`;
             this.scene.add
-                .text(11 * TILE_SIZE, y, text, { fontSize: "32px", fontFamily: "VT323" })
+                .text(11 * TILE_SIZE, y, text, {
+                    fontSize: "32px",
+                    fontFamily: "VT323",
+                })
                 .setTint(element.hex);
         }
 
         this.scene.add
-            .text(5 * TILE_SIZE, y + 70, "New game starting in 30 seconds", { fontSize: "42px", fontFamily: "VT323" })
-            .setTint(0xFF0000);
+            .text(5 * TILE_SIZE, y + 70, "New game starting in 30 seconds", {
+                fontSize: "42px",
+                fontFamily: "VT323",
+            })
+            .setTint(0xff0000);
     }
 }

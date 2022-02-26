@@ -5,7 +5,7 @@ export class CookieTracker {
      * @param cookieValue The value to be assigned to the cookie.
      */
     public setCookie(cookieName: string, cookieValue: string) {
-        let expirationDate = new Date();
+        const expirationDate = new Date();
         expirationDate.setDate(expirationDate.getDate() + 1);
 
         document.cookie = `${cookieName}=${cookieValue};expires=${expirationDate.toUTCString()};path=/;`;
@@ -17,11 +17,11 @@ export class CookieTracker {
      * @returns The value of the cookie. Or an empty string if the cookie was not found.
      */
     public getCookie(cookieName: string) {
-        let name = cookieName + "=";
-        let ca = document.cookie.split(';');
+        const name = cookieName + "=";
+        const ca = document.cookie.split(";");
         for (let i = 0; i < ca.length; i++) {
             let cookie = ca[i];
-            while (cookie.charAt(0) == ' ') {
+            while (cookie.charAt(0) == " ") {
                 cookie = cookie.substring(1);
             }
             if (cookie.indexOf(name) == 0) {
