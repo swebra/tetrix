@@ -62,35 +62,36 @@ const level = new Level();
 const queue = new PlayerQueue();
 const spectator = new Spectator();
 
-// Emit to all sockets.
+// =========== Emit to all sockets ================
 export function broadcastUpdateScoreboard(msg: Array<ColoredScore>) {
     io.sockets.emit("updateScoreboard", msg);
 }
 
-// Emit to all sockets.
-export function broadcastToSceneGameOver(msg: Array<ColoredScore>) {
-    queue.resetCounter();
-    io.sockets.emit("toSceneGameOver", msg);
-}
-
-// Emit to all sockets.
 export function broadcastToSceneWaitingRoom() {
-    queue.resetCounter();
-    io.sockets.emit("toSceneWaitingRoom");
+  queue.resetQueue();
+  io.sockets.emit("toSceneWaitingRoom");
 }
 
-// Emit to all sockets.
+export function broadcastToSceneGameArena() {
+  io.sockets.emit("toSceneGameArena");
+}
+
+export function broadcastToSceneGameOver(msg: Array<ColoredScore>) {
+  io.sockets.emit("toSceneGameOver", msg);
+}
+
 export function broadcastShowVotingSequence(votingSequence: string) {
     io.sockets.emit("showVotingSequence", votingSequence);
 }
 
-// Emit to all sockets.
 export function broadcastHideVotingSequence() {
     io.sockets.emit("hideVotingSequence");
 }
 
-// Uncomment to send the client a voting request. (lasts 10 seconds)
-spectator.generateFirstVotingSequence(level);
+export function broadcastRemainingPlayers(playersNeeded: number) {
+  io.sockets.emit("updateRemainingPlayers", playersNeeded);
+}
+// ==============================================
 
 // Uncomment to view the game end sequence:
 // setTimeout(() => {
@@ -99,41 +100,18 @@ spectator.generateFirstVotingSequence(level);
 // }, 30000);
 
 io.on("connection", (socket) => {
-    // =====================================================
-    // FIXME: Delete the following lines from the final game.
-    // These are left in for testing convenience.
+  if (process.env.VITE_DISABLE_WAITING_ROOM) {
     socket.emit("initPlayer", playerCounter);
     playerCounter += 1;
     playerCounter %= 4;
-    // ======================================================
+  }
 
-    socket.on("playerMove", (...args) => {
-        socket.broadcast.emit("playerMove", ...args);
-    });
-    scoreboard.initSocketListeners(socket, level);
-    spectator.initSocketListeners(socket);
+  socket.on("playerMove", (...args) => {
+    socket.broadcast.emit("playerMove", ...args);
+  });
 
-    socket.on("requestRemainingPlayers", () => {
-        socket.emit("updateRemainingPlayers", queue.getRemainingPlayers());
-    });
-
-    socket.on("joinGame", () => {
-        const playerIndex: number = queue.addToQueue();
-
-        // If there was room in the queue, notify the client of their player index value.
-        if (playerIndex < 4) {
-            socket.emit("initPlayer", playerIndex as 0 | 1 | 2 | 3);
-            io.sockets.emit(
-                "updateRemainingPlayers",
-                queue.getRemainingPlayers()
-            );
-
-            // 4 players have joined. Start the game.
-            if (playerIndex == 3) {
-                io.sockets.emit("toSceneGameArena");
-            }
-        }
-    });
-
-    // FIXME need a state machine to tell which scene the game is at, conditionally tackle disconnections?
+  scoreboard.initSocketListeners(socket, level);
+  spectator.initSocketListeners(socket);
+  queue.initSocketListeners(socket);
+  // FIXME need a state machine to tell which scene the game is at, conditionally tackle disconnections?
 });

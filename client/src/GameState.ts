@@ -11,13 +11,14 @@ export class GameState {
     socket: GameSocket;
 
     // frozen board is the board without moving players, NOTE: frozenBoard is the truth of placed blocks
-    frozenBoard: Array<Array<TetrominoType>>;
+    frozenBoard: Array<Array<TetrominoType | null>>;
     // board is the final product being rendered. contains all 3 other players
-    board: Array<Array<TetrominoType>>;
+    board: Array<Array<TetrominoType | null>>;
 
     // synced to server
     currentTetromino: Tetromino;
-    // synced from server
+    // synced from server, ordered by increasing, circular player numbers
+    // i.e. if you are player 1, these are of player 2, then 3, then 0
     otherPieces: Array<Tetromino>;
     playerId!: 0 | 1 | 2 | 3;
 
@@ -26,7 +27,7 @@ export class GameState {
         for (let r = 0; r < BOARD_SIZE; r++) {
             const row = [];
             for (let c = 0; c < BOARD_SIZE; c++) {
-                row.push(TetrominoType.Empty);
+                row.push(null);
             }
             board.push(row);
         }
@@ -53,12 +54,11 @@ export class GameState {
             console.log("playerId: ", playerId);
         });
 
-        // other player is sending in some action, should re-render using onPlayerAction
-        this.socket.on("playerMove", (playerId, position) => {
-            const otherPlayerIndex = ((playerId + 4 - this.playerId) % 4) - 1; // FIXME hack.
-            this.otherPieces[otherPlayerIndex].position = position.position;
-            this.otherPieces[otherPlayerIndex].rotation = position.rotation;
-            this.otherPieces[otherPlayerIndex].type = position.type;
+        this.socket.on("playerMove", (playerId, state) => {
+            let i = (3 - this.playerId + playerId) % 4 // Circular distance
+            this.otherPieces[i].setType(state.type);
+            this.otherPieces[i].setRotatedPosition(state.position, i + 1);
+            this.otherPieces[i].setRotation(i + 1 + state.rotation);
         });
     }
 }

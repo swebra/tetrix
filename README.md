@@ -9,7 +9,7 @@ A capstone project
 | Component | Name | Type | Default | Function |
 | --------- | ---- | ---- | ------- | -------- |
 | Client | `VITE_BACKEND_URL` | String | `http://localhost:3001/` | URL of the Tetrix backend server (not to be confused with the client Vite server) |
-| Client | `VITE_DISABLE_WAITING_ROOM` | Boolean | `false` | Skips the game's initial player waiting room |
+| Client & Server | `VITE_DISABLE_WAITING_ROOM` | Boolean | `false` | Skips the game's initial player waiting room |
 | Server | `PORT` | Integer | `80` | The port used by the server |
 
 

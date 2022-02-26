@@ -1,5 +1,4 @@
 import Phaser from "phaser";
-import { GameState } from "../GameState";
 import { BOARD_SIZE } from "common/shared";
 import { SharedState } from "..";
 import { Socket } from "socket.io-client";
@@ -14,20 +13,22 @@ type SocketWaitingRoom = Socket<ToClientEvents, ToServerEvents>;
 
 export class SceneWaitingRoom extends Phaser.Scene {
     private playersNeededText!: Phaser.GameObjects.Text;
+    private headerText!: Phaser.GameObjects.Text;
     private button!: Phaser.GameObjects.Text;
-    private gameState!: GameState;
     private socket!: SocketWaitingRoom;
     private sharedData!: SharedState;
+    private inQueue: boolean;
 
     constructor() {
         super({
             key: "SceneWaitingRoom",
         });
+
+        this.inQueue = false;
     }
 
     init(data: SharedState) {
         this.sharedData = data;
-        this.gameState = data.gameState;
         this.socket = data.socket;
         this.initListeners();
     }
@@ -37,25 +38,10 @@ export class SceneWaitingRoom extends Phaser.Scene {
     }
 
     create() {
-        this.add
-            .text(
-                BOARD_SIZE * 2.5,
-                BOARD_SIZE * 5,
-                "A new game is starting soon",
-                {
-                    fontSize: "52px",
-                    fontFamily: "VT323",
-                }
-            )
-            .setTint(0xff0000);
-        this.add
-            .text(
-                BOARD_SIZE * 4.5,
-                BOARD_SIZE * 6.5,
-                "Click the button below to join!",
-                { fontSize: "32px", fontFamily: "VT323" }
-            )
-            .setTint(0xff0000);
+        this.add.text(BOARD_SIZE * 2.5, BOARD_SIZE * 5, "A new game is starting soon", { fontSize: "52px", fontFamily: "VT323" })
+            .setTint(0xFF0000);
+        this.headerText = this.add.text(BOARD_SIZE * 4.5, BOARD_SIZE * 6.5, "Click the button below to join!", { fontSize: "32px", fontFamily: "VT323" })
+            .setTint(0xFF0000);
 
         this.button = this.add
             .text(BOARD_SIZE * 6.5, BOARD_SIZE * 9, "> Join <", {
@@ -90,16 +76,21 @@ export class SceneWaitingRoom extends Phaser.Scene {
         this.socket.emit("requestRemainingPlayers");
     }
 
-    initListeners() {
+    private initListeners () {
         this.socket.on("updateRemainingPlayers", (remainingPlayers: number) => {
             console.log("update remaining: ", remainingPlayers);
             this.playersNeededText.setText(
                 `Waiting on ${remainingPlayers} more player(s)`
             );
 
+            if (this.inQueue && remainingPlayers > 0) {
+                this.headerText.setText("Your request has been sent!");
+            }
+
             // Hide the join button if all player positions are occupied.
             if (remainingPlayers <= 0) {
                 this.button.setText("");
+                this.headerText.setText("Game starting in 5 seconds!");
             }
         });
 
@@ -127,6 +118,8 @@ export class SceneWaitingRoom extends Phaser.Scene {
      */
     private requestJoinGame() {
         this.button.setText("");
-        this.socket.emit("joinGame");
+        this.socket.emit("joinQueue");
+        this.headerText.setText("Your request has been sent!");
+        this.inQueue = true;
     }
 }
