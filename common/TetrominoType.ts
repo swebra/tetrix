@@ -1,10 +1,9 @@
 export enum TetrominoType {
-  LClockwise,
-  LCounterClockwise,
-  Z,
+  I,
+  J,
+  L,
+  O,
   S,
   T,
-  Square,
-  Long,
-  Empty,
-}
+  Z
+};
