@@ -25,7 +25,7 @@ import KEY_E from "../assets/controls/KEY_E.svg";
 type SocketGame = Socket<ToClientEvents, ToServerEvents>;
 
 export class SceneGameArena extends Phaser.Scene {
-    FRAMERATE = 12;
+    FRAMERATE: number = 12;
 
     keys!: any; // Phaser doesn't provide nice typing for keyboard.addKeys
     sharedState!: SharedState;
@@ -40,7 +40,7 @@ export class SceneGameArena extends Phaser.Scene {
     spectator!: SpectatorUI;
     controls!: ControlsUI;
 
-    frameTimeElapsed = 0; // the ms time since the last frame is drawn
+    frameTimeElapsed: number = 0; // the ms time since the last frame is drawn
 
     constructor() {
         super({
