@@ -23,7 +23,7 @@ export type ClientToServerEvents = sceneWaitingRoomMsgs.ToServerEvents &
 export type PlayerID = 0 | 1 | 2 | 3;
 
 export type TetrominoState = {
-    type: TetrominoType
+    type: TetrominoType;
     position: [number, number];
     rotation: 0 | 1 | 2 | 3;
-}
+};

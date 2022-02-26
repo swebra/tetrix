@@ -79,7 +79,9 @@ export class SceneGameArena extends Phaser.Scene {
         }
 
         // keyboard input
-        this.keys = this.input.keyboard.addKeys("w,up,a,left,s,down,d,right,q,z,e,x");
+        this.keys = this.input.keyboard.addKeys(
+            "w,up,a,left,s,down,d,right,q,z,e,x"
+        );
 
         // falling, controllable tetromino
         this.currentTetro = new RenderedTetromino(
@@ -141,8 +143,8 @@ export class SceneGameArena extends Phaser.Scene {
     private updateBoardFromFrozen(scene: SceneGameArena) {
         scene.gameState.board = cloneDeep(scene.gameState.frozenBoard);
         for (let i = 0; i < 3; i++) {
-            let tetro = scene.otherTetros[i].inner;
-            for (let tile of tetro.tiles) {
+            const tetro = scene.otherTetros[i].inner;
+            for (const tile of tetro.tiles) {
                 const row = tile[0] + tetro.position[0];
                 const col = tile[1] + tetro.position[1];
                 scene.gameState.board[row][col] = tetro.type;
@@ -181,8 +183,8 @@ export class SceneGameArena extends Phaser.Scene {
             for (let col = 0; col < BOARD_SIZE; col++) {
                 scene.renderedBoard[row][col]?.destroy();
                 if (board[row][col]) {
-                    let x = (col + 0.5) * TILE_SIZE;
-                    let y = (row + 0.5) * TILE_SIZE;
+                    const x = (col + 0.5) * TILE_SIZE;
+                    const y = (row + 0.5) * TILE_SIZE;
                     scene.renderedBoard[row][col] = scene.add.rectangle(
                         x,
                         y,
@@ -229,7 +231,7 @@ export class SceneGameArena extends Phaser.Scene {
     private canTetroFall(
         tetro: Tetromino,
         board: Array<Array<TetrominoType | null>>
-    ): Boolean {
+    ): boolean {
         // if the blocks right below this tetro are all empty, it can fall.
         const bottomRelative = Math.max(...tetro.tiles.map((tile) => tile[0])); // the lowest block in the tetro tiles, ranging from 0-3
         const bottomAbsolute = tetro.position[0] + bottomRelative; // the row of which the lowest block of the tetro is at in the board

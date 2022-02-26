@@ -38,10 +38,22 @@ export class SceneWaitingRoom extends Phaser.Scene {
     }
 
     create() {
-        this.add.text(BOARD_SIZE * 2.5, BOARD_SIZE * 5, "A new game is starting soon", { fontSize: "52px", fontFamily: "VT323" })
-            .setTint(0xFF0000);
-        this.headerText = this.add.text(BOARD_SIZE * 4.5, BOARD_SIZE * 6.5, "Click the button below to join!", { fontSize: "32px", fontFamily: "VT323" })
-            .setTint(0xFF0000);
+        this.add
+            .text(
+                BOARD_SIZE * 2.5,
+                BOARD_SIZE * 5,
+                "A new game is starting soon",
+                { fontSize: "52px", fontFamily: "VT323" }
+            )
+            .setTint(0xff0000);
+        this.headerText = this.add
+            .text(
+                BOARD_SIZE * 4.5,
+                BOARD_SIZE * 6.5,
+                "Click the button below to join!",
+                { fontSize: "32px", fontFamily: "VT323" }
+            )
+            .setTint(0xff0000);
 
         this.button = this.add
             .text(BOARD_SIZE * 6.5, BOARD_SIZE * 9, "> Join <", {
@@ -76,7 +88,7 @@ export class SceneWaitingRoom extends Phaser.Scene {
         this.socket.emit("requestRemainingPlayers");
     }
 
-    private initListeners () {
+    private initListeners() {
         this.socket.on("updateRemainingPlayers", (remainingPlayers: number) => {
             console.log("update remaining: ", remainingPlayers);
             this.playersNeededText.setText(

@@ -68,16 +68,16 @@ export function broadcastUpdateScoreboard(msg: Array<ColoredScore>) {
 }
 
 export function broadcastToSceneWaitingRoom() {
-  queue.resetQueue();
-  io.sockets.emit("toSceneWaitingRoom");
+    queue.resetQueue();
+    io.sockets.emit("toSceneWaitingRoom");
 }
 
 export function broadcastToSceneGameArena() {
-  io.sockets.emit("toSceneGameArena");
+    io.sockets.emit("toSceneGameArena");
 }
 
 export function broadcastToSceneGameOver(msg: Array<ColoredScore>) {
-  io.sockets.emit("toSceneGameOver", msg);
+    io.sockets.emit("toSceneGameOver", msg);
 }
 
 export function broadcastShowVotingSequence(votingSequence: string) {
@@ -89,7 +89,7 @@ export function broadcastHideVotingSequence() {
 }
 
 export function broadcastRemainingPlayers(playersNeeded: number) {
-  io.sockets.emit("updateRemainingPlayers", playersNeeded);
+    io.sockets.emit("updateRemainingPlayers", playersNeeded);
 }
 // ==============================================
 
@@ -100,18 +100,18 @@ export function broadcastRemainingPlayers(playersNeeded: number) {
 // }, 30000);
 
 io.on("connection", (socket) => {
-  if (process.env.VITE_DISABLE_WAITING_ROOM) {
-    socket.emit("initPlayer", playerCounter);
-    playerCounter += 1;
-    playerCounter %= 4;
-  }
+    if (process.env.VITE_DISABLE_WAITING_ROOM) {
+        socket.emit("initPlayer", playerCounter);
+        playerCounter += 1;
+        playerCounter %= 4;
+    }
 
-  socket.on("playerMove", (...args) => {
-    socket.broadcast.emit("playerMove", ...args);
-  });
+    socket.on("playerMove", (...args) => {
+        socket.broadcast.emit("playerMove", ...args);
+    });
 
-  scoreboard.initSocketListeners(socket, level);
-  spectator.initSocketListeners(socket);
-  queue.initSocketListeners(socket);
-  // FIXME need a state machine to tell which scene the game is at, conditionally tackle disconnections?
+    scoreboard.initSocketListeners(socket, level);
+    spectator.initSocketListeners(socket);
+    queue.initSocketListeners(socket);
+    // FIXME need a state machine to tell which scene the game is at, conditionally tackle disconnections?
 });

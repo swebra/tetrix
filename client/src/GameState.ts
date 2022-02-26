@@ -55,7 +55,7 @@ export class GameState {
         });
 
         this.socket.on("playerMove", (playerId, state) => {
-            let i = (3 - this.playerId + playerId) % 4 // Circular distance
+            const i = (3 - this.playerId + playerId) % 4; // Circular distance
             this.otherPieces[i].setType(state.type);
             this.otherPieces[i].setRotatedPosition(state.position, i + 1);
             this.otherPieces[i].setRotation(i + 1 + state.rotation);
