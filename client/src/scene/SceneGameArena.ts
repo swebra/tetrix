@@ -22,7 +22,7 @@ import KEY_S from "../assets/controls/KEY_S.svg";
 import KEY_Q from "../assets/controls/KEY_Q.svg";
 import KEY_E from "../assets/controls/KEY_E.svg";
 import KEY_SHIFT from "../assets/controls/KEY_SHIFT.svg";
-import { TradeUI } from "./TradeUI";
+import { Trade, TradeUI } from "./TradeUI";
 
 type SocketGame = Socket<ToClientEvents, ToServerEvents>;
 
@@ -143,6 +143,11 @@ export class SceneGameArena extends Phaser.Scene {
             // start next frame
             this.frameTimeElapsed = 0;
         }
+        //TODO socket display
+        
+        // this.socket.on("playerTrade", (playerId) => {
+        //     this.trade.displayAccept();
+        // })
     }
 
     // the frozen board is all blocks that are placed. the board contains dynamic player blocks.
@@ -164,6 +169,7 @@ export class SceneGameArena extends Phaser.Scene {
     // 2. they have duplicate logic with the Phaser.Scene.time.addEvent, consider moving the falling down here, but we need a internal state/class instance for each of them to track time delta in order to have a different function
     private updateUserInput(scene: SceneGameArena) {
         let moved = false;
+        let tradeChanged = false;
         if (scene.keys.a.isDown || scene.keys.left.isDown) {
             moved = scene.gameState.currentTetromino.move(-1);
         } else if (scene.keys.d.isDown || scene.keys.right.isDown) {
@@ -172,6 +178,17 @@ export class SceneGameArena extends Phaser.Scene {
             moved = scene.gameState.currentTetromino.rotateCCW();
         } else if (scene.keys.e.isDown || scene.keys.x.isDown) {
             moved = scene.gameState.currentTetromino.rotateCW();
+        } else if (scene.keys.shift.isDown) {
+            if (this.trade.tradeType == Trade.Offer) {
+                this.trade.displayProgress()
+                tradeChanged = true;
+            }
+            else if (this.trade.tradeType == Trade.Accept) {
+                this.trade.displayOffer()
+                tradeChanged = true;
+            }
+                //do nothing if progressing
+            else if (this.trade.tradeType == Trade.Progress){}
         }
 
         if (moved) {
@@ -180,6 +197,12 @@ export class SceneGameArena extends Phaser.Scene {
                 scene.gameState.playerId,
                 scene.gameState.currentTetromino.reportPosition()
             );
+        }
+        if (tradeChanged) {
+            scene.gameState.socket.emit("playerTrade",
+                scene.gameState.playerId,
+                scene.gameState.currentTetromino.reportPosition()
+            )
         }
     }
 

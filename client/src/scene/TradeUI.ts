@@ -18,12 +18,15 @@ export class TradeUI {
       this.tradeText = scene.add.text(20, y, this.offerText, {fontSize: `20px`, fontFamily: "VT323"});
     }
     public displayOffer() {
+        this.tradeType = Trade.Offer;
         this.tradeText.setText(this.offerText)
     }
     public displayAccept() {
+        this.tradeType = Trade.Accept
         this.tradeText.setText(this.acceptText)
     }
     public displayProgress() {
+        this.tradeType = Trade.Progress
         this.tradeText.setText(this.progressText)
     }
 }

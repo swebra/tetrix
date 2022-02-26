@@ -60,5 +60,6 @@ export class GameState {
             this.otherPieces[i].setRotatedPosition(state.position, i + 1);
             this.otherPieces[i].setRotation(i + 1 + state.rotation);
         });
+        
     }
 }

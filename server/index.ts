@@ -109,7 +109,9 @@ io.on("connection", (socket) => {
     socket.on("playerMove", (...args) => {
         socket.broadcast.emit("playerMove", ...args);
     });
-
+  socket.on("playerTrade", (...args) => {
+    socket.broadcast.emit("playerTrade", ...args);
+    })
     scoreboard.initSocketListeners(socket, level);
     spectator.initSocketListeners(socket);
     queue.initSocketListeners(socket);
