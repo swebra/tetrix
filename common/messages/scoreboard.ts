@@ -1,9 +1,9 @@
-import {ColoredScore} from "../shared";
+import { ColoredScore } from "../shared";
 
 export interface ToClientEvents {
-  updateScoreboard: (data: Array<ColoredScore>) => void;
+    updateScoreboard: (data: Array<ColoredScore>) => void;
 }
 
 export interface ToServerEvents {
-  requestScoreboardData: () => void;
+    requestScoreboardData: () => void;
 }

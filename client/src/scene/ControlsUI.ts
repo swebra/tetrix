@@ -2,18 +2,18 @@ import { SceneGameArena } from "./SceneGameArena";
 
 export class ControlsUI {
   constructor(scene: SceneGameArena, keys: Array<string>) {
-    let y: number = 550;
-    let index: number = 0;
-    let controlInfo = [
+    let y = 550;
+    let index = 0;
+    const controlInfo = [
       "Move Left",
       "Move Right",
       "Move Down",
       "Rotate CCW",
       "Rotate CW",
-      "Trade Action",
+      "Trade Action"
     ];
 
-    for (let key of keys) {
+    for (const key of keys) {
       scene.add.image(50, y, key).setScale(0.2);
 
       scene.add

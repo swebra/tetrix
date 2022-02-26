@@ -1,8 +1,8 @@
-import {ColoredScore} from "../shared";
+import { ColoredScore } from "../shared";
 
 export interface ToClientEvents {
-  toSceneGameOver: (data: Array<ColoredScore>) => void;
+    toSceneGameOver: (data: Array<ColoredScore>) => void;
 }
 
-export interface ToServerEvents {
-}
+// eslint-disable-next-line @typescript-eslint/no-empty-interface
+export interface ToServerEvents {}

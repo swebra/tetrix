@@ -1,6 +1,10 @@
-import { Player } from "./PlayerAttributes";
+import { PlayerColor } from "./PlayerAttributes";
 import { Level } from "./Level";
-import { broadcastUpdateScoreboard, broadcastToSceneWaitingRoom, broadcastToSceneGameOver } from "../index";
+import {
+    broadcastUpdateScoreboard,
+    broadcastToSceneWaitingRoom,
+    broadcastToSceneGameOver,
+} from "../index";
 
 import { ToServerEvents, ToClientEvents } from "common/messages/scoreboard";
 import { ColoredScore } from "common/shared";
@@ -26,40 +30,40 @@ export class Scoreboard {
         this._scoreMap = [];
         this._scoreMap.push({
             color: "Orange",
-            hex: 0xFFA500,
-            points: this.orangeScore
+            hex: 0xffa500,
+            points: this.orangeScore,
         });
 
         this._scoreMap.push({
             color: "Green",
-            hex: 0x00FF00,
-            points: this.greenScore
+            hex: 0x00ff00,
+            points: this.greenScore,
         });
 
         this._scoreMap.push({
             color: "Pink",
-            hex: 0xFF00FF,
-            points: this.pinkScore
+            hex: 0xff00ff,
+            points: this.pinkScore,
         });
 
         this._scoreMap.push({
             color: "Blue",
-            hex: 0x00BFFF,
-            points: this.blueScore
+            hex: 0x00bfff,
+            points: this.blueScore,
         });
     }
 
     initSocketListeners(socket: SocketScoreboard, level: Level) {
-      socket.on("requestScoreboardData", () => {
-        let clonedData = Object.assign([], this.scoreMap);
-        clonedData.push({
-          color: "Level",
-          hex: 0xFFFFFF,
-          points: level.currentLevel
-        });
+        socket.on("requestScoreboardData", () => {
+            const clonedData = Object.assign([], this.scoreMap);
+            clonedData.push({
+                color: "Level",
+                hex: 0xffffff,
+                points: level.currentLevel,
+            });
 
-        socket.emit("updateScoreboard", clonedData)
-      });
+            socket.emit("updateScoreboard", clonedData);
+        });
     }
 
     get orangeScore(): number {
@@ -83,7 +87,12 @@ export class Scoreboard {
     }
 
     get currentTeamScore(): number {
-        return this._orangeScore + this._greenScore + this._pinkScore + this._blueScore;
+        return (
+            this._orangeScore +
+            this._greenScore +
+            this._pinkScore +
+            this._blueScore
+        );
     }
 
     get scoreMap(): Array<ColoredScore> {
@@ -111,16 +120,16 @@ export class Scoreboard {
         this._totalScore += value;
 
         switch (playerIndex) {
-            case Player.Color.Orange:
+            case PlayerColor.Orange:
                 this._orangeScore += value;
                 break;
-            case Player.Color.Green:
+            case PlayerColor.Green:
                 this._greenScore += value;
                 break;
-            case Player.Color.Pink:
+            case PlayerColor.Pink:
                 this._pinkScore += value;
                 break;
-            case Player.Color.Blue:
+            case PlayerColor.Blue:
                 this._blueScore += value;
                 break;
         }
@@ -135,27 +144,31 @@ export class Scoreboard {
      * @param value The value to decrememnt the score by.
      * @param currentLevel The current level of the game.
      */
-    public decrementScore(playerIndex: number, value: number, currentLevel: number) {
+    public decrementScore(
+        playerIndex: number,
+        value: number,
+        currentLevel: number
+    ) {
         switch (playerIndex) {
-            case Player.Color.Orange:
+            case PlayerColor.Orange:
                 this._orangeScore -= value;
                 if (this._orangeScore <= 0) {
                     this._orangeScore = 0;
                 }
                 break;
-            case Player.Color.Green:
+            case PlayerColor.Green:
                 this._greenScore -= value;
                 if (this._greenScore <= 0) {
                     this._greenScore = 0;
                 }
                 break;
-            case Player.Color.Pink:
+            case PlayerColor.Pink:
                 this._pinkScore -= value;
                 if (this._pinkScore <= 0) {
                     this._pinkScore = 0;
                 }
                 break;
-            case Player.Color.Blue:
+            case PlayerColor.Blue:
                 this._blueScore -= value;
                 if (this._blueScore <= 0) {
                     this._blueScore = 0;
@@ -200,11 +213,11 @@ export class Scoreboard {
         this.updateScoreMap();
 
         // Temporary clone of the data so that we can append the level of the game.
-        let clonedData = Object.assign([], this._scoreMap);
+        const clonedData = Object.assign([], this._scoreMap);
         clonedData.push({
             color: "Level",
-            hex: 0xFFFFFF,
-            points: level
+            hex: 0xffffff,
+            points: level,
         });
 
         // Notify all connected users.
@@ -218,11 +231,11 @@ export class Scoreboard {
         this.updateScoreMap();
 
         // Temporary clone of the data so that we can append the level of the game.
-        let clonedData = Object.assign([], this._scoreMap);
+        const clonedData = Object.assign([], this._scoreMap);
         clonedData.push({
             color: "TEAM SCORE",
-            hex: 0xFFFF00,
-            points: this.currentTeamScore
+            hex: 0xffff00,
+            points: this.currentTeamScore,
         });
 
         // Show scoreboard to all connected users.

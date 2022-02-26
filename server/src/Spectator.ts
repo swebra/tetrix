@@ -1,8 +1,11 @@
 import { Level } from "./Level";
-import { broadcastHideVotingSequence, broadcastShowVotingSequence } from "../index";
+import {
+    broadcastHideVotingSequence,
+    broadcastShowVotingSequence,
+} from "../index";
 
 import { ToServerEvents, ToClientEvents } from "common/messages/spectator";
-import {Socket} from "socket.io";
+import { Socket } from "socket.io";
 
 type SocketSpectator = Socket<ToServerEvents, ToClientEvents>;
 
@@ -11,7 +14,12 @@ export class Spectator {
     private _isAcceptingVotes: boolean;
     private _isVoteRunning: boolean;
     private _previouslyVotedOption: string;
-    private _votingMap: { noAction: number, option1: number, option2: number, option3: number };
+    private _votingMap: {
+        noAction: number;
+        option1: number;
+        option2: number;
+        option3: number;
+    };
     private _countdownValue: number;
     private _secondVotingRoundSelection: string;
 
@@ -24,7 +32,7 @@ export class Spectator {
             noAction: 0,
             option1: 0,
             option2: 0,
-            option3: 0
+            option3: 0,
         };
         this._countdownValue = 10;
         this._secondVotingRoundSelection = "null";
@@ -35,22 +43,22 @@ export class Spectator {
     }
 
     initSocketListeners(socket: SocketSpectator) {
-      socket.on("vote", (votingResult: string) => {
-        this.getResult(votingResult);
-      });
+        socket.on("vote", (votingResult: string) => {
+            this.getResult(votingResult);
+        });
 
-      socket.on("requestVotingSequence", () => {
-        let currentSequence = this.isVoteRunning();
-        if (currentSequence) {
-          socket.emit("showVotingSequence", currentSequence);
-        }
-      });
+        socket.on("requestVotingSequence", () => {
+            const currentSequence = this.isVoteRunning();
+            if (currentSequence) {
+                socket.emit("showVotingSequence", currentSequence);
+            }
+        });
 
-      socket.on("requestVotingCountdown", () => {
-        if (this.isVoteRunning()) {
-          socket.emit("sendVotingCountdown", this.countdownValue);
-        }
-      });
+        socket.on("requestVotingCountdown", () => {
+            if (this.isVoteRunning()) {
+                socket.emit("sendVotingCountdown", this.countdownValue);
+            }
+        });
     }
 
     /**
@@ -95,14 +103,16 @@ export class Spectator {
         broadcastShowVotingSequence("initialDisplay");
         this.startCountdown();
 
-        setTimeout(() => {this.makeDecision(level)}, 12000);
+        setTimeout(() => {
+            this.makeDecision(level);
+        }, 12000);
     }
 
     /**
      * Starts a countdown. This is primairly used for clients to sync up with.
      */
     private startCountdown() {
-        let interval = setInterval(() => {
+        const interval = setInterval(() => {
             this._countdownValue--;
 
             // Stop emitting the countdown if it hits -1 (we send '0' and then stop the interval).
@@ -126,7 +136,9 @@ export class Spectator {
         broadcastShowVotingSequence(votingSet);
         this.startCountdown();
 
-        setTimeout(() => {this.makeDecision(level)}, 12000);
+        setTimeout(() => {
+            this.makeDecision(level);
+        }, 12000);
     }
 
     /**
@@ -167,11 +179,11 @@ export class Spectator {
         this._isVoteRunning = false;
 
         // Get value of the most voted option.
-        let array: number[] = Object.values(this._votingMap);
-        let maxVal = Math.max.apply(Math, array);
+        const array: number[] = Object.values(this._votingMap);
+        const maxVal = Math.max(...array);
 
         // Collect all keys that have a matching value (need to tie-break).
-        let allOptions = [];
+        const allOptions = [];
         for (let i = 0; i < Object.keys(this._votingMap).length; i++) {
             if (array[i] == maxVal) {
                 allOptions.push(Object.keys(this._votingMap)[i]);
@@ -179,7 +191,7 @@ export class Spectator {
         }
 
         // Randomly select one of the options.
-        let selectedIndex = Math.floor(Math.random() * allOptions.length);
+        const selectedIndex = Math.floor(Math.random() * allOptions.length);
 
         if (this._isFirstRoundVoting) {
             // If no option was voted on, then don't continue.
@@ -205,7 +217,10 @@ export class Spectator {
                 break;
             case "option2":
                 if (this._isFirstRoundVoting) {
-                    this.generateSecondVotingSequence("tetrominoSelection", level);
+                    this.generateSecondVotingSequence(
+                        "tetrominoSelection",
+                        level
+                    );
                 } else if (this._previouslyVotedOption == "option1") {
                     level.spectatorDecrementLevel();
                     console.log("Decrementing level (fall rate)"); // FIXME: remove later.
