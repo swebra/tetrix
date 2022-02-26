@@ -41,6 +41,9 @@ export class SceneWaitingRoom extends Phaser.Scene {
     create() {
         this.add.image(BOARD_SIZE * 10, BOARD_SIZE * 10, "titleScreenArt");
 
+        this.add.text(BOARD_SIZE * 7.2, BOARD_SIZE * 2.5, "TETRIX", { fontSize: "92px", fontFamily: "VT323" })
+            .setTint(0xff00d4);
+
         this.headerText = this.add.text(BOARD_SIZE * 5, BOARD_SIZE * 7.5, "Click the button below to join", { fontSize: "32px", fontFamily: "VT323" })
             .setTint(0x7fa832);
 
