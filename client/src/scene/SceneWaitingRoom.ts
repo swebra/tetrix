@@ -6,6 +6,8 @@ import { Socket } from "socket.io-client";
 import { ToClientEvents, ToServerEvents } from "common/messages/sceneWaitingRoom";
 import { WebFontFile } from "../plugins/WebFontFile";
 
+import TitleScreen from "../assets/TitleScreen.svg";
+
 type SocketWaitingRoom = Socket<ToClientEvents, ToServerEvents>;
 
 export class SceneWaitingRoom extends Phaser.Scene {
@@ -31,24 +33,26 @@ export class SceneWaitingRoom extends Phaser.Scene {
     }
 
     preload() {
-        this.load.addFile(new WebFontFile(this.load, 'VT323'))
+        this.load.addFile(new WebFontFile(this.load, 'VT323'));
+
+        this.load.svg("titleScreenArt", TitleScreen);
     }
 
     create() {
-        this.add.text(BOARD_SIZE * 2.5, BOARD_SIZE * 5, "A new game is starting soon", { fontSize: "52px", fontFamily: "VT323" })
-            .setTint(0xFF0000);
-        this.headerText = this.add.text(BOARD_SIZE * 4.5, BOARD_SIZE * 6.5, "Click the button below to join!", { fontSize: "32px", fontFamily: "VT323" })
-            .setTint(0xFF0000);
+        this.add.image(BOARD_SIZE * 10, BOARD_SIZE * 10, "titleScreenArt");
 
-        this.button = this.add.text(BOARD_SIZE * 6.5, BOARD_SIZE * 9, "> Join <", { fontSize: "82px", fontFamily: "VT323" })
+        this.headerText = this.add.text(BOARD_SIZE * 5, BOARD_SIZE * 7.5, "Click the button below to join", { fontSize: "32px", fontFamily: "VT323" })
+            .setTint(0x7fa832);
+
+        this.button = this.add.text(BOARD_SIZE * 6.6, BOARD_SIZE * 9, "> Join <", { fontSize: "82px", fontFamily: "VT323" })
             .setTint(0x53bb74)
             .setInteractive({ useHandCursor: true })
             .on("pointerover", () => { this.isHovered(this.button, true) })
             .on("pointerout", () => { this.isHovered(this.button, false) })
             .on("pointerdown", () => { this.requestJoinGame() });
 
-        this.playersNeededText = this.add.text(BOARD_SIZE * 6.7, BOARD_SIZE * 12, "Waiting on 4 more player(s)", { fontSize: "22px", fontFamily: "VT323" })
-            .setTint(0xFF0000);
+        this.playersNeededText = this.add.text(BOARD_SIZE * 6.9, BOARD_SIZE * 12, "Waiting on 4 more player(s)", { fontSize: "22px", fontFamily: "VT323" })
+            .setTint(0x32a4a8);
 
         // Request the # of remaining players needed to start the game.
         this.socket.emit("requestRemainingPlayers");
@@ -58,16 +62,6 @@ export class SceneWaitingRoom extends Phaser.Scene {
         this.socket.on("updateRemainingPlayers", (remainingPlayers: number) => {
             console.log("update remaining: ", remainingPlayers)
             this.playersNeededText.setText(`Waiting on ${remainingPlayers} more player(s)`);
-
-            if (this.inQueue && remainingPlayers > 0) {
-                this.headerText.setText("Your request has been sent!");
-            }
-
-            // Hide the join button if all player positions are occupied.
-            if (remainingPlayers <= 0) {
-                this.button.setText("");
-                this.headerText.setText("Game starting in 5 seconds!");
-            }
         });
 
         // If the queue is full, we should receive the signal from the server to start the game.
@@ -95,7 +89,9 @@ export class SceneWaitingRoom extends Phaser.Scene {
     private requestJoinGame() {
         this.button.setText("");
         this.socket.emit("joinQueue");
-        this.headerText.setText("Your request has been sent!");
+        this.headerText.setText("Your request has been sent!")
+                    .setTint(0x50a832)
+                    .setPosition(BOARD_SIZE * 5.5, BOARD_SIZE * 7.5);
         this.inQueue = true;
     }
 }
