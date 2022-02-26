@@ -17,6 +17,10 @@ const config = {
     parent: "root",
     width: BOARD_SIZE * TILE_SIZE,
     height: BOARD_SIZE * TILE_SIZE,
+    scale: {
+        mode: Phaser.Scale.FIT,
+        autoCenter: Phaser.Scale.CENTER_BOTH,
+    },
     scene: import.meta.env.VITE_DISABLE_WAITING_ROOM
         ? [SceneGameArena, SceneGameOver]
         : [SceneWaitingRoom, SceneGameArena, SceneGameOver],
