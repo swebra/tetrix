@@ -1,6 +1,6 @@
 export interface ToClientEvents {
-  toSceneWaitingRoom: () => void;
+    toSceneWaitingRoom: () => void;
 }
 
-export interface ToServerEvents {
-}
+// eslint-disable-next-line @typescript-eslint/no-empty-interface
+export interface ToServerEvents {}

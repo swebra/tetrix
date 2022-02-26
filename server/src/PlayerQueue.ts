@@ -1,6 +1,9 @@
-import { ToClientEvents, ToServerEvents } from "common/messages/sceneWaitingRoom";
+import {
+    ToClientEvents,
+    ToServerEvents,
+} from "common/messages/sceneWaitingRoom";
 import { Socket } from "socket.io";
-import { broadcastRemainingPlayers, broadcastToSceneGameArena} from "..";
+import { broadcastRemainingPlayers, broadcastToSceneGameArena } from "..";
 
 type SocketQueue = Socket<ToServerEvents, ToClientEvents>;
 
@@ -20,7 +23,10 @@ export class PlayerQueue {
             // 4 valid connections are found. Start the game.
             if (this.getRemainingPlayers() === 0) {
                 for (let playerIndex = 0; playerIndex < 4; playerIndex++) {
-                    this.queue[playerIndex].emit("initPlayer", playerIndex as 0 | 1 | 2 | 3);
+                    this.queue[playerIndex].emit(
+                        "initPlayer",
+                        playerIndex as 0 | 1 | 2 | 3
+                    );
                 }
                 broadcastToSceneGameArena();
             }

@@ -8,16 +8,16 @@ import { ToClientEvents, ToServerEvents } from "common/messages/sceneGameOver";
 import { ColoredScore } from "common/shared";
 
 type SocketGameOver = Socket<ToClientEvents, ToServerEvents>;
-type SceneDataGameOver = SharedState & {playerPoints: Array<ColoredScore>};
+type SceneDataGameOver = SharedState & { playerPoints: Array<ColoredScore> };
 export class SceneGameOver extends Phaser.Scene {
     private playerData!: Array<ColoredScore>;
     private gameState!: GameState;
     private scoreboard!: ScoreboardUI;
     private socket!: SocketGameOver;
 
-    constructor () {
+    constructor() {
         super({
-            key: "SceneGameOver"
+            key: "SceneGameOver",
         });
     }
 
@@ -33,7 +33,10 @@ export class SceneGameOver extends Phaser.Scene {
         this.scoreboard.createFullscreenScoreboard(this.playerData);
 
         this.socket.on("toSceneWaitingRoom", () => {
-            this.scene.start("SceneWaitingRoom", {gameState: this.gameState, socket: this.socket});
+            this.scene.start("SceneWaitingRoom", {
+                gameState: this.gameState,
+                socket: this.socket,
+            });
             // FIXME: Possibly remove all our listeners here?
         });
     }
