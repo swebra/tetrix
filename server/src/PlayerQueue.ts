@@ -1,39 +1,70 @@
+import { ToClientEvents, ToServerEvents } from "common/messages/sceneWaitingRoom";
+import { Socket } from "socket.io";
+import { broadcastRemainingPlayers, broadcastToSceneGameArena} from "..";
+
+type SocketQueue = Socket<ToServerEvents, ToClientEvents>;
+
 export class PlayerQueue {
-    private playerCounter: number;
+    private queue: Array<SocketQueue>;
 
     constructor() {
-        this.playerCounter = 0;
+        this.queue = [];
+    }
+
+    public initSocketListeners(socket: SocketQueue) {
+        socket.on("joinQueue", () => {
+            this.addToQueue(socket);
+
+            broadcastRemainingPlayers(this.getRemainingPlayers());
+
+            // 4 valid connections are found. Start the game.
+            if (this.getRemainingPlayers() === 0) {
+                for (let playerIndex = 0; playerIndex < 4; playerIndex++) {
+                    this.queue[playerIndex].emit("initPlayer", playerIndex as 0 | 1 | 2 | 3);
+                }
+                broadcastToSceneGameArena();
+            }
+        });
+
+        socket.on("requestRemainingPlayers", () => {
+            socket.emit("updateRemainingPlayers", this.getRemainingPlayers());
+        });
+
+        socket.on("disconnect", () => {
+            this.removeFromQueue(socket);
+            broadcastRemainingPlayers(this.getRemainingPlayers());
+        });
     }
 
     /**
      * Add a player to the queue.
-     * @returns Player index.
+     * @param socket The socket to add to the queue.
      */
-    public addToQueue(): number {
-        return this.playerCounter++;
-    }
-
-    public removeOne(): number {
-        this.playerCounter = Math.max(0, this.playerCounter - 1);
-        return this.playerCounter;
+    public addToQueue(socket: SocketQueue) {
+        this.queue.push(socket);
     }
 
     /**
-     * Reset the counter.
+     * Remove a player from the queue.
+     * @param socket The socket to be removed from the queue.
      */
-    public resetCounter() {
-        this.playerCounter = 0;
+    public removeFromQueue(socket: SocketQueue) {
+        this.queue = this.queue.filter(function (value, index, arr) {
+            return value != socket;
+        });
     }
 
     /**
-     * Get the number of remaining players needed to start the game.
-     * @returns The number of players needed to start the game.
+     * Empty the queue.
+     */
+    public resetQueue() {
+        this.queue = [];
+    }
+
+    /**
+     * @returns Returns the number of players needed to start the game.
      */
     public getRemainingPlayers(): number {
-        let remainingPlayers = 4 - this.playerCounter;
-        if (remainingPlayers < 0) {
-            return 0;
-        }
-        return remainingPlayers;
+        return Math.max(0, 4 - this.queue.length);
     }
 }
