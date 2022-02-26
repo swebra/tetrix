@@ -22,6 +22,7 @@ import KEY_S from "../assets/controls/KEY_S.svg";
 import KEY_Q from "../assets/controls/KEY_Q.svg";
 import KEY_E from "../assets/controls/KEY_E.svg";
 import KEY_SHIFT from "../assets/controls/KEY_SHIFT.svg";
+import { TradeUI } from "./TradeUI";
 
 type SocketGame = Socket<ToClientEvents, ToServerEvents>;
 
@@ -40,7 +41,7 @@ export class SceneGameArena extends Phaser.Scene {
     scoreboard!: ScoreboardUI;
     spectator!: SpectatorUI;
     controls!: ControlsUI;
-
+    trade!: TradeUI;
     frameTimeElapsed: number = 0; // the ms time since the last frame is drawn
 
     constructor() {
@@ -127,6 +128,9 @@ export class SceneGameArena extends Phaser.Scene {
                 "keyE",
                 "keySHIFT"
             ]);
+        }
+        if (this.trade == null && this.gameState.playerId != null) {
+            this.trade = new TradeUI(this);
         }
 
         // 12 fps
