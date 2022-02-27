@@ -56,7 +56,7 @@ export class Scoreboard {
         });
     }
 
-    initSocketListeners(socket: SocketScoreboard, level: Level) {
+    public initSocketListeners(socket: SocketScoreboard, level: Level) {
         socket.on("requestScoreboardData", () => {
             const clonedData = Object.assign([], this.scoreMap);
             clonedData.push({
@@ -251,6 +251,6 @@ export class Scoreboard {
         setTimeout(() => {
             broadcastToSceneWaitingRoom();
             this.resetScores();
-        }, 10000);
+        }, 30000);
     }
 }

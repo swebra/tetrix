@@ -102,10 +102,13 @@ export function broadcastRemainingPlayers(playersNeeded: number) {
 // setTimeout(() => {
 //   console.log("Sending clients to Game Over Screen!")
 //   scoreboard.displaySceneGameOver();
-// }, 30000);
+// }, 20000);
 
 io.on("connection", (socket) => {
-    scene.loadCurrentScene(socket, scoreboard.finalScores);
+    scoreboard.initSocketListeners(socket, level);
+    spectator.initSocketListeners(socket);
+    queue.initSocketListeners(socket);
+    scene.initSocketListeners(socket, scoreboard.finalScores);
 
     if (process.env.VITE_DISABLE_WAITING_ROOM) {
         socket.emit("initPlayer", playerCounter);
@@ -116,8 +119,4 @@ io.on("connection", (socket) => {
     socket.on("playerMove", (...args) => {
         socket.broadcast.emit("playerMove", ...args);
     });
-
-    scoreboard.initSocketListeners(socket, level);
-    spectator.initSocketListeners(socket);
-    queue.initSocketListeners(socket);
 });

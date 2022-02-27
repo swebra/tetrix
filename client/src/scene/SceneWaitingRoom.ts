@@ -39,6 +39,13 @@ export class SceneWaitingRoom extends Phaser.Scene {
     }
 
     create() {
+        this.socket.emit("requestCurrentScene");
+    }
+
+    /**
+     * Render in the waiting room only if we receive confirmation form the server that this is the currently active scene.
+     */
+    private renderWaitingRoom() {
         this.add.image(BOARD_SIZE * 10, BOARD_SIZE * 10, "titleScreenArt");
 
         this.add
@@ -87,12 +94,18 @@ export class SceneWaitingRoom extends Phaser.Scene {
         this.socket.emit("requestRemainingPlayers");
     }
 
+    /**
+     * Initialize event listeners.
+     */
     private initListeners() {
         this.socket.on("updateRemainingPlayers", (remainingPlayers: number) => {
-            console.log("update remaining: ", remainingPlayers);
             this.playersNeededText.setText(
                 `Waiting on ${remainingPlayers} more player(s)`
             );
+        });
+
+        this.socket.on("toSceneWaitingRoom", () => {
+            this.renderWaitingRoom();
         });
 
         this.socket.on("toSceneGameArena", () => {
