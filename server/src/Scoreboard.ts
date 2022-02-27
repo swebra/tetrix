@@ -19,6 +19,7 @@ export class Scoreboard {
     private _blueScore: number;
     private _totalScore: number;
     private _scoreMap: Array<ColoredScore>;
+    private _finalScores: Array<ColoredScore>;
 
     constructor() {
         this._orangeScore = 0;
@@ -26,6 +27,8 @@ export class Scoreboard {
         this._pinkScore = 0;
         this._blueScore = 0;
         this._totalScore = 0;
+
+        this._finalScores = [];
 
         this._scoreMap = [];
         this._scoreMap.push({
@@ -97,6 +100,10 @@ export class Scoreboard {
 
     get scoreMap(): Array<ColoredScore> {
         return this._scoreMap;
+    }
+
+    get finalScores(): Array<ColoredScore> {
+        return this._finalScores;
     }
 
     /**
@@ -230,16 +237,15 @@ export class Scoreboard {
     public displaySceneGameOver() {
         this.updateScoreMap();
 
-        // Temporary clone of the data so that we can append the level of the game.
-        const clonedData = Object.assign([], this._scoreMap);
-        clonedData.push({
+        this._finalScores = Object.assign([], this._scoreMap);
+        this._finalScores.push({
             color: "TEAM SCORE",
             hex: 0xffff00,
             points: this.currentTeamScore,
         });
 
         // Show scoreboard to all connected users.
-        broadcastToSceneGameOver(clonedData);
+        broadcastToSceneGameOver(this._finalScores);
 
         // Return to starting sequence after 30 seconds.
         setTimeout(() => {

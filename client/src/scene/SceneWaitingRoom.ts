@@ -28,7 +28,7 @@ export class SceneWaitingRoom extends Phaser.Scene {
 
     init(data: SharedState) {
         this.sharedData = data;
-        this.socket = data.socket;
+        this.socket = this.sharedData.socket;
         this.initListeners();
     }
 
@@ -95,9 +95,15 @@ export class SceneWaitingRoom extends Phaser.Scene {
             );
         });
 
-        // If the queue is full, we should receive the signal from the server to start the game.
         this.socket.on("toSceneGameArena", () => {
-            this.scene.start("SceneGameArena", this.sharedData);
+            this.scene.start("SceneGameArena", { ...this.sharedData });
+        });
+
+        this.socket.on("toSceneGameOver", (playerPoints) => {
+            this.scene.start("SceneGameOver", {
+                ...this.sharedData,
+                playerPoints: playerPoints,
+            });
         });
     }
 
