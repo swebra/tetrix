@@ -98,17 +98,16 @@ export function broadcastRemainingPlayers(playersNeeded: number) {
 }
 // ==============================================
 
-// Uncomment to view the game end sequence:
-// setTimeout(() => {
-//   console.log("Sending clients to Game Over Screen!")
-//   scoreboard.displaySceneGameOver();
-// }, 20000);
-
 io.on("connection", (socket) => {
     scoreboard.initSocketListeners(socket, level);
     spectator.initSocketListeners(socket);
     queue.initSocketListeners(socket);
     scene.initSocketListeners(socket, scoreboard.finalScores);
+
+    // Uncomment to view the game end sequence:
+    // setTimeout(() => {
+    //     scoreboard.displaySceneGameOver();
+    // }, 20000);
 
     if (process.env.VITE_DISABLE_WAITING_ROOM) {
         socket.emit("initPlayer", playerCounter);

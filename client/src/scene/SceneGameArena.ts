@@ -42,9 +42,7 @@ export class SceneGameArena extends Phaser.Scene {
     frameTimeElapsed: number = 0; // the ms time since the last frame is drawn
 
     constructor() {
-        super({
-            key: "SceneGameArena",
-        });
+        super("SceneGameArena");
     }
 
     preload() {
@@ -59,7 +57,7 @@ export class SceneGameArena extends Phaser.Scene {
 
     init(data: SharedState) {
         this.sharedState = data;
-        this.socket = this.sharedState.socket;
+        this.socket = data.socket;
     }
 
     create() {
@@ -98,6 +96,13 @@ export class SceneGameArena extends Phaser.Scene {
             callback: () => this.updateFalling(this),
             loop: true,
         });
+
+        this.initListeners();
+    }
+
+    private initListeners() {
+        // Clean out any old listeners to avoid accumulation.
+        this.socket.removeListener("toSceneGameOver");
 
         this.socket.on("toSceneGameOver", (playerPoints) => {
             this.scene.start("SceneGameOver", {

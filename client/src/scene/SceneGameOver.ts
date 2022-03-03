@@ -16,15 +16,13 @@ export class SceneGameOver extends Phaser.Scene {
     private socket!: SocketGameOver;
 
     constructor() {
-        super({
-            key: "SceneGameOver",
-        });
+        super("SceneGameOver");
     }
 
     init(data: SceneDataGameOver) {
         this.sharedData = data;
         this.playerData = data.playerPoints;
-        this.socket = this.sharedData.socket;
+        this.socket = data.socket;
     }
 
     create() {
@@ -32,10 +30,10 @@ export class SceneGameOver extends Phaser.Scene {
         this.scoreboard = new ScoreboardUI(this, this.socket);
         this.scoreboard.createFullscreenScoreboard(this.playerData);
 
-        this.socket.on("toSceneWaitingRoom", () => {
-            // Clean up the listeners to avoid accumulation.
-            this.socket.removeAllListeners();
+        // Clean out any old listeners to avoid accumulation.
+        this.socket.removeListener("toSceneWaitingRoom");
 
+        this.socket.on("toSceneWaitingRoom", () => {
             this.scene.start("SceneWaitingRoom", { ...this.sharedData });
         });
     }

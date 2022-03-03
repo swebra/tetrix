@@ -21,15 +21,12 @@ export class SceneWaitingRoom extends Phaser.Scene {
     private sharedData!: SharedState;
 
     constructor() {
-        super({
-            key: "SceneWaitingRoom",
-        });
+        super("SceneWaitingRoom");
     }
 
     init(data: SharedState) {
         this.sharedData = data;
-        this.socket = this.sharedData.socket;
-        this.initListeners();
+        this.socket = data.socket;
     }
 
     preload() {
@@ -39,6 +36,7 @@ export class SceneWaitingRoom extends Phaser.Scene {
     }
 
     create() {
+        this.initListeners();
         this.socket.emit("requestCurrentScene");
     }
 
@@ -98,6 +96,13 @@ export class SceneWaitingRoom extends Phaser.Scene {
      * Initialize event listeners.
      */
     private initListeners() {
+        // Remove old listeners to avoid accumulation.
+        this.socket.removeListener("updateRemainingPlayers");
+        this.socket.removeListener("toSceneWaitingRoom");
+        this.socket.removeListener("toSceneGameArena");
+        this.socket.removeListener("toSceneGameOver");
+
+        // Assign the new listeners.
         this.socket.on("updateRemainingPlayers", (remainingPlayers: number) => {
             this.playersNeededText.setText(
                 `Waiting on ${remainingPlayers} more player(s)`
@@ -137,7 +142,7 @@ export class SceneWaitingRoom extends Phaser.Scene {
      * If the join button was clicked, erase it from screen and send a request to the server to join the queue.
      */
     private requestJoinGame() {
-        this.button.setText("");
+        this.button.destroy();
         this.socket.emit("joinQueue");
         this.headerText
             .setText("Your request has been sent!")

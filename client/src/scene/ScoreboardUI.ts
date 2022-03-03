@@ -16,17 +16,18 @@ export class ScoreboardUI {
     private headerTextConfig: TextConfig;
     private regularTextConfig: TextConfig;
     private socket: SocketScoreboard;
+    private isMiniUILoaded: boolean;
 
     constructor(
-        SceneGameArena: SceneGameArena | SceneGameOver,
+        scene: SceneGameArena | SceneGameOver,
         socket: SocketScoreboard,
-        shouldLoadScoreboard = false
+        shouldLoadMiniScoreboard = false
     ) {
-        this.scene = SceneGameArena;
+        this.scene = scene;
         this.listOfScores = [];
         this.socket = socket;
+        this.isMiniUILoaded = shouldLoadMiniScoreboard;
         this.initListeners();
-        console.log("init scoreboard: ", this.socket);
 
         // Configs used for the different text's.
         this.headerTextConfig = {
@@ -38,7 +39,7 @@ export class ScoreboardUI {
             fontFamily: "VT323",
         };
 
-        if (shouldLoadScoreboard) {
+        if (shouldLoadMiniScoreboard) {
             this.loadScoreboard();
         }
 
@@ -56,9 +57,8 @@ export class ScoreboardUI {
      * Initialize listeners
      */
     private initListeners() {
-        if (this.socket == null) {
-            return;
-        }
+        // Clean up any old listeners from a previous game.
+        this.socket.removeListener("updateScoreboard");
 
         this.socket.on("updateScoreboard", (scores) => {
             this.updateScoreboard(scores);
@@ -132,6 +132,11 @@ export class ScoreboardUI {
      * @param playerPts The array of objects containing player data (name + points + hex-color).
      */
     public updateScoreboard(playerPts: Array<ColoredScore>) {
+        // Ensure this function is only run if the mini-scoreboard is loaded.
+        if (!this.isMiniUILoaded) {
+            return;
+        }
+
         for (let i = 0; i < playerPts.length; i++) {
             const text =
                 `${playerPts[i].color}`.padEnd(10) + `${playerPts[i].points}`;
