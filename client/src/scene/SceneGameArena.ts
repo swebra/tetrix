@@ -37,7 +37,7 @@ export class SceneGameArena extends Phaser.Scene {
 
     scoreboard!: ScoreboardUI;
     spectator!: SpectatorUI;
-    controls!: ControlsUI;
+    controls!: ControlsUI | null;
 
     frameTimeElapsed: number = 0; // the ms time since the last frame is drawn
 
@@ -63,6 +63,7 @@ export class SceneGameArena extends Phaser.Scene {
     create() {
         this.scoreboard = new ScoreboardUI(this, this.sharedState.socket, true);
         this.spectator = new SpectatorUI(this, this.sharedState.socket);
+        this.controls = null;
 
         // initialize an empty rendered board
         this.renderedBoard = [];
