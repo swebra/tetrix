@@ -1,7 +1,6 @@
 import Phaser from "phaser";
 import { Socket } from "socket.io-client";
 import { SharedState } from "..";
-import { GameState } from "../GameState";
 import { ScoreboardUI } from "./ScoreboardUI";
 
 import { ToClientEvents, ToServerEvents } from "common/messages/sceneGameOver";
