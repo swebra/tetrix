@@ -22,7 +22,7 @@ import KEY_S from "../assets/controls/KEY_S.svg";
 import KEY_Q from "../assets/controls/KEY_Q.svg";
 import KEY_E from "../assets/controls/KEY_E.svg";
 import KEY_SHIFT from "../assets/controls/KEY_SHIFT.svg";
-import { Trade, TradeUI } from "./TradeUI";
+import { TradeState, TradeUI } from "./TradeUI";
 
 type SocketGame = Socket<ToClientEvents, ToServerEvents>;
 
@@ -139,11 +139,11 @@ export class SceneGameArena extends Phaser.Scene {
             this.updateUserInput(this);
             this.updateDrawBoard(this.gameState, this);
             this.updateDrawPlayer(this);
+            this.updateFromTradeState(this);
 
             // start next frame
             this.frameTimeElapsed = 0;
         }
-        //TODO socket display
         
         // this.socket.on("playerTrade", (playerId) => {
         //     this.trade.displayAccept();
@@ -179,16 +179,18 @@ export class SceneGameArena extends Phaser.Scene {
         } else if (scene.keys.e.isDown || scene.keys.x.isDown) {
             moved = scene.gameState.currentTetromino.rotateCW();
         } else if (scene.keys.shift.isDown) {
-            if (this.trade.tradeType == Trade.Offer) {
-                this.trade.displayProgress()
+            if (scene.trade.tradeState == TradeState.NoTrade) {
+                scene.gameState.tradeState = TradeState.Offered;
+                scene.trade.updateNewTradeState(scene.gameState.tradeState);
                 tradeChanged = true;
             }
-            else if (this.trade.tradeType == Trade.Accept) {
-                this.trade.displayOffer()
+            else if (scene.trade.tradeState == TradeState.Pending) {
+                scene.gameState.tradeState = TradeState.Accepted
+                scene.trade.updateNewTradeState(scene.gameState.tradeState);
                 tradeChanged = true;
             }
-                //do nothing if progressing
-            else if (this.trade.tradeType == Trade.Progress){}
+                //do nothing if the user had already offered the trade
+            else if (scene.trade.tradeState == TradeState.Offered){}
         }
 
         if (moved) {
@@ -201,11 +203,14 @@ export class SceneGameArena extends Phaser.Scene {
         if (tradeChanged) {
             scene.gameState.socket.emit("playerTrade",
                 scene.gameState.playerId,
-                scene.gameState.currentTetromino.reportPosition()
+                scene.gameState.currentTetromino.reportPosition(), 
+                scene.trade.tradeState,
             )
         }
     }
-
+    private updateFromTradeState(scene: SceneGameArena) {
+        scene.trade.updateNewTradeState(scene.gameState.tradeState);
+    }
     private updateDrawBoard(state: GameState, scene: SceneGameArena) {
         // re-render the board
         const board = state.board;

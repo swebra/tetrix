@@ -1,32 +1,28 @@
 import { Scene } from "phaser";
 import { SceneGameArena } from "./SceneGameArena";
 
-export enum Trade{
-    Offer,
-    Accept, 
-    Progress
+export enum TradeState{
+    NoTrade,
+    Offered,
+    Accepted,
+    Pending
 }
 export class TradeUI {
-    tradeType: Trade
+    tradeState: TradeState
     tradeText: Phaser.GameObjects.Text
-    offerText: string = "Initiate Trade"
-    acceptText: string = "Accept Trade"
-    progressText: string = "Waiting Trade"
+    //Eventually should include who was offering the trade
+    tradeMap:  { [key in TradeState]: string} = {[TradeState.NoTrade]: "Initiate Trade", [TradeState.Offered]: "Waiting for trade to happen", [TradeState.Pending]: "Trade is Available", [TradeState.Accepted]: "Trade Accepted"}
+    noTradeText: string = "Initiate Trade"
+    offeredText: string = "Waiting for trade to happen"
+    waitingText: string = "Waiting Trade"
+    acceptedText: string = "Accept Trade"
     constructor(scene: SceneGameArena) {
       const  y = 50;
-      this.tradeType = Trade.Offer;
-      this.tradeText = scene.add.text(20, y, this.offerText, {fontSize: `20px`, fontFamily: "VT323"});
+      this.tradeState = TradeState.NoTrade;
+      this.tradeText = scene.add.text(20, y, this.noTradeText, {fontSize: `20px`, fontFamily: "VT323"});
     }
-    public displayOffer() {
-        this.tradeType = Trade.Offer;
-        this.tradeText.setText(this.offerText)
-    }
-    public displayAccept() {
-        this.tradeType = Trade.Accept
-        this.tradeText.setText(this.acceptText)
-    }
-    public displayProgress() {
-        this.tradeType = Trade.Progress
-        this.tradeText.setText(this.progressText)
+    public updateNewTradeState(newTradeState: TradeState) {
+        this.tradeState = newTradeState;
+        this.tradeText.setText(this.tradeMap[newTradeState]);
     }
 }

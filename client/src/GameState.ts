@@ -3,6 +3,7 @@ import { TetrominoType } from "common/TetrominoType";
 import { Tetromino } from "./Tetromino";
 import { BOARD_SIZE } from "common/shared";
 import { ToServerEvents, ToClientEvents } from "common/messages/game";
+import { TradeState } from "./scene/TradeUI";
 
 type GameSocket = Socket<ToClientEvents, ToServerEvents>;
 
@@ -14,7 +15,7 @@ export class GameState {
     frozenBoard: Array<Array<TetrominoType | null>>;
     // board is the final product being rendered. contains all 3 other players
     board: Array<Array<TetrominoType | null>>;
-
+    tradeState: TradeState;
     // synced to server
     currentTetromino: Tetromino;
     // synced from server, ordered by increasing, circular player numbers
@@ -38,6 +39,7 @@ export class GameState {
         this.socket = socket;
         this.board = this.blankBoard();
         this.frozenBoard = this.blankBoard();
+        this.tradeState = TradeState.NoTrade;
 
         this.currentTetromino = new Tetromino(TetrominoType.T);
         // other player's moving piece, TODO this is synchronized with the server
@@ -59,6 +61,13 @@ export class GameState {
             this.otherPieces[i].setType(state.type);
             this.otherPieces[i].setRotatedPosition(state.position, i + 1);
             this.otherPieces[i].setRotation(i + 1 + state.rotation);
+        });
+        this.socket.on("playerTrade", (playerId, state, otherTradeState) => {   
+            if (otherTradeState == TradeState.Offered) {
+                this.tradeState = TradeState.Pending;
+            } else if (otherTradeState == TradeState.Accepted) {
+                this.tradeState = TradeState.NoTrade;
+            }
         });
         
     }
