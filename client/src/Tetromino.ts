@@ -102,6 +102,7 @@ export class Tetromino {
 
     type: TetrominoType;
     position: [number, number];
+    rawPosition: [number, number];
     rotation: 0 | 1 | 2 | 3;
     tiles: Array<[number, number]>;
 
@@ -109,6 +110,10 @@ export class Tetromino {
         this.type = type;
         this.tiles = cloneDeep(Tetromino.shapes[type].tiles);
         this.position = [
+            0,
+            Math.round((BOARD_SIZE - Tetromino.shapes[type].width) / 2),
+        ];
+        this.rawPosition = [
             0,
             Math.round((BOARD_SIZE - Tetromino.shapes[type].width) / 2),
         ];
@@ -191,6 +196,59 @@ export class Tetromino {
             return false;
         }
         this.setRotation(4 + this.rotation - 1);
+        return true;
+    }
+
+    canTetroFall(board: Array<Array<TetrominoType | null>>): boolean {
+        // if the blocks right below this tetro are all empty, it can fall.
+        const bottomRelative = Math.max(...this.tiles.map((tile) => tile[0])); // the lowest block in the tetro tiles, ranging from 0-3
+        const bottomAbsolute = this.position[0] + bottomRelative; // the row of which the lowest block of the tetro is at in the board
+
+        if (bottomAbsolute + 1 >= board.length) return false;
+
+        return this.tiles.every(
+            (tile: any) =>
+                tile[0] < bottomRelative || // either the tile is not the bottom tiles which we don't care
+                board[bottomAbsolute + 1][this.position[1] + tile[1]] == null // or the room below it has to be empty
+        );
+    }
+
+    moveIfCan(
+        board: Array<Array<TetrominoType | null>>,
+        movement: (tetro: Tetromino) => Tetromino | void
+    ): boolean {
+        let newTetro: Tetromino = cloneDeep(this);
+        const oldTileCoords = newTetro.tiles.map((tile) => [
+            newTetro.position[0] + tile[0],
+            newTetro.position[1] + tile[1],
+        ]);
+
+        // look-ahead for the next tetromino state after movement
+        newTetro = movement(newTetro) || newTetro;
+        for (let i = 0; i < this.tiles.length; i++) {
+            const [row, col] = newTetro.tiles[i];
+
+            if (
+                // 1. the new position has some other tiles in it
+                board[newTetro.position[0] + row][newTetro.position[1] + col] !=
+                    null &&
+                // AND 2. the tiles are NOT from the old self
+                // TODO falling out of bounds
+                !oldTileCoords.some(
+                    ([oldRow, oldCol]) =>
+                        newTetro.position[0] + row == oldRow &&
+                        newTetro.position[1] + col == oldCol
+                )
+            ) {
+                return false;
+            }
+        }
+        // copy all attributes over
+        this.position = newTetro.position;
+        this.tiles = newTetro.tiles;
+        this.rotation = newTetro.rotation;
+        this.type = newTetro.type;
+        this.rawPosition = newTetro.rawPosition;
         return true;
     }
 }

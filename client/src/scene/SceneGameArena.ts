@@ -11,6 +11,7 @@ import { SharedState } from "..";
 import { WebFontFile } from "../plugins/WebFontFile";
 
 import { Socket } from "socket.io-client";
+import _ from "lodash";
 
 import { ToClientEvents, ToServerEvents } from "common/messages/sceneGameArena";
 import { TILE_SIZE } from "common/shared";
@@ -21,6 +22,7 @@ import KEY_D from "../assets/controls/KEY_D.svg";
 import KEY_S from "../assets/controls/KEY_S.svg";
 import KEY_Q from "../assets/controls/KEY_Q.svg";
 import KEY_E from "../assets/controls/KEY_E.svg";
+import { TetrominoState } from "common/message";
 
 type SocketGame = Socket<ToClientEvents, ToServerEvents>;
 
@@ -67,6 +69,16 @@ export class SceneGameArena extends Phaser.Scene {
     create() {
         this.scoreboard = new ScoreboardUI(this, this.sharedState.socket, true);
         this.spectator = new SpectatorUI(this, this.sharedState.socket);
+        // NOTE: need to make sure playerId is valid when this scene is started
+        this.controls = new ControlsUI(this, [
+            "keyA",
+            "keyD",
+            "keyS",
+            "keyQ",
+            "keyE",
+        ]);
+
+        this.gameState.deadReckoningSystem?.initTimer();
 
         // initialize an empty rendered board
         this.renderedBoard = [];
@@ -113,22 +125,12 @@ export class SceneGameArena extends Phaser.Scene {
     update(time: number, delta: number) {
         this.frameTimeElapsed += delta;
 
-        // FIXME: Is this still needed after a proper queue is implemented? We can call the startGameArena event after
-        // the player has received their playerID & guarantee the scene has that data.
-        // Load in the controlsUI for players. Placed here due to a potential time delay for receiving the playerID.
-        if (this.controls == null && this.gameState.playerId != null) {
-            this.controls = new ControlsUI(this, [
-                "keyA",
-                "keyD",
-                "keyS",
-                "keyQ",
-                "keyE",
-            ]);
-        }
-
         // 12 fps
         if (this.frameTimeElapsed > 1000 / this.FRAMERATE) {
-            this.updateBoardFromFrozen(this);
+            this.gameState.deadReckoningSystem?.updateRemotePlayersIfDead(
+                this.gameState.board
+            );
+            this.updateBoardFromFrozen(this, this.gameState.otherPieces);
             this.updateUserInput(this);
             this.updateDrawBoard(this.gameState, this);
             this.updateDrawPlayer(this);
@@ -140,10 +142,14 @@ export class SceneGameArena extends Phaser.Scene {
 
     // the frozen board is all blocks that are placed. the board contains dynamic player blocks.
     // this function sync the board with frozenboard, and add players on top
-    private updateBoardFromFrozen(scene: SceneGameArena) {
+    private updateBoardFromFrozen(
+        scene: SceneGameArena,
+        otherTetros: Array<Tetromino>
+    ) {
         scene.gameState.board = cloneDeep(scene.gameState.frozenBoard);
         for (let i = 0; i < 3; i++) {
-            const tetro = scene.otherTetros[i].inner;
+            const tetro = otherTetros[i];
+
             for (const tile of tetro.tiles) {
                 const row = tile[0] + tetro.position[0];
                 const col = tile[1] + tetro.position[1];
@@ -214,9 +220,12 @@ export class SceneGameArena extends Phaser.Scene {
         const board = state.board;
         const tetro = state.currentTetromino;
 
-        if (this.canTetroFall(tetro, board)) {
-            tetro.position[0] += 1;
-
+        if (
+            tetro.moveIfCan(board, (tetro) => {
+                tetro.position[0] += 1;
+                return tetro;
+            })
+        ) {
             scene.gameState.socket.emit(
                 "playerMove",
                 scene.gameState.playerId,
@@ -226,22 +235,5 @@ export class SceneGameArena extends Phaser.Scene {
             console.log(tetro, "cannot fall!");
             // TODO place on state.board and emit events to the server
         }
-    }
-
-    private canTetroFall(
-        tetro: Tetromino,
-        board: Array<Array<TetrominoType | null>>
-    ): boolean {
-        // if the blocks right below this tetro are all empty, it can fall.
-        const bottomRelative = Math.max(...tetro.tiles.map((tile) => tile[0])); // the lowest block in the tetro tiles, ranging from 0-3
-        const bottomAbsolute = tetro.position[0] + bottomRelative; // the row of which the lowest block of the tetro is at in the board
-
-        if (bottomAbsolute + 1 >= board.length) return false;
-
-        return tetro.tiles.every(
-            (tile: any) =>
-                tile[0] < bottomRelative || // either the tile is not the bottom tiles which we don't care
-                board[bottomAbsolute + 1][tetro.position[1] + tile[1]] == null // or the room below it has to be empty
-        );
     }
 }
