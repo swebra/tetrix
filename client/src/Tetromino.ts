@@ -104,7 +104,7 @@ export class Tetromino {
     position: [number, number];
     rotation: 0 | 1 | 2 | 3;
     tiles: Array<[number, number]>;
-
+    isTraded: boolean = false;
     constructor(type: TetrominoType) {
         this.type = type;
         this.tiles = cloneDeep(Tetromino.shapes[type].tiles);
@@ -115,6 +115,15 @@ export class Tetromino {
         this.rotation = 0; // default (no rotation)
     }
 
+    swapPiece(newType: TetrominoType) {
+        this.type = newType;
+        this.tiles = cloneDeep(Tetromino.shapes[this.type].tiles);
+        this.position = [
+            0,
+            Math.round((BOARD_SIZE - Tetromino.shapes[this.type].width) / 2),
+        ];
+        this.rotation = 0;
+    }
     reportPosition(): TetrominoState {
         return {
             type: this.type,

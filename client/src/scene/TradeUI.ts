@@ -12,17 +12,19 @@ export class TradeUI {
     tradeText: Phaser.GameObjects.Text
     //Eventually should include who was offering the trade
     tradeMap:  { [key in TradeState]: string} = {[TradeState.NoTrade]: "Initiate Trade", [TradeState.Offered]: "Waiting for trade to happen", [TradeState.Pending]: "Trade is Available", [TradeState.Accepted]: "Trade Accepted"}
-    noTradeText: string = "Initiate Trade"
-    offeredText: string = "Waiting for trade to happen"
-    waitingText: string = "Waiting Trade"
-    acceptedText: string = "Accept Trade"
     constructor(scene: SceneGameArena) {
       const  y = 50;
       this.tradeState = TradeState.NoTrade;
-      this.tradeText = scene.add.text(20, y, this.noTradeText, {fontSize: `20px`, fontFamily: "VT323"});
+      this.tradeText = scene.add.text(20, y, this.tradeMap[this.tradeState], {fontSize: `20px`, fontFamily: "VT323"});
     }
-    public updateNewTradeState(newTradeState: TradeState) {
+    public updateNewTradeState(newTradeState: TradeState, userNum: number | null) {
         this.tradeState = newTradeState;
-        this.tradeText.setText(this.tradeMap[newTradeState]);
+        if (this.tradeState == TradeState.Pending && userNum != null) {
+            this.tradeText.setText(`${this.tradeMap[newTradeState]} from user #${userNum +1}`);
+        }
+        else {
+            this.tradeText.setText(this.tradeMap[newTradeState]);
+
+        }
     }
 }

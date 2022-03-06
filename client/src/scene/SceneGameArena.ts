@@ -179,18 +179,19 @@ export class SceneGameArena extends Phaser.Scene {
         } else if (scene.keys.e.isDown || scene.keys.x.isDown) {
             moved = scene.gameState.currentTetromino.rotateCW();
         } else if (scene.keys.shift.isDown) {
-            if (scene.trade.tradeState == TradeState.NoTrade) {
+            if (scene.gameState.currentTetromino.isTraded || scene.trade.tradeState == TradeState.Offered || scene.trade.tradeState == TradeState.Accepted) {
+                //ignore
+            }
+            else if (scene.trade.tradeState == TradeState.NoTrade) {
                 scene.gameState.tradeState = TradeState.Offered;
-                scene.trade.updateNewTradeState(scene.gameState.tradeState);
+                scene.trade.updateNewTradeState(scene.gameState.tradeState, scene.gameState.tradingPlayerId);
                 tradeChanged = true;
             }
             else if (scene.trade.tradeState == TradeState.Pending) {
                 scene.gameState.tradeState = TradeState.Accepted
-                scene.trade.updateNewTradeState(scene.gameState.tradeState);
+                scene.trade.updateNewTradeState(scene.gameState.tradeState, scene.gameState.tradingPlayerId);
                 tradeChanged = true;
             }
-                //do nothing if the user had already offered the trade
-            else if (scene.trade.tradeState == TradeState.Offered){}
         }
 
         if (moved) {
@@ -201,15 +202,11 @@ export class SceneGameArena extends Phaser.Scene {
             );
         }
         if (tradeChanged) {
-            scene.gameState.socket.emit("playerTrade",
-                scene.gameState.playerId,
-                scene.gameState.currentTetromino.reportPosition(), 
-                scene.trade.tradeState,
-            )
+            scene.gameState.emitTrade();
         }
     }
     private updateFromTradeState(scene: SceneGameArena) {
-        scene.trade.updateNewTradeState(scene.gameState.tradeState);
+        scene.trade.updateNewTradeState(scene.gameState.tradeState, scene.gameState.tradingPlayerId);
     }
     private updateDrawBoard(state: GameState, scene: SceneGameArena) {
         // re-render the board

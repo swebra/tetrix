@@ -15,13 +15,14 @@ export class GameState {
     frozenBoard: Array<Array<TetrominoType | null>>;
     // board is the final product being rendered. contains all 3 other players
     board: Array<Array<TetrominoType | null>>;
-    tradeState: TradeState;
+    tradeState!: TradeState;
     // synced to server
     currentTetromino: Tetromino;
     // synced from server, ordered by increasing, circular player numbers
     // i.e. if you are player 1, these are of player 2, then 3, then 0
     otherPieces: Array<Tetromino>;
     playerId!: 0 | 1 | 2 | 3;
+    tradingPlayerId: 0 | 1 | 2 | 3 | null = null;
 
     private blankBoard() {
         const board = [];
@@ -62,13 +63,29 @@ export class GameState {
             this.otherPieces[i].setRotatedPosition(state.position, i + 1);
             this.otherPieces[i].setRotation(i + 1 + state.rotation);
         });
-        this.socket.on("playerTrade", (playerId, state, otherTradeState) => {   
+        this.socket.on("playerTrade", (playerId, _, otherTradeState) => {   
             if (otherTradeState == TradeState.Offered) {
                 this.tradeState = TradeState.Pending;
+                this.tradingPlayerId = playerId;
             } else if (otherTradeState == TradeState.Accepted) {
                 this.tradeState = TradeState.NoTrade;
+                this.tradingPlayerId = null;
             }
         });
+        this.socket.on("sendTradePiece", (tetrominoType) => {
+            this.currentTetromino.swapPiece(tetrominoType);
+            this.currentTetromino.isTraded = true;
+            this.tradeState = TradeState.NoTrade;
+            this.tradingPlayerId = null;
+            this.socket.emit("clearTrade")
+        })
         
     }
+            public emitTrade() {
+            this.socket.emit("playerTrade", this.playerId,
+                this.currentTetromino.type, 
+                this.tradeState)
+            
+            
+        }
 }
