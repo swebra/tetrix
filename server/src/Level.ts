@@ -7,7 +7,6 @@ type SocketLevel = Socket<ToServerEvents, ToClientEvents>;
 export class Level {
     private _currentLevel: number;
     private currentFallRate: number;
-    private MAX_FALL_RATE: number = 200;
 
     constructor() {
         this._currentLevel = 1;
@@ -29,11 +28,11 @@ export class Level {
     }
 
     /**
-     * Check if its possible to update the game's level based off the given score.
+     * Check if its possible to update the game's level based off the given score. Max level is 15.
      * @param score The total score the players have accumulated.
      */
     public checkUpdateLevel(score: number) {
-        if (score >= this._currentLevel * 20) {
+        if (score >= this._currentLevel * 20 && this._currentLevel < 15) {
             this._currentLevel++;
             this.increaseFallRate();
         }
@@ -60,23 +59,24 @@ export class Level {
     }
 
     /**
-     * Increase the fall rate by 50ms.
+     * Increase the fall rate according to the current level.
      */
     private increaseFallRate() {
-        if (this.currentFallRate - 50 >= this.MAX_FALL_RATE) {
-            this.currentFallRate -= 50;
-        } else {
-            this.currentFallRate = 200;
-        }
-
+        this.currentFallRate =
+            1000 *
+            (0.8 * ((this._currentLevel - 1) * 0.007)) **
+                (this._currentLevel - 1);
         broadcastFallRate(this.currentFallRate);
     }
 
     /**
-     * Decrease the fall rate by 50ms.
+     * Decrease the fall rate according to the current level.
      */
     private decreaseFallRate() {
-        this.currentFallRate += 50;
+        this.currentFallRate =
+            1000 *
+            (0.8 * ((this._currentLevel - 2) * 0.007)) **
+                (this._currentLevel - 2);
         broadcastFallRate(this.currentFallRate);
     }
 
