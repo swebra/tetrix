@@ -91,6 +91,10 @@ export function broadcastHideVotingSequence() {
 export function broadcastRemainingPlayers(playersNeeded: number) {
     io.sockets.emit("updateRemainingPlayers", playersNeeded);
 }
+
+export function broadcastFallRate(fallRate: number) {
+    io.sockets.emit("updateFallRate", fallRate);
+}
 // ==============================================
 
 // Uncomment to view the game end sequence:
@@ -113,5 +117,6 @@ io.on("connection", (socket) => {
     scoreboard.initSocketListeners(socket, level);
     spectator.initSocketListeners(socket);
     queue.initSocketListeners(socket);
+    level.initSocketListeners(socket);
     // FIXME need a state machine to tell which scene the game is at, conditionally tackle disconnections?
 });

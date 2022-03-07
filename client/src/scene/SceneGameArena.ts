@@ -31,6 +31,7 @@ export class SceneGameArena extends Phaser.Scene {
     sharedState!: SharedState;
     gameState!: GameState;
     socket!: SocketGame;
+    fallRateTimer!: Phaser.Time.TimerEvent | null;
 
     currentTetro!: RenderedTetromino;
     otherTetros!: Array<RenderedTetromino>;
@@ -67,6 +68,7 @@ export class SceneGameArena extends Phaser.Scene {
     create() {
         this.scoreboard = new ScoreboardUI(this, this.sharedState.socket, true);
         this.spectator = new SpectatorUI(this, this.sharedState.socket);
+        this.fallRateTimer = null;
 
         // initialize an empty rendered board
         this.renderedBoard = [];
@@ -94,11 +96,10 @@ export class SceneGameArena extends Phaser.Scene {
             );
         }
 
-        // 1s interval falling rate, TODO put inside update()?
-        this.time.addEvent({
-            delay: 1000,
-            callback: () => this.updateFalling(this),
-            loop: true,
+        this.socket.emit("requestFallRate");
+
+        this.socket.on("updateFallRate", (fallRate) => {
+            this.updateFallTimer(fallRate);
         });
 
         this.socket.on("toSceneGameOver", (playerPoints) => {
@@ -136,6 +137,18 @@ export class SceneGameArena extends Phaser.Scene {
             // start next frame
             this.frameTimeElapsed = 0;
         }
+    }
+
+    private updateFallTimer(interval: number) {
+        if (this.fallRateTimer) {
+            this.time.removeEvent(this.fallRateTimer);
+        }
+
+        this.fallRateTimer = this.time.addEvent({
+            delay: interval,
+            callback: () => this.updateFalling(this),
+            loop: true,
+        });
     }
 
     // the frozen board is all blocks that are placed. the board contains dynamic player blocks.
