@@ -21,15 +21,12 @@ export class SceneWaitingRoom extends Phaser.Scene {
     private sharedData!: SharedState;
 
     constructor() {
-        super({
-            key: "SceneWaitingRoom",
-        });
+        super("SceneWaitingRoom");
     }
 
     init(data: SharedState) {
         this.sharedData = data;
         this.socket = data.socket;
-        this.initListeners();
     }
 
     preload() {
@@ -39,6 +36,14 @@ export class SceneWaitingRoom extends Phaser.Scene {
     }
 
     create() {
+        this.initListeners();
+        this.socket.emit("requestCurrentScene");
+    }
+
+    /**
+     * Render in the waiting room only if we receive confirmation form the server that this is the currently active scene.
+     */
+    private renderWaitingRoom() {
         this.add.image(BOARD_SIZE * 10, BOARD_SIZE * 10, "titleScreenArt");
 
         this.add
@@ -87,17 +92,36 @@ export class SceneWaitingRoom extends Phaser.Scene {
         this.socket.emit("requestRemainingPlayers");
     }
 
+    /**
+     * Initialize event listeners.
+     */
     private initListeners() {
+        // Remove old listeners to avoid accumulation.
+        this.socket.removeListener("updateRemainingPlayers");
+        this.socket.removeListener("toSceneWaitingRoom");
+        this.socket.removeListener("toSceneGameArena");
+        this.socket.removeListener("toSceneGameOver");
+
+        // Assign the new listeners.
         this.socket.on("updateRemainingPlayers", (remainingPlayers: number) => {
-            console.log("update remaining: ", remainingPlayers);
             this.playersNeededText.setText(
                 `Waiting on ${remainingPlayers} more player(s)`
             );
         });
 
-        // If the queue is full, we should receive the signal from the server to start the game.
+        this.socket.on("toSceneWaitingRoom", () => {
+            this.renderWaitingRoom();
+        });
+
         this.socket.on("toSceneGameArena", () => {
-            this.scene.start("SceneGameArena", this.sharedData);
+            this.scene.start("SceneGameArena", { ...this.sharedData });
+        });
+
+        this.socket.on("toSceneGameOver", (playerPoints) => {
+            this.scene.start("SceneGameOver", {
+                ...this.sharedData,
+                playerPoints: playerPoints,
+            });
         });
     }
 
@@ -118,7 +142,7 @@ export class SceneWaitingRoom extends Phaser.Scene {
      * If the join button was clicked, erase it from screen and send a request to the server to join the queue.
      */
     private requestJoinGame() {
-        this.button.setText("");
+        this.button.destroy();
         this.socket.emit("joinQueue");
         this.headerText
             .setText("Your request has been sent!")

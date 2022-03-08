@@ -70,9 +70,14 @@ export class SpectatorUI {
      * Initalize the listeners for events received from the server.
      */
     private initListeners() {
+        // Clean out any old listeners to avoid accumulation.
+        this.socket.removeListener("showVotingSequence");
+        this.socket.removeListener("hideVotingSequence");
+        this.socket.removeListener("sendVotingCountdown");
+
         this.socket.on("showVotingSequence", (votingSequence) => {
             // Only display the voting sequence for spectators.
-            if (this.scene.gameState.playerId == null) {
+            if (this.scene.sharedState.gameState.playerId == null) {
                 this.generateTimedEvent(votingSequence);
             }
         });
