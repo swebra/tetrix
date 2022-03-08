@@ -51,7 +51,7 @@ export class GameState {
 
         // initial rotation
         this.otherPieces.map((tetro, i) => {
-            tetro.setRotatedPosition(tetro.rawPosition, i + 1);
+            tetro.setRotatedPosition(tetro.position, i + 1);
             tetro.setRotation(i + 1);
         });
 
@@ -61,7 +61,7 @@ export class GameState {
 
         this.socket.on("playerMove", (playerId, state) => {
             const i = (3 - this.playerId + playerId) % 4; // Circular distance
-            this.otherPieces[i].rawPosition = state.position; // position before rotation
+            this.otherPieces[i].position = state.position; // position before rotation
             this.otherPieces[i].setType(state.type);
             this.otherPieces[i].setRotatedPosition(state.position, i + 1);
             this.otherPieces[i].setRotation(i + 1 + state.rotation);
