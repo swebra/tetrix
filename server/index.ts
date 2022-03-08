@@ -10,6 +10,7 @@ import path from "path";
 
 import { ServerToClientEvents, ClientToServerEvents } from "common/message";
 import { ColoredScore } from "common/shared";
+import { SceneTracker } from "./src/SceneTracker";
 
 interface InterServerEvents {
     ping: () => void;
@@ -61,6 +62,7 @@ const scoreboard = new Scoreboard();
 const level = new Level();
 const queue = new PlayerQueue();
 const spectator = new Spectator();
+const scene = new SceneTracker();
 
 // =========== Emit to all sockets ================
 export function broadcastUpdateScoreboard(msg: Array<ColoredScore>) {
@@ -69,14 +71,17 @@ export function broadcastUpdateScoreboard(msg: Array<ColoredScore>) {
 
 export function broadcastToSceneWaitingRoom() {
     queue.resetQueue();
+    scene.setScene("SceneWaitingRoom");
     io.sockets.emit("toSceneWaitingRoom");
 }
 
 export function broadcastToSceneGameArena() {
+    scene.setScene("SceneGameArena");
     io.sockets.emit("toSceneGameArena");
 }
 
 export function broadcastToSceneGameOver(msg: Array<ColoredScore>) {
+    scene.setScene("SceneGameOver");
     io.sockets.emit("toSceneGameOver", msg);
 }
 
@@ -97,13 +102,18 @@ export function broadcastFallRate(fallRate: number) {
 }
 // ==============================================
 
-// Uncomment to view the game end sequence:
-// setTimeout(() => {
-//   console.log("Sending clients to Game Over Screen!")
-//   scoreboard.displaySceneGameOver();
-// }, 30000);
-
 io.on("connection", (socket) => {
+    scoreboard.initSocketListeners(socket, level);
+    spectator.initSocketListeners(socket);
+    queue.initSocketListeners(socket);
+    scene.initSocketListeners(socket, scoreboard.finalScores);
+    level.initSocketListeners(socket);
+
+    // Uncomment to view the game end sequence:
+    // setTimeout(() => {
+    //     scoreboard.displaySceneGameOver();
+    // }, 20000);
+
     if (process.env.VITE_DISABLE_WAITING_ROOM) {
         socket.emit("initPlayer", playerCounter);
         playerCounter += 1;
@@ -113,10 +123,4 @@ io.on("connection", (socket) => {
     socket.on("playerMove", (...args) => {
         socket.broadcast.emit("playerMove", ...args);
     });
-
-    scoreboard.initSocketListeners(socket, level);
-    spectator.initSocketListeners(socket);
-    queue.initSocketListeners(socket);
-    level.initSocketListeners(socket);
-    // FIXME need a state machine to tell which scene the game is at, conditionally tackle disconnections?
 });
