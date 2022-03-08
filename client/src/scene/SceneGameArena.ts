@@ -64,8 +64,10 @@ export class SceneGameArena extends Phaser.Scene {
     create() {
         this.scoreboard = new ScoreboardUI(this, this.sharedState.socket, true);
         this.spectator = new SpectatorUI(this, this.sharedState.socket);
-        this.fallRateTimer = null;
         this.controls = null;
+
+        // Initialize the fall rate to 1000 until we get confirmation from the server.
+        this.updateFallTimer(1000);
 
         // initialize an empty rendered board
         this.renderedBoard = [];
@@ -95,16 +97,17 @@ export class SceneGameArena extends Phaser.Scene {
 
         this.socket.emit("requestFallRate");
 
-        this.socket.on("updateFallRate", (fallRate) => {
-            this.updateFallTimer(fallRate);
-        });
-
         this.initListeners();
     }
 
     private initListeners() {
         // Clean out any old listeners to avoid accumulation.
         this.socket.removeListener("toSceneGameOver");
+        this.socket.removeListener("updateFallRate");
+
+        this.socket.on("updateFallRate", (fallRate) => {
+            this.updateFallTimer(fallRate);
+        });
 
         this.socket.on("toSceneGameOver", (playerPoints) => {
             this.scene.start("SceneGameOver", {
