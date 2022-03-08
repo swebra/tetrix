@@ -109,6 +109,10 @@ io.on("connection", (socket) => {
     socket.on("playerMove", (...args) => {
         socket.broadcast.emit("playerMove", ...args);
     });
+    socket.on("playerPlace", (...args) => {
+        console.log("player ", args[0], " placed.");
+        socket.broadcast.emit("playerPlace", ...args);
+    });
 
     scoreboard.initSocketListeners(socket, level);
     spectator.initSocketListeners(socket);

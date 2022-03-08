@@ -127,9 +127,9 @@ export class SceneGameArena extends Phaser.Scene {
 
         // 12 fps
         if (this.frameTimeElapsed > 1000 / this.FRAMERATE) {
-            this.gameState.deadReckoningSystem?.updateRemotePlayersIfDead(
-                this.gameState.board
-            );
+            // this.gameState.deadReckoningSystem?.updateRemotePlayersIfDead(
+            //     this.gameState.board
+            // );
             this.updateBoardFromFrozen(this, this.gameState.otherPieces);
             this.updateUserInput(this);
             this.updateDrawBoard(this.gameState, this);
@@ -223,6 +223,9 @@ export class SceneGameArena extends Phaser.Scene {
         if (
             tetro.moveIfCan(board, (tetro) => {
                 tetro.position[0] += 1;
+                if (tetro.position[0] > BOARD_SIZE) {
+                    tetro.position[0] = 0;
+                }
                 return tetro;
             })
         ) {
@@ -234,6 +237,26 @@ export class SceneGameArena extends Phaser.Scene {
         } else {
             console.log(tetro, "cannot fall!");
             // TODO place on state.board and emit events to the server
+            scene.gameState.socket.emit(
+                "playerPlace",
+                scene.gameState.playerId,
+                scene.gameState.currentTetromino.reportPosition()
+            );
+
+            // convert the tetromino to static blocks
+            scene.gameState.currentTetromino.tiles.forEach((tile) => {
+                const [row, col] = [
+                    scene.gameState.currentTetromino.position[0] + tile[0],
+                    scene.gameState.currentTetromino.position[1] + tile[1],
+                ];
+                scene.gameState.frozenBoard[row][col] =
+                    scene.gameState.currentTetromino.type;
+            });
+            // start a new tetromino from the top
+            scene.gameState.currentTetromino = new Tetromino(TetrominoType.T);
+            this.currentTetro = new RenderedTetromino(
+                scene.gameState.currentTetromino
+            );
         }
     }
 }

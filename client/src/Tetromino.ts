@@ -128,6 +128,14 @@ export class Tetromino {
         };
     }
 
+    static createFromState(state: TetrominoState): Tetromino {
+        const newTetro = new Tetromino(state.type);
+        newTetro.position = state.position;
+        newTetro.tiles = cloneDeep(Tetromino.shapes[state.type].tiles);
+        newTetro.rotation = state.rotation;
+        return newTetro;
+    }
+
     setType(type: TetrominoType) {
         if (this.type == type) {
             return;
