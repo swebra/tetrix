@@ -90,6 +90,14 @@ export class Level {
     }
 
     /**
+     * Reset the values of the fallrate & level. Used upon restarting the game.
+     */
+    public resetLevel() {
+        this.currentFallRate = 1000;
+        this._currentLevel = 1;
+    }
+
+    /**
      * Notify the client of the current fallrate.
      * @param socket The client requesting data.
      */

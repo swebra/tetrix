@@ -71,6 +71,7 @@ export function broadcastUpdateScoreboard(msg: Array<ColoredScore>) {
 
 export function broadcastToSceneWaitingRoom() {
     queue.resetQueue();
+    level.resetLevel();
     scene.setScene("SceneWaitingRoom");
     io.sockets.emit("toSceneWaitingRoom");
 }
