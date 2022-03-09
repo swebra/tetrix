@@ -32,7 +32,10 @@ export class Level {
      * @param score The total score the players have accumulated.
      */
     public checkUpdateLevel(score: number) {
-        if (score >= this._currentLevel * 20 && this._currentLevel < 15) {
+        if (
+            score - (this._currentLevel - 1) * 20 >= this._currentLevel * 20 &&
+            this._currentLevel < 15
+        ) {
             this._currentLevel++;
             this.updateFallRate();
         }
