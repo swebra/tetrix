@@ -202,20 +202,6 @@ export class Tetromino {
         return true;
     }
 
-    canTetroFall(board: Array<Array<TetrominoType | null>>): boolean {
-        // if the blocks right below this tetro are all empty, it can fall.
-        const bottomRelative = Math.max(...this.tiles.map((tile) => tile[0])); // the lowest block in the tetro tiles, ranging from 0-3
-        const bottomAbsolute = this.position[0] + bottomRelative; // the row of which the lowest block of the tetro is at in the board
-
-        if (bottomAbsolute + 1 >= board.length) return false;
-
-        return this.tiles.every(
-            (tile: any) =>
-                tile[0] < bottomRelative || // either the tile is not the bottom tiles which we don't care
-                board[bottomAbsolute + 1][this.position[1] + tile[1]] == null // or the room below it has to be empty
-        );
-    }
-
     moveIfCan(
         board: Array<Array<TetrominoType | null>>,
         movement: (tetro: Tetromino) => Tetromino | void
