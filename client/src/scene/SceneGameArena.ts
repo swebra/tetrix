@@ -7,7 +7,6 @@ import { TetrominoType } from "common/TetrominoType";
 import { Tetromino } from "../Tetromino";
 import { ScoreboardUI } from "../scene/ScoreboardUI";
 import { SpectatorUI } from "../scene/SpectatorUI";
-import { SharedState } from "..";
 import { WebFontFile } from "../plugins/WebFontFile";
 
 import { Socket } from "socket.io-client";
@@ -24,11 +23,15 @@ import KEY_E from "../assets/controls/KEY_E.svg";
 
 type SocketGame = Socket<ToClientEvents, ToServerEvents>;
 
+interface SceneDataGameArena {
+    gameState: GameState;
+}
+
 export class SceneGameArena extends Phaser.Scene {
     FRAMERATE: number = 12;
 
     keys!: any; // Phaser doesn't provide nice typing for keyboard.addKeys
-    sharedState!: SharedState;
+    gameState!: GameState;
     socket!: SocketGame;
 
     currentTetro!: RenderedTetromino;
@@ -55,14 +58,14 @@ export class SceneGameArena extends Phaser.Scene {
         this.load.svg("keyQ", KEY_Q);
     }
 
-    init(data: SharedState) {
-        this.sharedState = data;
-        this.socket = data.socket;
+    init(data: SceneDataGameArena) {
+        this.gameState = data.gameState;
+        this.socket = this.gameState.socket;
     }
 
     create() {
-        this.scoreboard = new ScoreboardUI(this, this.sharedState.socket, true);
-        this.spectator = new SpectatorUI(this, this.sharedState.socket);
+        this.scoreboard = new ScoreboardUI(this, this.socket, true);
+        this.spectator = new SpectatorUI(this, this.socket);
         this.controls = null;
 
         // initialize an empty rendered board
@@ -82,12 +85,12 @@ export class SceneGameArena extends Phaser.Scene {
 
         // falling, controllable tetromino
         this.currentTetro = new RenderedTetromino(
-            this.sharedState.gameState.currentTetromino
+            this.gameState.currentTetromino
         );
         this.otherTetros = [];
         for (let i = 0; i < 3; i++) {
             this.otherTetros.push(
-                new RenderedTetromino(this.sharedState.gameState.otherPieces[i])
+                new RenderedTetromino(this.gameState.otherPieces[i])
             );
         }
 
@@ -107,7 +110,7 @@ export class SceneGameArena extends Phaser.Scene {
 
         this.socket.on("toSceneGameOver", (playerPoints) => {
             this.scene.start("SceneGameOver", {
-                ...this.sharedState,
+                gameState: this.gameState,
                 playerPoints: playerPoints,
             });
         });
@@ -117,10 +120,7 @@ export class SceneGameArena extends Phaser.Scene {
         this.frameTimeElapsed += delta;
 
         // Load in the controlsUI for players. Placed here due to a potential time delay for receiving the playerID.
-        if (
-            this.controls == null &&
-            this.sharedState.gameState.playerId != null
-        ) {
+        if (this.controls == null && this.gameState.playerId != null) {
             this.controls = new ControlsUI(this, [
                 "keyA",
                 "keyD",
@@ -134,7 +134,7 @@ export class SceneGameArena extends Phaser.Scene {
         if (this.frameTimeElapsed > 1000 / this.FRAMERATE) {
             this.updateBoardFromFrozen(this);
             this.updateUserInput(this);
-            this.updateDrawBoard(this.sharedState.gameState, this);
+            this.updateDrawBoard(this.gameState, this);
             this.updateDrawPlayer(this);
 
             // start next frame
@@ -145,15 +145,13 @@ export class SceneGameArena extends Phaser.Scene {
     // the frozen board is all blocks that are placed. the board contains dynamic player blocks.
     // this function sync the board with frozenboard, and add players on top
     private updateBoardFromFrozen(scene: SceneGameArena) {
-        scene.sharedState.gameState.board = cloneDeep(
-            scene.sharedState.gameState.frozenBoard
-        );
+        scene.gameState.board = cloneDeep(scene.gameState.frozenBoard);
         for (let i = 0; i < 3; i++) {
             const tetro = scene.otherTetros[i].inner;
             for (const tile of tetro.tiles) {
                 const row = tile[0] + tetro.position[0];
                 const col = tile[1] + tetro.position[1];
-                scene.sharedState.gameState.board[row][col] = tetro.type;
+                scene.gameState.board[row][col] = tetro.type;
             }
         }
     }
@@ -164,20 +162,20 @@ export class SceneGameArena extends Phaser.Scene {
     private updateUserInput(scene: SceneGameArena) {
         let moved = false;
         if (scene.keys.a.isDown || scene.keys.left.isDown) {
-            moved = scene.sharedState.gameState.currentTetromino.move(-1);
+            moved = scene.gameState.currentTetromino.move(-1);
         } else if (scene.keys.d.isDown || scene.keys.right.isDown) {
-            moved = scene.sharedState.gameState.currentTetromino.move(1);
+            moved = scene.gameState.currentTetromino.move(1);
         } else if (scene.keys.q.isDown || scene.keys.z.isDown) {
-            moved = scene.sharedState.gameState.currentTetromino.rotateCCW();
+            moved = scene.gameState.currentTetromino.rotateCCW();
         } else if (scene.keys.e.isDown || scene.keys.x.isDown) {
-            moved = scene.sharedState.gameState.currentTetromino.rotateCW();
+            moved = scene.gameState.currentTetromino.rotateCW();
         }
 
         if (moved) {
-            scene.sharedState.gameState.socket.emit(
+            scene.gameState.socket.emit(
                 "playerMove",
-                scene.sharedState.gameState.playerId,
-                scene.sharedState.gameState.currentTetromino.reportPosition()
+                scene.gameState.playerId,
+                scene.gameState.currentTetromino.reportPosition()
             );
         }
     }
@@ -216,17 +214,17 @@ export class SceneGameArena extends Phaser.Scene {
 
         // NOTE: other players' tetrominoes are treated as static blocks, although they are synced shortly before this function
 
-        const state = scene.sharedState.gameState;
+        const state = scene.gameState;
         const board = state.board;
         const tetro = state.currentTetromino;
 
         if (this.canTetroFall(tetro, board)) {
             tetro.position[0] += 1;
 
-            scene.sharedState.gameState.socket.emit(
+            scene.gameState.socket.emit(
                 "playerMove",
-                scene.sharedState.gameState.playerId,
-                scene.sharedState.gameState.currentTetromino.reportPosition()
+                scene.gameState.playerId,
+                scene.gameState.currentTetromino.reportPosition()
             );
         } else {
             console.log(tetro, "cannot fall!");

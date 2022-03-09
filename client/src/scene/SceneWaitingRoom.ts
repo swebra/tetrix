@@ -1,6 +1,5 @@
 import Phaser from "phaser";
-import { BOARD_SIZE } from "common/shared";
-import { SharedState } from "..";
+import { BOARD_SIZE, ColoredScore } from "common/shared";
 import { Socket } from "socket.io-client";
 
 import {
@@ -8,25 +7,30 @@ import {
     ToServerEvents,
 } from "common/messages/sceneWaitingRoom";
 import { WebFontFile } from "../plugins/WebFontFile";
+import { GameState } from "../GameState";
 
 import TitleScreen from "../assets/TitleScreen.svg";
 
 type SocketWaitingRoom = Socket<ToClientEvents, ToServerEvents>;
+
+interface SceneDataWaitingRoom {
+    gameState: GameState;
+}
 
 export class SceneWaitingRoom extends Phaser.Scene {
     private playersNeededText!: Phaser.GameObjects.Text;
     private headerText!: Phaser.GameObjects.Text;
     private button!: Phaser.GameObjects.Text;
     private socket!: SocketWaitingRoom;
-    private sharedData!: SharedState;
+    private gameState!: GameState;
 
     constructor() {
         super("SceneWaitingRoom");
     }
 
-    init(data: SharedState) {
-        this.sharedData = data;
-        this.socket = data.socket;
+    init(data: SceneDataWaitingRoom) {
+        this.gameState = data.gameState;
+        this.socket = this.gameState.socket;
     }
 
     preload() {
@@ -114,13 +118,13 @@ export class SceneWaitingRoom extends Phaser.Scene {
         });
 
         this.socket.on("toSceneGameArena", () => {
-            this.scene.start("SceneGameArena", { ...this.sharedData });
+            this.scene.start("SceneGameArena", { gameState: this.gameState });
         });
 
         this.socket.on("toSceneGameOver", (playerPoints) => {
             this.scene.start("SceneGameOver", {
-                ...this.sharedData,
-                playerPoints: playerPoints,
+                gameState: this.gameState,
+                playerPoints,
             });
         });
     }
