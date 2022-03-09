@@ -34,7 +34,7 @@ export class Level {
     public checkUpdateLevel(score: number) {
         if (score >= this._currentLevel * 20 && this._currentLevel < 15) {
             this._currentLevel++;
-            this.increaseFallRate();
+            this.updateFallRate();
         }
     }
 
@@ -59,9 +59,9 @@ export class Level {
     }
 
     /**
-     * Increase the fall rate according to the current level.
+     * Update the fall rate according to the current level.
      */
-    private increaseFallRate() {
+    private updateFallRate() {
         this.currentFallRate =
             1000 *
             (0.8 * ((this._currentLevel - 1) * 0.007)) **
@@ -70,7 +70,16 @@ export class Level {
     }
 
     /**
-     * Decrease the fall rate according to the current level.
+     * Increase the fall rate.
+     */
+    private increaseFallRate() {
+        this.currentFallRate =
+            1000 * (0.8 * (this._currentLevel * 0.007)) ** this._currentLevel;
+        broadcastFallRate(this.currentFallRate);
+    }
+
+    /**
+     * Decrease the fall rate.
      */
     private decreaseFallRate() {
         this.currentFallRate =
