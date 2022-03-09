@@ -44,7 +44,7 @@ export class Level {
     public spectatorIncreaseFallRate() {
         this.increaseFallRate();
         setTimeout(() => {
-            this.decreaseFallRate();
+            this.updateFallRate();
         }, 20000);
     }
 
@@ -54,7 +54,7 @@ export class Level {
     public spectatorDecreaseFallRate() {
         this.decreaseFallRate();
         setTimeout(() => {
-            this.increaseFallRate();
+            this.updateFallRate();
         }, 20000);
     }
 
@@ -70,7 +70,7 @@ export class Level {
     }
 
     /**
-     * Increase the fall rate.
+     * Increase the fall rate to be the next-level's equivalent.
      */
     private increaseFallRate() {
         this.currentFallRate =
@@ -79,7 +79,7 @@ export class Level {
     }
 
     /**
-     * Decrease the fall rate.
+     * Decrease the fall rate to be the previous level's equivalent.
      */
     private decreaseFallRate() {
         this.currentFallRate =
