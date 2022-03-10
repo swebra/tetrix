@@ -123,8 +123,5 @@ io.on("connection", (socket) => {
         socket.broadcast.emit("playerPlace", ...args);
     });
 
-    scoreboard.initSocketListeners(socket, level);
-    spectator.initSocketListeners(socket);
-    queue.initSocketListeners(socket);
     // FIXME need a state machine to tell which scene the game is at, conditionally tackle disconnections?
 });
