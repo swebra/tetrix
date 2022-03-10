@@ -10,7 +10,6 @@ import { SpectatorUI } from "../scene/SpectatorUI";
 import { WebFontFile } from "../plugins/WebFontFile";
 
 import { Socket } from "socket.io-client";
-import _ from "lodash";
 
 import { ToClientEvents, ToServerEvents } from "common/messages/sceneGameArena";
 import { TILE_SIZE } from "common/shared";
@@ -21,7 +20,6 @@ import KEY_D from "../assets/controls/KEY_D.svg";
 import KEY_S from "../assets/controls/KEY_S.svg";
 import KEY_Q from "../assets/controls/KEY_Q.svg";
 import KEY_E from "../assets/controls/KEY_E.svg";
-import { TetrominoState } from "common/message";
 
 type SocketGame = Socket<ToClientEvents, ToServerEvents>;
 
@@ -130,9 +128,6 @@ export class SceneGameArena extends Phaser.Scene {
 
         // 12 fps
         if (this.frameTimeElapsed > 1000 / this.FRAMERATE) {
-            // this.gameState.deadReckoningSystem?.updateRemotePlayersIfDead(
-            //     this.gameState.board
-            // );
             this.updateBoardFromFrozen(this, this.gameState.otherPieces);
             this.updateUserInput(this);
             this.updateDrawBoard(this.gameState, this);
@@ -167,13 +162,33 @@ export class SceneGameArena extends Phaser.Scene {
     private updateUserInput(scene: SceneGameArena) {
         let moved = false;
         if (scene.keys.a.isDown || scene.keys.left.isDown) {
-            moved = scene.gameState.currentTetromino.move(-1);
+            moved = scene.gameState.currentTetromino.moveIfCan(
+                scene.gameState.board,
+                (tetro) => {
+                    tetro.position[1] -= 1;
+                }
+            );
         } else if (scene.keys.d.isDown || scene.keys.right.isDown) {
-            moved = scene.gameState.currentTetromino.move(1);
+            moved = scene.gameState.currentTetromino.moveIfCan(
+                scene.gameState.board,
+                (tetro) => {
+                    tetro.position[1] += 1;
+                }
+            );
         } else if (scene.keys.q.isDown || scene.keys.z.isDown) {
-            moved = scene.gameState.currentTetromino.rotateCCW();
+            moved = scene.gameState.currentTetromino.moveIfCan(
+                scene.gameState.board,
+                (tetro) => {
+                    tetro.rotateCCW();
+                }
+            );
         } else if (scene.keys.e.isDown || scene.keys.x.isDown) {
-            moved = scene.gameState.currentTetromino.rotateCW();
+            moved = scene.gameState.currentTetromino.moveIfCan(
+                scene.gameState.board,
+                (tetro) => {
+                    tetro.rotateCW();
+                }
+            );
         }
 
         if (moved) {
@@ -211,12 +226,6 @@ export class SceneGameArena extends Phaser.Scene {
     }
 
     private updateFalling(scene: SceneGameArena) {
-        // fall the tetromino
-        // if (can fall)
-        //    fall
-        // else
-        //    TODO place on board
-
         // NOTE: other players' tetrominoes are treated as static blocks, although they are synced shortly before this function
 
         const state = scene.gameState;
@@ -238,8 +247,7 @@ export class SceneGameArena extends Phaser.Scene {
                 scene.gameState.currentTetromino.reportPosition()
             );
         } else {
-            console.log(tetro, "cannot fall!");
-            // TODO place on state.board and emit events to the server
+            // place on state.board and emit events to the server
             scene.gameState.socket.emit(
                 "playerPlace",
                 scene.gameState.playerId,

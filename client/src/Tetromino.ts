@@ -171,35 +171,12 @@ export class Tetromino {
         this.rotation = <0 | 1 | 2 | 3>(rotation % 4);
     }
 
-    // TODO: Properly verify movement is possible before allowing it
-    move(colDelta: number): boolean {
-        const newCol = this.position[1] + colDelta;
-        if (newCol < 0 || newCol >= BOARD_SIZE) {
-            return false;
-        }
-        this.position[1] = newCol;
-        return true;
-    }
-
-    // TODO: Verify rotation is possible before allowing it
-    private canRotate(): boolean {
-        return true;
-    }
-
-    rotateCW(): boolean {
-        if (!this.canRotate()) {
-            return false;
-        }
+    rotateCW() {
         this.setRotation(this.rotation + 1);
-        return true;
     }
 
-    rotateCCW(): boolean {
-        if (!this.canRotate()) {
-            return false;
-        }
+    rotateCCW() {
         this.setRotation(4 + this.rotation - 1);
-        return true;
     }
 
     moveIfCan(
@@ -223,6 +200,7 @@ export class Tetromino {
                     null &&
                 // AND 2. the tiles are NOT from the old self
                 // TODO falling out of bounds
+                // TODO hitting outside the visible arena (game over)
                 !oldTileCoords.some(
                     ([oldRow, oldCol]) =>
                         newTetro.position[0] + row == oldRow &&
