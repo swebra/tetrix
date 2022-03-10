@@ -30,15 +30,15 @@ export class Level {
     /**
      * Check if its possible to update the game's level based off the given score. Max level is 15.
      * @param score The total score the players have accumulated.
+     * @returns Whether the level was incremented.
      */
     public checkUpdateLevel(score: number) {
-        if (
-            score - (this._currentLevel - 1) * 20 >= this._currentLevel * 20 &&
-            this._currentLevel < 15
-        ) {
+        if (score >= this._currentLevel * 20 && this._currentLevel < 15) {
             this._currentLevel++;
             this.updateFallRate();
+            return true;
         }
+        return false;
     }
 
     /**

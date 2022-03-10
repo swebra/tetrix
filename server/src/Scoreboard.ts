@@ -17,7 +17,7 @@ export class Scoreboard {
     private _greenScore: number;
     private _pinkScore: number;
     private _blueScore: number;
-    private _totalScore: number;
+    private _accumulatedScore: number;
     private _scoreMap: Array<ColoredScore>;
     private _finalScores: Array<ColoredScore>;
 
@@ -26,7 +26,7 @@ export class Scoreboard {
         this._greenScore = 0;
         this._pinkScore = 0;
         this._blueScore = 0;
-        this._totalScore = 0;
+        this._accumulatedScore = 0;
 
         this._finalScores = [];
 
@@ -85,10 +85,6 @@ export class Scoreboard {
         return this._blueScore;
     }
 
-    get totalScore(): number {
-        return this._totalScore;
-    }
-
     get currentTeamScore(): number {
         return (
             this._orangeScore +
@@ -114,7 +110,7 @@ export class Scoreboard {
         this._greenScore = 0;
         this._pinkScore = 0;
         this._blueScore = 0;
-        this._totalScore = 0;
+        this._accumulatedScore = 0;
     }
 
     /**
@@ -124,7 +120,7 @@ export class Scoreboard {
      * @param level The level object. Used to *possibly* increase the level of the game.
      */
     public incrementScore(playerIndex: number, value: number, level: Level) {
-        this._totalScore += value;
+        this._accumulatedScore += value;
 
         switch (playerIndex) {
             case PlayerColor.Orange:
@@ -141,7 +137,11 @@ export class Scoreboard {
                 break;
         }
 
-        level.checkUpdateLevel(this.totalScore);
+        // Reset the score if the level was incremented.
+        if (level.checkUpdateLevel(this._accumulatedScore)) {
+            this._accumulatedScore = 0;
+        }
+
         this.updateScoreboardUI(level.currentLevel);
     }
 
