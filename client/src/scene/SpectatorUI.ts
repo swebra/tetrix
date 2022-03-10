@@ -77,7 +77,7 @@ export class SpectatorUI {
 
         this.socket.on("showVotingSequence", (votingSequence) => {
             // Only display the voting sequence for spectators.
-            if (this.scene.sharedState.gameState.playerId == null) {
+            if (this.scene.gameState.playerId == null) {
                 this.generateTimedEvent(votingSequence);
             }
         });
