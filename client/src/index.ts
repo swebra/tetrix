@@ -1,16 +1,11 @@
 import Phaser from "phaser";
-import { io, Socket } from "socket.io-client";
+import { io } from "socket.io-client";
 
 import { SceneWaitingRoom } from "./scene/SceneWaitingRoom";
 import { SceneGameArena } from "./scene/SceneGameArena";
 import { SceneGameOver } from "./scene/SceneGameOver";
 import { GameState } from "./GameState";
 import { BOARD_SIZE, TILE_SIZE } from "common/shared";
-
-export interface SharedState {
-    gameState: GameState;
-    socket: Socket;
-}
 
 const config = {
     type: Phaser.AUTO,

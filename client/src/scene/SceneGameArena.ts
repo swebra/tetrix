@@ -7,7 +7,6 @@ import { TetrominoType } from "common/TetrominoType";
 import { Tetromino } from "../Tetromino";
 import { ScoreboardUI } from "../scene/ScoreboardUI";
 import { SpectatorUI } from "../scene/SpectatorUI";
-import { SharedState } from "..";
 import { WebFontFile } from "../plugins/WebFontFile";
 
 import { Socket } from "socket.io-client";
@@ -26,11 +25,14 @@ import { TetrominoState } from "common/message";
 
 type SocketGame = Socket<ToClientEvents, ToServerEvents>;
 
+interface SceneDataGameArena {
+    gameState: GameState;
+}
+
 export class SceneGameArena extends Phaser.Scene {
     FRAMERATE: number = 12;
 
     keys!: any; // Phaser doesn't provide nice typing for keyboard.addKeys
-    sharedState!: SharedState;
     gameState!: GameState;
     socket!: SocketGame;
 
@@ -40,14 +42,12 @@ export class SceneGameArena extends Phaser.Scene {
 
     scoreboard!: ScoreboardUI;
     spectator!: SpectatorUI;
-    controls!: ControlsUI;
+    controls!: ControlsUI | null;
 
     frameTimeElapsed: number = 0; // the ms time since the last frame is drawn
 
     constructor() {
-        super({
-            key: "SceneGameArena",
-        });
+        super("SceneGameArena");
     }
 
     preload() {
@@ -60,15 +60,14 @@ export class SceneGameArena extends Phaser.Scene {
         this.load.svg("keyQ", KEY_Q);
     }
 
-    init(data: SharedState) {
-        this.sharedState = data;
+    init(data: SceneDataGameArena) {
         this.gameState = data.gameState;
-        this.socket = data.socket;
+        this.socket = this.gameState.socket;
     }
 
     create() {
-        this.scoreboard = new ScoreboardUI(this, this.sharedState.socket, true);
-        this.spectator = new SpectatorUI(this, this.sharedState.socket);
+        this.scoreboard = new ScoreboardUI(this, this.socket, true);
+        this.spectator = new SpectatorUI(this, this.socket);
         // NOTE: need to make sure playerId is valid when this scene is started
         this.controls = new ControlsUI(this, [
             "keyA",
@@ -77,8 +76,6 @@ export class SceneGameArena extends Phaser.Scene {
             "keyQ",
             "keyE",
         ]);
-
-        this.gameState.deadReckoningSystem?.initTimer();
 
         // initialize an empty rendered board
         this.renderedBoard = [];
@@ -113,11 +110,17 @@ export class SceneGameArena extends Phaser.Scene {
             loop: true,
         });
 
+        this.initListeners();
+    }
+
+    private initListeners() {
+        // Clean out any old listeners to avoid accumulation.
+        this.socket.removeListener("toSceneGameOver");
+
         this.socket.on("toSceneGameOver", (playerPoints) => {
             this.scene.start("SceneGameOver", {
-                ...this.sharedState,
-                playerPoints: playerPoints,
                 gameState: this.gameState,
+                playerPoints: playerPoints,
             });
         });
     }
