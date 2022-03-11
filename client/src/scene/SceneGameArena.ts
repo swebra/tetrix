@@ -97,7 +97,7 @@ export class SceneGameArena extends Phaser.Scene {
         this.otherTetros = [];
         for (let i = 0; i < 3; i++) {
             this.otherTetros.push(
-                new RenderedTetromino(this.gameState.otherPieces[i])
+                new RenderedTetromino(this.gameState.otherTetrominoes[i])
             );
         }
 
@@ -128,7 +128,7 @@ export class SceneGameArena extends Phaser.Scene {
 
         // 12 fps
         if (this.frameTimeElapsed > 1000 / this.FRAMERATE) {
-            this.updateBoardFromFrozen(this, this.gameState.otherPieces);
+            this.updateBoardFromFrozen(this, this.gameState.otherTetrominoes);
             this.updateUserInput(this);
             this.updateDrawBoard(this.gameState, this);
             this.updateDrawPlayer(this);
@@ -178,16 +178,12 @@ export class SceneGameArena extends Phaser.Scene {
         } else if (scene.keys.q.isDown || scene.keys.z.isDown) {
             moved = scene.gameState.currentTetromino.moveIfCan(
                 scene.gameState.board,
-                (tetro) => {
-                    tetro.rotateCCW();
-                }
+                Tetromino.rotateCCW
             );
         } else if (scene.keys.e.isDown || scene.keys.x.isDown) {
             moved = scene.gameState.currentTetromino.moveIfCan(
                 scene.gameState.board,
-                (tetro) => {
-                    tetro.rotateCW();
-                }
+                Tetromino.rotateCW
             );
         }
 
@@ -235,9 +231,6 @@ export class SceneGameArena extends Phaser.Scene {
         if (
             tetro.moveIfCan(board, (tetro) => {
                 tetro.position[0] += 1;
-                if (tetro.position[0] > BOARD_SIZE) {
-                    tetro.position[0] = 0;
-                }
                 return tetro;
             })
         ) {

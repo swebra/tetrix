@@ -123,12 +123,23 @@ export class Tetromino {
         };
     }
 
-    static createFromState(state: TetrominoState): Tetromino {
-        const newTetro = new Tetromino(state.type);
-        newTetro.position = state.position;
-        newTetro.tiles = cloneDeep(Tetromino.shapes[state.type].tiles);
-        newTetro.rotation = state.rotation;
-        return newTetro;
+    static createFromState(
+        state: TetrominoState,
+        ccRotations: number
+    ): Tetromino {
+        const tetromino = new Tetromino(state.type);
+        Tetromino.updateFromState(tetromino, state, ccRotations);
+        return tetromino;
+    }
+
+    static updateFromState(
+        tetromino: Tetromino,
+        state: TetrominoState,
+        ccRotations: number
+    ) {
+        tetromino.setType(state.type);
+        tetromino.setRotatedPosition(state.position, ccRotations);
+        tetromino.setRotation(ccRotations + state.rotation);
     }
 
     setType(type: TetrominoType) {
@@ -171,12 +182,12 @@ export class Tetromino {
         this.rotation = <0 | 1 | 2 | 3>(rotation % 4);
     }
 
-    rotateCW() {
-        this.setRotation(this.rotation + 1);
+    static rotateCW(tetromino: Tetromino) {
+        tetromino.setRotation(tetromino.rotation + 1);
     }
 
-    rotateCCW() {
-        this.setRotation(4 + this.rotation - 1);
+    static rotateCCW(tetromino: Tetromino) {
+        tetromino.setRotation(4 + tetromino.rotation + 1);
     }
 
     moveIfCan(
