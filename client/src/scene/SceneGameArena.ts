@@ -187,7 +187,7 @@ export class SceneGameArena extends Phaser.Scene {
             scene.gameState.socket.emit(
                 "playerMove",
                 scene.gameState.playerId,
-                scene.gameState.currentTetromino.reportPosition()
+                scene.gameState.currentTetromino.reportState()
             );
         }
     }
@@ -228,14 +228,14 @@ export class SceneGameArena extends Phaser.Scene {
             scene.gameState.socket.emit(
                 "playerMove",
                 scene.gameState.playerId,
-                scene.gameState.currentTetromino.reportPosition()
+                scene.gameState.currentTetromino.reportState()
             );
         } else {
             // place on state.board and emit events to the server
             scene.gameState.socket.emit(
                 "playerPlace",
                 scene.gameState.playerId,
-                scene.gameState.currentTetromino.reportPosition()
+                scene.gameState.currentTetromino.reportState()
             );
 
             // convert the tetromino to static blocks
@@ -257,7 +257,7 @@ export class SceneGameArena extends Phaser.Scene {
             scene.gameState.socket.emit(
                 "playerMove",
                 scene.gameState.playerId,
-                scene.gameState.currentTetromino.reportPosition()
+                scene.gameState.currentTetromino.reportState()
             );
         }
     }

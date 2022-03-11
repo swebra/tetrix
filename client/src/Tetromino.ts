@@ -115,21 +115,12 @@ export class Tetromino {
         this.rotation = 0; // default (no rotation)
     }
 
-    reportPosition(): TetrominoState {
+    reportState(): TetrominoState {
         return {
             type: this.type,
             position: this.position,
             rotation: this.rotation,
         };
-    }
-
-    static createFromState(
-        state: TetrominoState,
-        ccRotations: number
-    ): Tetromino {
-        const tetromino = new Tetromino(state.type);
-        Tetromino.updateFromState(tetromino, state, ccRotations);
-        return tetromino;
     }
 
     static updateFromState(
