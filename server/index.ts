@@ -71,6 +71,7 @@ export function broadcastUpdateScoreboard(msg: Array<ColoredScore>) {
 
 export function broadcastToSceneWaitingRoom() {
     queue.resetQueue();
+    level.resetLevel();
     scene.setScene("SceneWaitingRoom");
     io.sockets.emit("toSceneWaitingRoom");
 }
@@ -96,6 +97,10 @@ export function broadcastHideVotingSequence() {
 export function broadcastRemainingPlayers(playersNeeded: number) {
     io.sockets.emit("updateRemainingPlayers", playersNeeded);
 }
+
+export function broadcastFallRate(fallRate: number) {
+    io.sockets.emit("updateFallRate", fallRate);
+}
 // ==============================================
 
 io.on("connection", (socket) => {
@@ -103,6 +108,7 @@ io.on("connection", (socket) => {
     spectator.initSocketListeners(socket);
     queue.initSocketListeners(socket);
     scene.initSocketListeners(socket, scoreboard.finalScores);
+    level.initSocketListeners(socket);
 
     // Uncomment to view the game end sequence:
     // setTimeout(() => {
