@@ -261,6 +261,13 @@ export class SceneGameArena extends Phaser.Scene {
             this.currentTetro = new RenderedTetromino(
                 scene.gameState.currentTetromino
             );
+
+            // broadcast new tetromino position
+            scene.gameState.socket.emit(
+                "playerMove",
+                scene.gameState.playerId,
+                scene.gameState.currentTetromino.reportPosition()
+            );
         }
     }
 }

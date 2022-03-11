@@ -205,19 +205,18 @@ export class Tetromino {
         for (let i = 0; i < this.tiles.length; i++) {
             const [row, col] = newTetro.tiles[i];
 
-            if (
-                // 1. the new position has some other tiles in it
+            // conditions to check if there is something there already
+            // there is a tile already
+            const tileIsOccupied =
                 board[newTetro.position[0] + row][newTetro.position[1] + col] !=
-                    null &&
-                // AND 2. the tiles are NOT from the old self
-                // TODO falling out of bounds
-                // TODO hitting outside the visible arena (game over)
-                !oldTileCoords.some(
-                    ([oldRow, oldCol]) =>
-                        newTetro.position[0] + row == oldRow &&
-                        newTetro.position[1] + col == oldCol
-                )
-            ) {
+                null;
+            // the tile is not part of the old tetromino
+            const tileIsForeign = !oldTileCoords.some(
+                ([oldRow, oldCol]) =>
+                    newTetro.position[0] + row == oldRow &&
+                    newTetro.position[1] + col == oldCol
+            );
+            if (tileIsOccupied && tileIsForeign) {
                 return false;
             }
         }
