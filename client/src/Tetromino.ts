@@ -190,6 +190,18 @@ export class Tetromino {
         tetromino.setRotation(4 + tetromino.rotation + 1);
     }
 
+    static fall(tetromino: Tetromino) {
+        // fall down by 1
+        tetromino.position[0] += 1;
+    }
+
+    static slide(direction: -1 | 1): (tetro: Tetromino) => void {
+        // move left/right by 1
+        return (tetromino) => {
+            tetromino.position[1] += direction;
+        };
+    }
+
     moveIfCan(
         board: Array<Array<TetrominoType | null>>,
         movement: (tetro: Tetromino) => Tetromino | void

@@ -164,16 +164,12 @@ export class SceneGameArena extends Phaser.Scene {
         if (scene.keys.a.isDown || scene.keys.left.isDown) {
             moved = scene.gameState.currentTetromino.moveIfCan(
                 scene.gameState.board,
-                (tetro) => {
-                    tetro.position[1] -= 1;
-                }
+                Tetromino.slide(-1) // left
             );
         } else if (scene.keys.d.isDown || scene.keys.right.isDown) {
             moved = scene.gameState.currentTetromino.moveIfCan(
                 scene.gameState.board,
-                (tetro) => {
-                    tetro.position[1] += 1;
-                }
+                Tetromino.slide(1) // right
             );
         } else if (scene.keys.q.isDown || scene.keys.z.isDown) {
             moved = scene.gameState.currentTetromino.moveIfCan(
@@ -228,12 +224,7 @@ export class SceneGameArena extends Phaser.Scene {
         const board = state.board;
         const tetro = state.currentTetromino;
 
-        if (
-            tetro.moveIfCan(board, (tetro) => {
-                tetro.position[0] += 1;
-                return tetro;
-            })
-        ) {
+        if (tetro.moveIfCan(board, Tetromino.fall)) {
             scene.gameState.socket.emit(
                 "playerMove",
                 scene.gameState.playerId,
