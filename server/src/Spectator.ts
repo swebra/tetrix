@@ -209,7 +209,7 @@ export class Spectator {
                 if (this._isFirstRoundVoting) {
                     this.generateSecondVotingSequence("fallRate", level);
                 } else if (this._previouslyVotedOption == "option1") {
-                    level.spectatorIncrementLevel();
+                    level.spectatorIncreaseFallRate();
                     console.log("Incrementing level (fall rate)"); // FIXME: remove later.
                 } else if (this._previouslyVotedOption == "option2") {
                     console.log("Spawning in tetromino option 1..."); // FIXME: Need to spawn in a tetromino for the players for 20 seconds.
@@ -222,7 +222,7 @@ export class Spectator {
                         level
                     );
                 } else if (this._previouslyVotedOption == "option1") {
-                    level.spectatorDecrementLevel();
+                    level.spectatorDecreaseFallRate();
                     console.log("Decrementing level (fall rate)"); // FIXME: remove later.
                 } else if (this._previouslyVotedOption == "option2") {
                     console.log("Spawning in tetromino option 2 ..."); // FIXME: Spawn in tetrominos for players for 20 seconds.

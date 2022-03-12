@@ -33,6 +33,7 @@ export class SceneGameArena extends Phaser.Scene {
     keys!: any; // Phaser doesn't provide nice typing for keyboard.addKeys
     gameState!: GameState;
     socket!: SocketGame;
+    fallRateTimer!: Phaser.Time.TimerEvent | null;
 
     currentTetro!: RenderedTetromino;
     otherTetros!: Array<RenderedTetromino>;
@@ -75,6 +76,9 @@ export class SceneGameArena extends Phaser.Scene {
             "keyE",
         ]);
 
+        // Initialize the fall rate to 1000 until we get confirmation from the server.
+        this.updateFallTimer(1000);
+
         // initialize an empty rendered board
         this.renderedBoard = [];
         for (let row = 0; row < BOARD_SIZE; row++) {
@@ -101,12 +105,7 @@ export class SceneGameArena extends Phaser.Scene {
             );
         }
 
-        // 1s interval falling rate, TODO put inside update()?
-        this.time.addEvent({
-            delay: 1000,
-            callback: () => this.updateFalling(this),
-            loop: true,
-        });
+        this.socket.emit("requestFallRate");
 
         this.initListeners();
     }
@@ -114,6 +113,11 @@ export class SceneGameArena extends Phaser.Scene {
     private initListeners() {
         // Clean out any old listeners to avoid accumulation.
         this.socket.removeListener("toSceneGameOver");
+        this.socket.removeListener("updateFallRate");
+
+        this.socket.on("updateFallRate", (fallRate) => {
+            this.updateFallTimer(fallRate);
+        });
 
         this.socket.on("toSceneGameOver", (playerPoints) => {
             this.scene.start("SceneGameOver", {
@@ -136,6 +140,18 @@ export class SceneGameArena extends Phaser.Scene {
             // start next frame
             this.frameTimeElapsed = 0;
         }
+    }
+
+    private updateFallTimer(interval: number) {
+        if (this.fallRateTimer) {
+            this.time.removeEvent(this.fallRateTimer);
+        }
+
+        this.fallRateTimer = this.time.addEvent({
+            delay: interval,
+            callback: () => this.updateFalling(this),
+            loop: true,
+        });
     }
 
     // the frozen board is all blocks that are placed. the board contains dynamic player blocks.
