@@ -6,15 +6,19 @@ type SocketLevel = Socket<ToServerEvents, ToClientEvents>;
 
 export class Level {
     private _currentLevel: number;
-    private currentFallRate: number;
+    private _currentFallRate: number;
 
     constructor() {
         this._currentLevel = 1;
-        this.currentFallRate = 1000;
+        this._currentFallRate = 1000;
     }
 
     get currentLevel(): number {
         return this._currentLevel;
+    }
+
+    get currentFallRate(): number {
+        return this._currentFallRate;
     }
 
     /**
@@ -23,7 +27,7 @@ export class Level {
      */
     public initSocketListeners(socket: SocketLevel) {
         socket.on("requestFallRate", () => {
-            socket.emit("updateFallRate", this.currentFallRate);
+            socket.emit("updateFallRate", this._currentFallRate);
         });
     }
 
@@ -65,38 +69,38 @@ export class Level {
      * Update the fall rate according to the current level.
      */
     private updateFallRate() {
-        this.currentFallRate =
+        this._currentFallRate =
             1000 *
-            (0.8 * ((this._currentLevel - 1) * 0.007)) **
+            (0.8 - (this._currentLevel - 1) * 0.007) **
                 (this._currentLevel - 1);
-        broadcastFallRate(this.currentFallRate);
+        broadcastFallRate(this._currentFallRate);
     }
 
     /**
      * Increase the fall rate to be the next-level's equivalent.
      */
     private increaseFallRate() {
-        this.currentFallRate =
-            1000 * (0.8 * (this._currentLevel * 0.007)) ** this._currentLevel;
-        broadcastFallRate(this.currentFallRate);
+        this._currentFallRate =
+            1000 * (0.8 - this._currentLevel * 0.007) ** this._currentLevel;
+        broadcastFallRate(this._currentFallRate);
     }
 
     /**
      * Decrease the fall rate to be the previous level's equivalent.
      */
     private decreaseFallRate() {
-        this.currentFallRate =
+        this._currentFallRate =
             1000 *
-            (0.8 * ((this._currentLevel - 2) * 0.007)) **
+            (0.8 - (this._currentLevel - 2) * 0.007) **
                 (this._currentLevel - 2);
-        broadcastFallRate(this.currentFallRate);
+        broadcastFallRate(this._currentFallRate);
     }
 
     /**
      * Reset the values of the fallrate & level. Used upon restarting the game.
      */
     public resetLevel() {
-        this.currentFallRate = 1000;
+        this._currentFallRate = 1000;
         this._currentLevel = 1;
     }
 
@@ -105,6 +109,6 @@ export class Level {
      * @param socket The client requesting data.
      */
     public getFallRate(socket: SocketLevel) {
-        socket.emit("updateFallRate", this.currentFallRate);
+        socket.emit("updateFallRate", this._currentFallRate);
     }
 }
