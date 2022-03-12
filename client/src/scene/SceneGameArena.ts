@@ -67,7 +67,14 @@ export class SceneGameArena extends Phaser.Scene {
     create() {
         this.scoreboard = new ScoreboardUI(this, this.socket, true);
         this.spectator = new SpectatorUI(this, this.socket);
-        this.controls = null;
+        // NOTE: need to make sure playerId is valid when this scene is started
+        this.controls = new ControlsUI(this, [
+            "keyA",
+            "keyD",
+            "keyS",
+            "keyQ",
+            "keyE",
+        ]);
 
         // Initialize the fall rate to 1000 until we get confirmation from the server.
         this.updateFallTimer(1000);
@@ -94,7 +101,7 @@ export class SceneGameArena extends Phaser.Scene {
         this.otherTetros = [];
         for (let i = 0; i < 3; i++) {
             this.otherTetros.push(
-                new RenderedTetromino(this.gameState.otherPieces[i])
+                new RenderedTetromino(this.gameState.otherTetrominoes[i])
             );
         }
 
@@ -123,20 +130,9 @@ export class SceneGameArena extends Phaser.Scene {
     update(time: number, delta: number) {
         this.frameTimeElapsed += delta;
 
-        // Load in the controlsUI for players. Placed here due to a potential time delay for receiving the playerID.
-        if (this.controls == null && this.gameState.playerId != null) {
-            this.controls = new ControlsUI(this, [
-                "keyA",
-                "keyD",
-                "keyS",
-                "keyQ",
-                "keyE",
-            ]);
-        }
-
         // 12 fps
         if (this.frameTimeElapsed > 1000 / this.FRAMERATE) {
-            this.updateBoardFromFrozen(this);
+            this.updateBoardFromFrozen(this, this.gameState.otherTetrominoes);
             this.updateUserInput(this);
             this.updateDrawBoard(this.gameState, this);
             this.updateDrawPlayer(this);
@@ -160,10 +156,14 @@ export class SceneGameArena extends Phaser.Scene {
 
     // the frozen board is all blocks that are placed. the board contains dynamic player blocks.
     // this function sync the board with frozenboard, and add players on top
-    private updateBoardFromFrozen(scene: SceneGameArena) {
+    private updateBoardFromFrozen(
+        scene: SceneGameArena,
+        otherTetros: Array<Tetromino>
+    ) {
         scene.gameState.board = cloneDeep(scene.gameState.frozenBoard);
         for (let i = 0; i < 3; i++) {
-            const tetro = scene.otherTetros[i].inner;
+            const tetro = otherTetros[i];
+
             for (const tile of tetro.tiles) {
                 const row = tile[0] + tetro.position[0];
                 const col = tile[1] + tetro.position[1];
@@ -178,20 +178,32 @@ export class SceneGameArena extends Phaser.Scene {
     private updateUserInput(scene: SceneGameArena) {
         let moved = false;
         if (scene.keys.a.isDown || scene.keys.left.isDown) {
-            moved = scene.gameState.currentTetromino.move(-1);
+            moved = scene.gameState.currentTetromino.moveIfCan(
+                scene.gameState.board,
+                Tetromino.slide(-1) // left
+            );
         } else if (scene.keys.d.isDown || scene.keys.right.isDown) {
-            moved = scene.gameState.currentTetromino.move(1);
+            moved = scene.gameState.currentTetromino.moveIfCan(
+                scene.gameState.board,
+                Tetromino.slide(1) // right
+            );
         } else if (scene.keys.q.isDown || scene.keys.z.isDown) {
-            moved = scene.gameState.currentTetromino.rotateCCW();
+            moved = scene.gameState.currentTetromino.moveIfCan(
+                scene.gameState.board,
+                Tetromino.rotateCCW
+            );
         } else if (scene.keys.e.isDown || scene.keys.x.isDown) {
-            moved = scene.gameState.currentTetromino.rotateCW();
+            moved = scene.gameState.currentTetromino.moveIfCan(
+                scene.gameState.board,
+                Tetromino.rotateCW
+            );
         }
 
         if (moved) {
             scene.gameState.socket.emit(
                 "playerMove",
                 scene.gameState.playerId,
-                scene.gameState.currentTetromino.reportPosition()
+                scene.gameState.currentTetromino.reportState()
             );
         }
     }
@@ -222,46 +234,47 @@ export class SceneGameArena extends Phaser.Scene {
     }
 
     private updateFalling(scene: SceneGameArena) {
-        // fall the tetromino
-        // if (can fall)
-        //    fall
-        // else
-        //    TODO place on board
-
         // NOTE: other players' tetrominoes are treated as static blocks, although they are synced shortly before this function
 
         const state = scene.gameState;
         const board = state.board;
         const tetro = state.currentTetromino;
 
-        if (this.canTetroFall(tetro, board)) {
-            tetro.position[0] += 1;
-
+        if (tetro.moveIfCan(board, Tetromino.fall)) {
             scene.gameState.socket.emit(
                 "playerMove",
                 scene.gameState.playerId,
-                scene.gameState.currentTetromino.reportPosition()
+                scene.gameState.currentTetromino.reportState()
             );
         } else {
-            console.log(tetro, "cannot fall!");
-            // TODO place on state.board and emit events to the server
+            // place on state.board and emit events to the server
+            scene.gameState.socket.emit(
+                "playerPlace",
+                scene.gameState.playerId,
+                scene.gameState.currentTetromino.reportState()
+            );
+
+            // convert the tetromino to static blocks
+            scene.gameState.currentTetromino.tiles.forEach((tile) => {
+                const [row, col] = [
+                    scene.gameState.currentTetromino.position[0] + tile[0],
+                    scene.gameState.currentTetromino.position[1] + tile[1],
+                ];
+                scene.gameState.frozenBoard[row][col] =
+                    scene.gameState.currentTetromino.type;
+            });
+            // start a new tetromino from the top
+            scene.gameState.currentTetromino = new Tetromino(TetrominoType.T);
+            this.currentTetro = new RenderedTetromino(
+                scene.gameState.currentTetromino
+            );
+
+            // broadcast new tetromino position
+            scene.gameState.socket.emit(
+                "playerMove",
+                scene.gameState.playerId,
+                scene.gameState.currentTetromino.reportState()
+            );
         }
-    }
-
-    private canTetroFall(
-        tetro: Tetromino,
-        board: Array<Array<TetrominoType | null>>
-    ): boolean {
-        // if the blocks right below this tetro are all empty, it can fall.
-        const bottomRelative = Math.max(...tetro.tiles.map((tile) => tile[0])); // the lowest block in the tetro tiles, ranging from 0-3
-        const bottomAbsolute = tetro.position[0] + bottomRelative; // the row of which the lowest block of the tetro is at in the board
-
-        if (bottomAbsolute + 1 >= board.length) return false;
-
-        return tetro.tiles.every(
-            (tile: any) =>
-                tile[0] < bottomRelative || // either the tile is not the bottom tiles which we don't care
-                board[bottomAbsolute + 1][tetro.position[1] + tile[1]] == null // or the room below it has to be empty
-        );
     }
 }
