@@ -249,7 +249,7 @@ export class SceneGameArena extends Phaser.Scene {
             scene.gameState.tradingPlayerId
         );
         if (scene.gameState.currentTetromino.isTraded) {
-            scene.trade.clearText();
+            scene.trade.existingText();
         }
     }
     private updateDrawBoard(state: GameState, scene: SceneGameArena) {
