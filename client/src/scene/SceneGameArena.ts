@@ -134,7 +134,7 @@ export class SceneGameArena extends Phaser.Scene {
         if (this.frameTimeElapsed > 1000 / this.FRAMERATE) {
             this.updateUserInput(this);
             this.updateDrawBoard(this.gameState, this);
-            this.updateDrawPlayer(this);
+            this.updateDrawPlayers(this);
 
             // start next frame
             this.frameTimeElapsed = 0;
@@ -210,8 +210,11 @@ export class SceneGameArena extends Phaser.Scene {
         }
     }
 
-    private updateDrawPlayer(scene: SceneGameArena) {
+    private updateDrawPlayers(scene: SceneGameArena) {
         scene.currentTetro.draw(scene);
+        for (let tetromino of scene.otherTetros) {
+            tetromino.draw(scene);
+          }
     }
 
     private updateFalling(scene: SceneGameArena) {
