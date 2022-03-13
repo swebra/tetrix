@@ -19,7 +19,9 @@ import KEY_D from "../assets/controls/KEY_D.svg";
 import KEY_S from "../assets/controls/KEY_S.svg";
 import KEY_Q from "../assets/controls/KEY_Q.svg";
 import KEY_E from "../assets/controls/KEY_E.svg";
-import { TradeState, TradeUI } from "./TradeUI";
+import KEY_SHIFT from "../assets/controls/KEY_SHIFT.svg";
+import { TradeUI } from "./TradeUI";
+import { TradeState } from "common/TradeState";
 
 type SocketGame = Socket<ToClientEvents, ToServerEvents>;
 

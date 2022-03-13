@@ -1,5 +1,5 @@
 import { TetrominoState, PlayerID } from "../message";
-import { TradeState } from "./trade";
+import { TradeState } from "../TradeState";
 import { TetrominoType } from "../TetrominoType";
 export interface ToClientEvents {
     initPlayer: (playerId: 0 | 1 | 2 | 3) => void;

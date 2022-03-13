@@ -1,6 +1,6 @@
 import { SceneGameArena } from "./SceneGameArena";
 import { PlayerColor } from "common/PlayerAttributes";
-import { TradeState } from "common/messages/trade";
+import { TradeState } from "common/TradeState";
 
 export class TradeUI {
     tradeState: TradeState;

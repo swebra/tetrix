@@ -3,7 +3,7 @@ import { TetrominoType } from "common/TetrominoType";
 import { Tetromino } from "./Tetromino";
 import { BOARD_SIZE } from "common/shared";
 import { ToServerEvents, ToClientEvents } from "common/messages/game";
-import { TradeState } from "./scene/TradeUI";
+import { TradeState } from "common/TradeState";
 
 type GameSocket = Socket<ToClientEvents, ToServerEvents>;
 
