@@ -163,9 +163,6 @@ io.on("connection", (socket) => {
     socket.on("clearTrade", () => {
         trader.clearTrade();
     })
-    scoreboard.initSocketListeners(socket, level);
-    spectator.initSocketListeners(socket);
-    queue.initSocketListeners(socket);
     socket.on("playerPlace", (...args) => {
         console.log("player ", args[0], " placed.");
         socket.broadcast.emit("playerPlace", ...args);
