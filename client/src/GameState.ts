@@ -21,7 +21,7 @@ export class GameState {
     playerId!: 0 | 1 | 2 | 3;
 
     private newBoard() {
-        let board = new Array(BOARD_SIZE);
+        const board = new Array(BOARD_SIZE);
         for (let r = 0; r < BOARD_SIZE; r++) {
             board[r] = new Array(BOARD_SIZE).fill(null);
         }

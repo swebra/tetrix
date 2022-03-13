@@ -2,7 +2,6 @@ import { GameState } from "../GameState";
 import Phaser, { GameObjects } from "phaser";
 import { RenderedTetromino } from "../RenderedTetromino";
 import { BOARD_SIZE } from "common/shared";
-import { cloneDeep } from "lodash";
 import { TetrominoType } from "common/TetrominoType";
 import { Tetromino } from "../Tetromino";
 import { ScoreboardUI } from "../scene/ScoreboardUI";
@@ -211,13 +210,18 @@ export class SceneGameArena extends Phaser.Scene {
 
     private updateDrawPlayers() {
         this.currentTetro.draw(this);
-        for (let tetromino of this.otherTetros) {
+        for (const tetromino of this.otherTetros) {
             tetromino.draw(this);
-          }
+        }
     }
 
     private updateFalling() {
-        if (this.gameState.currentTetromino.moveIfCan(this.gameState.board, Tetromino.fall)) {
+        if (
+            this.gameState.currentTetromino.moveIfCan(
+                this.gameState.board,
+                Tetromino.fall
+            )
+        ) {
             this.gameState.socket.emit(
                 "playerMove",
                 this.gameState.playerId,
