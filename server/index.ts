@@ -11,6 +11,7 @@ import path from "path";
 import { ServerToClientEvents, ClientToServerEvents } from "common/message";
 import { ColoredScore } from "common/shared";
 import { TetrominoType } from "common/TetrominoType";
+import { SceneTracker } from "./src/SceneTracker";
 
 interface InterServerEvents {
     ping: () => void;
@@ -62,6 +63,7 @@ const scoreboard = new Scoreboard();
 const level = new Level();
 const queue = new PlayerQueue();
 const spectator = new Spectator();
+const scene = new SceneTracker();
 
 // =========== Emit to all sockets ================
 export function broadcastUpdateScoreboard(msg: Array<ColoredScore>) {
@@ -70,14 +72,18 @@ export function broadcastUpdateScoreboard(msg: Array<ColoredScore>) {
 
 export function broadcastToSceneWaitingRoom() {
     queue.resetQueue();
+    level.resetLevel();
+    scene.setScene("SceneWaitingRoom");
     io.sockets.emit("toSceneWaitingRoom");
 }
 
 export function broadcastToSceneGameArena() {
+    scene.setScene("SceneGameArena");
     io.sockets.emit("toSceneGameArena");
 }
 
 export function broadcastToSceneGameOver(msg: Array<ColoredScore>) {
+    scene.setScene("SceneGameOver");
     io.sockets.emit("toSceneGameOver", msg);
 }
 
@@ -92,7 +98,6 @@ export function broadcastHideVotingSequence() {
 export function broadcastRemainingPlayers(playersNeeded: number) {
     io.sockets.emit("updateRemainingPlayers", playersNeeded);
 }
-// ==============================================
 
 // Uncomment to view the game end sequence:
 // setTimeout(() => {
@@ -124,8 +129,23 @@ class Trade {
     }
 }
 const trader = new Trade();
+export function broadcastFallRate(fallRate: number) {
+    io.sockets.emit("updateFallRate", fallRate);
+}
+// ==============================================
 
 io.on("connection", (socket) => {
+    scoreboard.initSocketListeners(socket, level);
+    spectator.initSocketListeners(socket);
+    queue.initSocketListeners(socket);
+    scene.initSocketListeners(socket, scoreboard.finalScores);
+    level.initSocketListeners(socket);
+
+    // Uncomment to view the game end sequence:
+    // setTimeout(() => {
+    //     scoreboard.displaySceneGameOver();
+    // }, 20000);
+
     if (process.env.VITE_DISABLE_WAITING_ROOM) {
         socket.emit("initPlayer", playerCounter);
         playerCounter += 1;
@@ -146,5 +166,10 @@ io.on("connection", (socket) => {
     scoreboard.initSocketListeners(socket, level);
     spectator.initSocketListeners(socket);
     queue.initSocketListeners(socket);
+    socket.on("playerPlace", (...args) => {
+        console.log("player ", args[0], " placed.");
+        socket.broadcast.emit("playerPlace", ...args);
+    });
+
     // FIXME need a state machine to tell which scene the game is at, conditionally tackle disconnections?
 });

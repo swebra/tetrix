@@ -17,15 +17,18 @@ export class Scoreboard {
     private _greenScore: number;
     private _pinkScore: number;
     private _blueScore: number;
-    private _totalScore: number;
+    private _accumulatedScore: number;
     private _scoreMap: Array<ColoredScore>;
+    private _finalScores: Array<ColoredScore>;
 
     constructor() {
         this._orangeScore = 0;
         this._greenScore = 0;
         this._pinkScore = 0;
         this._blueScore = 0;
-        this._totalScore = 0;
+        this._accumulatedScore = 0;
+
+        this._finalScores = [];
 
         this._scoreMap = [];
         this._scoreMap.push({
@@ -53,7 +56,7 @@ export class Scoreboard {
         });
     }
 
-    initSocketListeners(socket: SocketScoreboard, level: Level) {
+    public initSocketListeners(socket: SocketScoreboard, level: Level) {
         socket.on("requestScoreboardData", () => {
             const clonedData = Object.assign([], this.scoreMap);
             clonedData.push({
@@ -82,10 +85,6 @@ export class Scoreboard {
         return this._blueScore;
     }
 
-    get totalScore(): number {
-        return this._totalScore;
-    }
-
     get currentTeamScore(): number {
         return (
             this._orangeScore +
@@ -99,6 +98,10 @@ export class Scoreboard {
         return this._scoreMap;
     }
 
+    get finalScores(): Array<ColoredScore> {
+        return this._finalScores;
+    }
+
     /**
      * Reset all scores.
      */
@@ -107,7 +110,7 @@ export class Scoreboard {
         this._greenScore = 0;
         this._pinkScore = 0;
         this._blueScore = 0;
-        this._totalScore = 0;
+        this._accumulatedScore = 0;
     }
 
     /**
@@ -117,7 +120,7 @@ export class Scoreboard {
      * @param level The level object. Used to *possibly* increase the level of the game.
      */
     public incrementScore(playerIndex: number, value: number, level: Level) {
-        this._totalScore += value;
+        this._accumulatedScore += value;
 
         switch (playerIndex) {
             case PlayerColor.Orange:
@@ -134,7 +137,11 @@ export class Scoreboard {
                 break;
         }
 
-        level.checkUpdateLevel(this.totalScore);
+        // Reset the score if the level was incremented.
+        if (level.checkUpdateLevel(this._accumulatedScore)) {
+            this._accumulatedScore = 0;
+        }
+
         this.updateScoreboardUI(level.currentLevel);
     }
 
@@ -230,21 +237,20 @@ export class Scoreboard {
     public displaySceneGameOver() {
         this.updateScoreMap();
 
-        // Temporary clone of the data so that we can append the level of the game.
-        const clonedData = Object.assign([], this._scoreMap);
-        clonedData.push({
+        this._finalScores = Object.assign([], this._scoreMap);
+        this._finalScores.push({
             color: "TEAM SCORE",
             hex: 0xffff00,
             points: this.currentTeamScore,
         });
 
         // Show scoreboard to all connected users.
-        broadcastToSceneGameOver(clonedData);
+        broadcastToSceneGameOver(this._finalScores);
 
         // Return to starting sequence after 30 seconds.
         setTimeout(() => {
             broadcastToSceneWaitingRoom();
             this.resetScores();
-        }, 10000);
+        }, 30000);
     }
 }
