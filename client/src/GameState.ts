@@ -11,9 +11,7 @@ export class GameState {
     // used for synchronization. not related to rendering (no sprites, scene, phaser3 stuff)
     socket: GameSocket;
 
-    // frozen board is the board without moving players, NOTE: frozenBoard is the truth of placed blocks
-    frozenBoard: Array<Array<TetrominoType | null>>;
-    // board is the final product being rendered. contains all 3 other players
+    // board contains all placed monominoes (tiles)
     board: Array<Array<TetrominoType | null>>;
     tradeState!: TradeState;
     // synced to server
@@ -22,17 +20,19 @@ export class GameState {
     // i.e. if you are player 1, these are of player 2, then 3, then 0
     otherTetrominoes: Array<Tetromino>;
     playerId!: 0 | 1 | 2 | 3;
-    tradingPlayerId: 0 | 1 | 2 | 3 | null
+    tradingPlayerId: 0 | 1 | 2 | 3 | null;
 
-    private blankBoard() {
-        const board = [];
+    private newBoard() {
+        const board = new Array(BOARD_SIZE);
         for (let r = 0; r < BOARD_SIZE; r++) {
-            const row = [];
-            for (let c = 0; c < BOARD_SIZE; c++) {
-                row.push(null);
-            }
-            board.push(row);
+            board[r] = new Array(BOARD_SIZE).fill(null);
         }
+
+        const centerTopLeft = BOARD_SIZE / 2 - 1;
+        board[centerTopLeft][centerTopLeft] = TetrominoType.O;
+        board[centerTopLeft + 1][centerTopLeft] = TetrominoType.O;
+        board[centerTopLeft][centerTopLeft + 1] = TetrominoType.O;
+        board[centerTopLeft + 1][centerTopLeft + 1] = TetrominoType.O;
         return board;
     }
 
@@ -42,10 +42,10 @@ export class GameState {
 
     constructor(socket: GameSocket) {
         this.socket = socket;
-        this.board = this.blankBoard();
-        this.frozenBoard = this.blankBoard();
+
         this.tradeState = TradeState.NoTrade;
         this.tradingPlayerId = null;
+        this.board = this.newBoard();
 
         this.currentTetromino = new Tetromino(TetrominoType.T);
         // other player's moving piece, TODO this is synchronized with the server
@@ -83,15 +83,20 @@ export class GameState {
             const tetroToPlace = this.otherTetrominoes[i];
 
             Tetromino.updateFromState(tetroToPlace, state, i + 1);
-            tetroToPlace.tiles.forEach((tile) => {
-                const [row, col] = [
-                    tetroToPlace.position[0] + tile[0],
-                    tetroToPlace.position[1] + tile[1],
-                ];
-                this.frozenBoard[row][col] = tetroToPlace.type;
-            });
+            this.placeTetromino(tetroToPlace);
         });
-        this.socket.on("playerTrade", (playerId, _, otherTradeState) => {   
+    }
+
+    public placeTetromino(tetromino: Tetromino) {
+        tetromino.tiles.forEach((tile) => {
+            const [row, col] = [
+                tetromino.position[0] + tile[0],
+                tetromino.position[1] + tile[1],
+            ];
+            this.board[row][col] = tetromino.type;
+        });
+        this.socket.on("playerTrade", (playerId, _, otherTradeState) => {
+            console.log("Request received");
             if (otherTradeState == TradeState.Offered) {
                 this.tradeState = TradeState.Pending;
                 this.tradingPlayerId = playerId;
@@ -105,15 +110,15 @@ export class GameState {
             this.currentTetromino.isTraded = true;
             this.tradeState = TradeState.NoTrade;
             this.tradingPlayerId = null;
-            this.socket.emit("clearTrade")
-        })
-        
+            this.socket.emit("clearTrade");
+        });
     }
-            public emitTrade() {
-            this.socket.emit("playerTrade", this.playerId,
-                this.currentTetromino.type, 
-                this.tradeState)
-            
-            
-        }
+    public emitTrade() {
+        this.socket.emit(
+            "playerTrade",
+            this.playerId,
+            this.currentTetromino.type,
+            this.tradeState
+        );
+    }
 }
