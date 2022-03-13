@@ -4,6 +4,7 @@ import * as gameMsgs from "./messages/game";
 import * as scoreboardMsgs from "./messages/scoreboard";
 import * as spectatorMsgs from "./messages/spectator";
 import * as sceneGameOverMsgs from "./messages/sceneGameOver";
+import * as tradeMsgs from "./messages/trade"
 import { TetrominoType } from "./TetrominoType";
 
 export type ServerToClientEvents = sceneWaitingRoomMsgs.ToClientEvents &
@@ -11,14 +12,16 @@ export type ServerToClientEvents = sceneWaitingRoomMsgs.ToClientEvents &
     gameMsgs.ToClientEvents &
     scoreboardMsgs.ToClientEvents &
     spectatorMsgs.ToClientEvents &
-    sceneGameOverMsgs.ToClientEvents;
+    sceneGameOverMsgs.ToClientEvents &
+    tradeMsgs.ToClientEvents;
 
 export type ClientToServerEvents = sceneWaitingRoomMsgs.ToServerEvents &
     sceneGameArenaMsgs.ToServerEvents &
     gameMsgs.ToClientEvents &
     scoreboardMsgs.ToServerEvents &
     spectatorMsgs.ToServerEvents &
-    sceneGameOverMsgs.ToServerEvents;
+    sceneGameOverMsgs.ToServerEvents &
+    tradeMsgs.ToServerEvents;
 
 export type PlayerID = 0 | 1 | 2 | 3;
 

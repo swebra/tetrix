@@ -155,10 +155,6 @@ export class SceneGameArena extends Phaser.Scene {
             // start next frame
             this.frameTimeElapsed = 0;
         }
-        
-        // this.socket.on("playerTrade", (playerId) => {
-        //     this.trade.displayAccept();
-        // })
     }
 
     private updateFallTimer(interval: number) {

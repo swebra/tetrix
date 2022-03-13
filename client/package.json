@@ -12,6 +12,7 @@
     "common": "file:../common",
     "lodash": "^4.17.21",
     "phaser": "^3.53.1",
+    "prettier": "^2.5.1",
     "socket.io": "^4.4.1",
     "socket.io-client": "^4.4.1",
     "webfontloader": "^1.6.28"

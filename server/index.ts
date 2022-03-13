@@ -1,12 +1,13 @@
 // Import the express in typescript file
 import express from "express";
 import http from "http";
-import { Server, Socket } from "socket.io";
+import { Server } from "socket.io";
 import { Level } from "./src/Level";
 import { Scoreboard } from "./src/Scoreboard";
 import { PlayerQueue } from "./src/PlayerQueue";
 import { Spectator } from "./src/Spectator";
 import path from "path";
+import { Trade } from "./src/Trade";
 
 import { ServerToClientEvents, ClientToServerEvents } from "common/message";
 import { ColoredScore } from "common/shared";
@@ -104,30 +105,7 @@ export function broadcastRemainingPlayers(playersNeeded: number) {
 //   console.log("Sending clients to Game Over Screen!")
 //   scoreboard.displaySceneGameOver();
 // }, 30000);
-class Trade {
-    //currentOffer should be a socket
-    currentOfferer: Socket<ClientToServerEvents, ServerToClientEvents, InterServerEvents, SocketData> | null = null;
-    tradeActive: boolean = false;
-    currentTradeOffer: TetrominoType | null = null;
-    public addTrade(socket: Socket<ClientToServerEvents, ServerToClientEvents, InterServerEvents, SocketData>, tradeOffer: TetrominoType) {
-        if (!this.currentOfferer) {
-            this.currentOfferer = socket;
-            this.currentTradeOffer = tradeOffer;    
-            this.tradeActive = true;
-        } else if (this.currentOfferer && this.currentTradeOffer && this.tradeActive) {
-            const acceptingSocket = socket;
-            const acceptingTetromino = tradeOffer;
-            acceptingSocket.emit("sendTradePiece", this.currentTradeOffer);
-            this.currentOfferer.emit("sendTradePiece", acceptingTetromino);
-            console.log(`The pieces ${this.currentTradeOffer} and ${acceptingTetromino} were sent`)
-        }
-    }
-    public clearTrade() {
-        this.tradeActive = false;
-        this.currentOfferer = null;
-        this.currentTradeOffer = null;
-    }
-}
+
 const trader = new Trade();
 export function broadcastFallRate(fallRate: number) {
     io.sockets.emit("updateFallRate", fallRate);
@@ -159,10 +137,10 @@ io.on("connection", (socket) => {
         socket.broadcast.emit("playerTrade", ...args);
         const tetrominoType = args[1];
         trader.addTrade(socket, tetrominoType);
-    })
+    });
     socket.on("clearTrade", () => {
         trader.clearTrade();
-    })
+    });
     socket.on("playerPlace", (...args) => {
         console.log("player ", args[0], " placed.");
         socket.broadcast.emit("playerPlace", ...args);

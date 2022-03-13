@@ -22,7 +22,7 @@ export class GameState {
     // i.e. if you are player 1, these are of player 2, then 3, then 0
     otherTetrominoes: Array<Tetromino>;
     playerId!: 0 | 1 | 2 | 3;
-    tradingPlayerId: 0 | 1 | 2 | 3 | null = null;
+    tradingPlayerId: 0 | 1 | 2 | 3 | null
 
     private blankBoard() {
         const board = [];
@@ -45,6 +45,7 @@ export class GameState {
         this.board = this.blankBoard();
         this.frozenBoard = this.blankBoard();
         this.tradeState = TradeState.NoTrade;
+        this.tradingPlayerId = null;
 
         this.currentTetromino = new Tetromino(TetrominoType.T);
         // other player's moving piece, TODO this is synchronized with the server
