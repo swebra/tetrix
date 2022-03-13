@@ -6,3 +6,10 @@ export interface ToClientEvents {
 export interface ToServerEvents {
     sendTradePiece: (tetrominoType: TetrominoType) => void;
 }
+
+export enum TradeState {
+    NoTrade,
+    Offered,
+    Accepted,
+    Pending,
+}

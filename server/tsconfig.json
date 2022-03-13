@@ -7,5 +7,5 @@
     "strict": true,
     "module": "CommonJS"
   },
-  "include": ["./src", "./index.ts", "../common/PlayerAttributes.ts"]
+  "include": ["./src", "./index.ts"]
 }

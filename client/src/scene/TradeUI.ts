@@ -1,12 +1,7 @@
 import { SceneGameArena } from "./SceneGameArena";
 import { PlayerColor } from "common/PlayerAttributes";
+import { TradeState } from "common/messages/trade";
 
-export enum TradeState {
-    NoTrade,
-    Offered,
-    Accepted,
-    Pending,
-}
 export class TradeUI {
     tradeState: TradeState;
     tradeText: Phaser.GameObjects.Text;
