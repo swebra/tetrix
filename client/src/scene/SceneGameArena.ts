@@ -132,7 +132,6 @@ export class SceneGameArena extends Phaser.Scene {
 
         // 12 fps
         if (this.frameTimeElapsed > 1000 / this.FRAMERATE) {
-            this.updateBoardFromFrozen(this, this.gameState.otherTetrominoes);
             this.updateUserInput(this);
             this.updateDrawBoard(this.gameState, this);
             this.updateDrawPlayer(this);
@@ -152,24 +151,6 @@ export class SceneGameArena extends Phaser.Scene {
             callback: () => this.updateFalling(this),
             loop: true,
         });
-    }
-
-    // the frozen board is all blocks that are placed. the board contains dynamic player blocks.
-    // this function sync the board with frozenboard, and add players on top
-    private updateBoardFromFrozen(
-        scene: SceneGameArena,
-        otherTetros: Array<Tetromino>
-    ) {
-        scene.gameState.board = cloneDeep(scene.gameState.frozenBoard);
-        for (let i = 0; i < 3; i++) {
-            const tetro = otherTetros[i];
-
-            for (const tile of tetro.tiles) {
-                const row = tile[0] + tetro.position[0];
-                const col = tile[1] + tetro.position[1];
-                scene.gameState.board[row][col] = tetro.type;
-            }
-        }
     }
 
     // TODO
@@ -253,16 +234,8 @@ export class SceneGameArena extends Phaser.Scene {
                 scene.gameState.playerId,
                 scene.gameState.currentTetromino.reportState()
             );
+            scene.gameState.placeTetromino(scene.gameState.currentTetromino);
 
-            // convert the tetromino to static blocks
-            scene.gameState.currentTetromino.tiles.forEach((tile) => {
-                const [row, col] = [
-                    scene.gameState.currentTetromino.position[0] + tile[0],
-                    scene.gameState.currentTetromino.position[1] + tile[1],
-                ];
-                scene.gameState.frozenBoard[row][col] =
-                    scene.gameState.currentTetromino.type;
-            });
             // start a new tetromino from the top
             scene.gameState.currentTetromino = new Tetromino(TetrominoType.T);
             this.currentTetro = new RenderedTetromino(
