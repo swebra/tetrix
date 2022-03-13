@@ -47,8 +47,6 @@ export class SceneGameArena extends Phaser.Scene {
     controls!: ControlsUI | null;
     trade!: TradeUI;
 
-
-
     frameTimeElapsed: number = 0; // the ms time since the last frame is drawn
 
     constructor() {
@@ -137,9 +135,6 @@ export class SceneGameArena extends Phaser.Scene {
     update(time: number, delta: number) {
         this.frameTimeElapsed += delta;
 
-
-
-
         if (this.trade == null && this.gameState.playerId != null) {
             this.trade = new TradeUI(this);
         }
@@ -214,17 +209,25 @@ export class SceneGameArena extends Phaser.Scene {
                 Tetromino.rotateCW
             );
         } else if (scene.keys.shift.isDown) {
-            if (scene.gameState.currentTetromino.isTraded || scene.trade.tradeState == TradeState.Offered || scene.trade.tradeState == TradeState.Accepted) {
+            if (
+                scene.gameState.currentTetromino.isTraded ||
+                scene.trade.tradeState == TradeState.Offered ||
+                scene.trade.tradeState == TradeState.Accepted
+            ) {
                 //ignore
-            }
-            else if (scene.trade.tradeState == TradeState.NoTrade) {
+            } else if (scene.trade.tradeState == TradeState.NoTrade) {
                 scene.gameState.tradeState = TradeState.Offered;
-                scene.trade.updateNewTradeState(scene.gameState.tradeState, scene.gameState.tradingPlayerId);
+                scene.trade.updateNewTradeState(
+                    scene.gameState.tradeState,
+                    scene.gameState.tradingPlayerId
+                );
                 tradeChanged = true;
-            }
-            else if (scene.trade.tradeState == TradeState.Pending) {
-                scene.gameState.tradeState = TradeState.Accepted
-                scene.trade.updateNewTradeState(scene.gameState.tradeState, scene.gameState.tradingPlayerId);
+            } else if (scene.trade.tradeState == TradeState.Pending) {
+                scene.gameState.tradeState = TradeState.Accepted;
+                scene.trade.updateNewTradeState(
+                    scene.gameState.tradeState,
+                    scene.gameState.tradingPlayerId
+                );
                 tradeChanged = true;
             }
         }
@@ -241,7 +244,13 @@ export class SceneGameArena extends Phaser.Scene {
         }
     }
     private updateFromTradeState(scene: SceneGameArena) {
-        scene.trade.updateNewTradeState(scene.gameState.tradeState, scene.gameState.tradingPlayerId);
+        scene.trade.updateNewTradeState(
+            scene.gameState.tradeState,
+            scene.gameState.tradingPlayerId
+        );
+        if (scene.gameState.currentTetromino.isTraded) {
+            scene.trade.clearText();
+        }
     }
     private updateDrawBoard(state: GameState, scene: SceneGameArena) {
         // re-render the board
