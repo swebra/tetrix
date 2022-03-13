@@ -20,17 +20,18 @@ export class GameState {
     otherTetrominoes: Array<Tetromino>;
     playerId!: 0 | 1 | 2 | 3;
 
-    private initBoard() {
-        this.board = new Array(BOARD_SIZE);
+    private newBoard() {
+        let board = new Array(BOARD_SIZE);
         for (let r = 0; r < BOARD_SIZE; r++) {
-            this.board[r] = new Array(BOARD_SIZE).fill(null);
+            board[r] = new Array(BOARD_SIZE).fill(null);
         }
 
         const centerTopLeft = BOARD_SIZE / 2 - 1;
-        this.board[centerTopLeft][centerTopLeft] = TetrominoType.O;
-        this.board[centerTopLeft + 1][centerTopLeft] = TetrominoType.O;
-        this.board[centerTopLeft][centerTopLeft + 1] = TetrominoType.O;
-        this.board[centerTopLeft + 1][centerTopLeft + 1] = TetrominoType.O;
+        board[centerTopLeft][centerTopLeft] = TetrominoType.O;
+        board[centerTopLeft + 1][centerTopLeft] = TetrominoType.O;
+        board[centerTopLeft][centerTopLeft + 1] = TetrominoType.O;
+        board[centerTopLeft + 1][centerTopLeft + 1] = TetrominoType.O;
+        return board;
     }
 
     private getPlayerIndex(playerId: number) {
@@ -39,7 +40,7 @@ export class GameState {
 
     constructor(socket: GameSocket) {
         this.socket = socket;
-        this.initBoard();
+        this.board = this.newBoard();
 
         this.currentTetromino = new Tetromino(TetrominoType.T);
         // other player's moving piece, TODO this is synchronized with the server
