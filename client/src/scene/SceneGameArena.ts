@@ -19,7 +19,6 @@ import KEY_D from "../assets/controls/KEY_D.svg";
 import KEY_S from "../assets/controls/KEY_S.svg";
 import KEY_Q from "../assets/controls/KEY_Q.svg";
 import KEY_E from "../assets/controls/KEY_E.svg";
-import KEY_SHIFT from "../assets/controls/KEY_SHIFT.svg";
 import { TradeState, TradeUI } from "./TradeUI";
 
 type SocketGame = Socket<ToClientEvents, ToServerEvents>;
@@ -60,7 +59,6 @@ export class SceneGameArena extends Phaser.Scene {
         this.load.svg("keyS", KEY_S);
         this.load.svg("keyE", KEY_E);
         this.load.svg("keyQ", KEY_Q);
-        this.load.svg("keySHIFT", KEY_SHIFT);
     }
 
     init(data: SceneDataGameArena) {
