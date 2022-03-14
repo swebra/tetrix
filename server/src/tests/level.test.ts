@@ -1,15 +1,13 @@
 import { Level } from "../Level";
-import { broadcast } from "../broadcast";
 
 describe("Testing 'Level'", () => {
     let level: Level;
-    const fallRateEvent: broadcast["fallRate"] = jest.fn();
 
     jest.useFakeTimers();
     jest.spyOn(global, "setTimeout");
 
     beforeEach(() => {
-        level = new Level(fallRateEvent);
+        level = new Level(jest.fn());
     });
 
     test("Valid level increments", () => {

@@ -109,7 +109,7 @@ export class Spectator {
 
         setTimeout(() => {
             this.makeDecision(level);
-        }, 12000);
+        }, 10000);
     }
 
     /**
@@ -142,7 +142,7 @@ export class Spectator {
 
         setTimeout(() => {
             this.makeDecision(level);
-        }, 12000);
+        }, 10000);
     }
 
     /**
