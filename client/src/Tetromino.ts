@@ -115,12 +115,22 @@ export class Tetromino {
         this.rotation = 0; // default (no rotation)
     }
 
-    reportPosition(): TetrominoState {
+    reportState(): TetrominoState {
         return {
             type: this.type,
             position: this.position,
             rotation: this.rotation,
         };
+    }
+
+    static updateFromState(
+        tetromino: Tetromino,
+        state: TetrominoState,
+        ccRotations: number
+    ) {
+        tetromino.setType(state.type);
+        tetromino.setRotatedPosition(state.position, ccRotations);
+        tetromino.setRotation(ccRotations + state.rotation);
     }
 
     setType(type: TetrominoType) {
@@ -163,34 +173,61 @@ export class Tetromino {
         this.rotation = <0 | 1 | 2 | 3>(rotation % 4);
     }
 
-    // TODO: Properly verify movement is possible before allowing it
-    move(colDelta: number): boolean {
-        const newCol = this.position[1] + colDelta;
-        if (newCol < 0 || newCol >= BOARD_SIZE) {
-            return false;
-        }
-        this.position[1] = newCol;
-        return true;
+    static rotateCW(tetromino: Tetromino) {
+        tetromino.setRotation(tetromino.rotation + 1);
     }
 
-    // TODO: Verify rotation is possible before allowing it
-    private canRotate(): boolean {
-        return true;
+    static rotateCCW(tetromino: Tetromino) {
+        tetromino.setRotation(4 + tetromino.rotation + 1);
     }
 
-    rotateCW(): boolean {
-        if (!this.canRotate()) {
-            return false;
-        }
-        this.setRotation(this.rotation + 1);
-        return true;
+    static fall(tetromino: Tetromino) {
+        // fall down by 1
+        tetromino.position[0] += 1;
     }
 
-    rotateCCW(): boolean {
-        if (!this.canRotate()) {
-            return false;
+    static slide(direction: -1 | 1): (tetro: Tetromino) => void {
+        // move left/right by 1
+        return (tetromino) => {
+            tetromino.position[1] += direction;
+        };
+    }
+
+    moveIfCan(
+        board: Array<Array<TetrominoType | null>>,
+        movement: (tetro: Tetromino) => Tetromino | void
+    ): boolean {
+        let newTetro: Tetromino = cloneDeep(this);
+        const oldTileCoords = newTetro.tiles.map((tile) => [
+            newTetro.position[0] + tile[0],
+            newTetro.position[1] + tile[1],
+        ]);
+
+        // look-ahead for the next tetromino state after movement
+        newTetro = movement(newTetro) || newTetro;
+        for (let i = 0; i < this.tiles.length; i++) {
+            const [row, col] = newTetro.tiles[i];
+
+            // conditions to check if there is something there already
+            // there is a tile already
+            const tileIsOccupied =
+                board[newTetro.position[0] + row][newTetro.position[1] + col] !=
+                null;
+            // the tile is not part of the old tetromino
+            const tileIsForeign = !oldTileCoords.some(
+                ([oldRow, oldCol]) =>
+                    newTetro.position[0] + row == oldRow &&
+                    newTetro.position[1] + col == oldCol
+            );
+            if (tileIsOccupied && tileIsForeign) {
+                return false;
+            }
         }
-        this.setRotation(4 + this.rotation - 1);
+        // copy all attributes over
+        this.position = newTetro.position;
+        this.tiles = newTetro.tiles;
+        this.rotation = newTetro.rotation;
+        this.type = newTetro.type;
         return true;
     }
 }
