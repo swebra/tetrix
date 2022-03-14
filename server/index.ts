@@ -52,6 +52,7 @@ const updateScoreboard: broadcast["updateScoreboard"] = (
 const toSceneWaitingRoom: broadcast["toSceneWaitingRoom"] = () => {
     queue.resetQueue();
     level.resetLevel();
+    scoreboard.resetScores();
     scene.setScene("SceneWaitingRoom");
     io.sockets.emit("toSceneWaitingRoom");
 };
@@ -84,22 +85,31 @@ const remainingPlayers: broadcast["remainingPlayers"] = (
     io.sockets.emit("updateRemainingPlayers", playersNeeded);
 };
 
-const broadcastFallRate: broadcast["fallRate"] = (fallRate: number) => {
+const fallRate: broadcast["fallRate"] = (fallRate: number) => {
     io.sockets.emit("updateFallRate", fallRate);
 };
 // ==============================================
 
 console.log(`Server started at port ${port}`);
 let playerCounter: 0 | 1 | 2 | 3 = 0; // FIXME: Remove this on final version.
-const scoreboard = new Scoreboard(
-    toSceneGameOver,
-    toSceneWaitingRoom,
-    updateScoreboard
-);
-const level = new Level(broadcastFallRate);
+const scoreboard = new Scoreboard(updateScoreboard);
+const level = new Level(fallRate);
 const queue = new PlayerQueue(remainingPlayers, toSceneGameArena);
 const spectator = new Spectator(showVotingSequence, hideVotingSequence);
 const scene = new SceneTracker();
+
+/**
+ * End the game.
+ */
+function gameOver() {
+    // Show scoreboard to all connected users.
+    toSceneGameOver(scoreboard.getFinalScores());
+
+    // Return to starting scene after 30 seconds.
+    setTimeout(() => {
+        toSceneWaitingRoom();
+    }, 30000);
+}
 
 io.on("connection", (socket) => {
     scoreboard.initSocketListeners(socket, level);
@@ -107,11 +117,6 @@ io.on("connection", (socket) => {
     queue.initSocketListeners(socket);
     scene.initSocketListeners(socket, scoreboard.finalScores);
     level.initSocketListeners(socket);
-
-    // Uncomment to view the game end sequence:
-    // setTimeout(() => {
-    //     scoreboard.displaySceneGameOver();
-    // }, 20000);
 
     if (process.env.VITE_DISABLE_WAITING_ROOM) {
         socket.emit("initPlayer", playerCounter);
