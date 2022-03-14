@@ -1,10 +1,15 @@
 import { Level } from "../Level";
+import { broadcast } from "../broadcast";
 
 describe("Testing 'Level'", () => {
     let level: Level;
+    const fallRateEvent: broadcast["fallRate"] = jest.fn();
+
+    jest.useFakeTimers();
+    jest.spyOn(global, "setTimeout");
 
     beforeEach(() => {
-        level = new Level();
+        level = new Level(fallRateEvent);
     });
 
     test("Valid level increments", () => {
@@ -27,16 +32,16 @@ describe("Testing 'Level'", () => {
 
         level.spectatorIncreaseFallRate();
         expect(level.currentFallRate).toBe(793);
-        expect(setTimeout).toHaveBeenCalledTimes(1);
+        expect(setTimeout).toHaveBeenCalled();
         expect(setTimeout).toHaveBeenCalledWith(expect.any(Function), 20000);
     });
 
     test("Spectator Decreasing Fall Rate & Resetting Fall Rate after 20s", () => {
         expect(level.currentFallRate).toBe(1000);
 
-        level.spectatorIncreaseFallRate();
-        expect(level.currentFallRate).toBeCloseTo(1239);
-        expect(setTimeout).toHaveBeenCalledTimes(1);
+        level.spectatorDecreaseFallRate();
+        expect(level.currentFallRate).toBeCloseTo(1239, 0);
+        expect(setTimeout).toHaveBeenCalled();
         expect(setTimeout).toHaveBeenCalledWith(expect.any(Function), 20000);
     });
 
