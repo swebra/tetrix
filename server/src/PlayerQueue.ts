@@ -62,6 +62,7 @@ export class PlayerQueue {
      * @param socket The socket to be removed from the queue.
      */
     public removeFromQueue(socket: SocketQueue) {
+        /* eslint-disable @typescript-eslint/no-unused-vars */
         this.queue = this.queue.filter(function (value, index, arr) {
             return value != socket;
         });
