@@ -204,42 +204,4 @@ export class Tetromino {
             tetromino.position[1] += direction;
         };
     }
-
-    moveIfCan(
-        board: Array<Array<TetrominoType | null>>,
-        movement: (tetro: Tetromino) => Tetromino | void
-    ): boolean {
-        let newTetro: Tetromino = cloneDeep(this);
-        const oldTileCoords = newTetro.tiles.map((tile) => [
-            newTetro.position[0] + tile[0],
-            newTetro.position[1] + tile[1],
-        ]);
-
-        // look-ahead for the next tetromino state after movement
-        newTetro = movement(newTetro) || newTetro;
-        for (let i = 0; i < this.tiles.length; i++) {
-            const [row, col] = newTetro.tiles[i];
-
-            // conditions to check if there is something there already
-            // there is a tile already
-            const tileIsOccupied =
-                board[newTetro.position[0] + row][newTetro.position[1] + col] !=
-                null;
-            // the tile is not part of the old tetromino
-            const tileIsForeign = !oldTileCoords.some(
-                ([oldRow, oldCol]) =>
-                    newTetro.position[0] + row == oldRow &&
-                    newTetro.position[1] + col == oldCol
-            );
-            if (tileIsOccupied && tileIsForeign) {
-                return false;
-            }
-        }
-        // copy all attributes over
-        this.position = newTetro.position;
-        this.tiles = newTetro.tiles;
-        this.rotation = newTetro.rotation;
-        this.type = newTetro.type;
-        return true;
-    }
 }
