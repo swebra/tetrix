@@ -1,10 +1,6 @@
 import { PlayerColor } from "./PlayerAttributes";
 import { Level } from "./Level";
-import {
-    broadcastUpdateScoreboard,
-    broadcastToSceneWaitingRoom,
-    broadcastToSceneGameOver,
-} from "../index";
+import { broadcast } from "./broadcast";
 
 import { ToServerEvents, ToClientEvents } from "common/messages/scoreboard";
 import { ColoredScore } from "common/shared";
@@ -20,13 +16,24 @@ export class Scoreboard {
     private _accumulatedScore: number;
     private _scoreMap: Array<ColoredScore>;
     private _finalScores: Array<ColoredScore>;
+    private broadcastToSceneGameOver: broadcast["toSceneGameOver"];
+    private broadcastToSceneWaitingRoom: broadcast["toSceneWaitingRoom"];
+    private broadcastUpdateScoreboard: broadcast["updateScoreboard"];
 
-    constructor() {
+    constructor(
+        gameOverEvent: broadcast["toSceneGameOver"],
+        waitingRoomEvent: broadcast["toSceneWaitingRoom"],
+        updateScoreboardEvent: broadcast["updateScoreboard"]
+    ) {
         this._orangeScore = 0;
         this._greenScore = 0;
         this._pinkScore = 0;
         this._blueScore = 0;
         this._accumulatedScore = 0;
+
+        this.broadcastToSceneGameOver = gameOverEvent;
+        this.broadcastToSceneWaitingRoom = waitingRoomEvent;
+        this.broadcastUpdateScoreboard = updateScoreboardEvent;
 
         this._finalScores = [];
 
@@ -228,7 +235,7 @@ export class Scoreboard {
         });
 
         // Notify all connected users.
-        broadcastUpdateScoreboard(clonedData);
+        this.broadcastUpdateScoreboard(clonedData);
     }
 
     /**
@@ -245,11 +252,11 @@ export class Scoreboard {
         });
 
         // Show scoreboard to all connected users.
-        broadcastToSceneGameOver(this._finalScores);
+        this.broadcastToSceneGameOver(this._finalScores);
 
         // Return to starting sequence after 30 seconds.
         setTimeout(() => {
-            broadcastToSceneWaitingRoom();
+            this.broadcastToSceneWaitingRoom();
             this.resetScores();
         }, 30000);
     }

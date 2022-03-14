@@ -1,8 +1,5 @@
 import { Level } from "./Level";
-import {
-    broadcastHideVotingSequence,
-    broadcastShowVotingSequence,
-} from "../index";
+import { broadcast } from "./broadcast";
 
 import { ToServerEvents, ToClientEvents } from "common/messages/spectator";
 import { Socket } from "socket.io";
@@ -22,8 +19,13 @@ export class Spectator {
     };
     private _countdownValue: number;
     private _secondVotingRoundSelection: string;
+    private broadcastShowVotingSequence: broadcast["showVotingSequence"];
+    private broadcastHideVotingSequence: broadcast["hideVotingSequence"];
 
-    constructor() {
+    constructor(
+        showVotingSequenceEvent: broadcast["showVotingSequence"],
+        hideVotingSequenceEvent: broadcast["hideVotingSequence"]
+    ) {
         this._isFirstRoundVoting = true;
         this._isAcceptingVotes = false;
         this._isVoteRunning = false;
@@ -36,6 +38,8 @@ export class Spectator {
         };
         this._countdownValue = 10;
         this._secondVotingRoundSelection = "null";
+        this.broadcastShowVotingSequence = showVotingSequenceEvent;
+        this.broadcastHideVotingSequence = hideVotingSequenceEvent;
     }
 
     get countdownValue(): number {
@@ -100,7 +104,7 @@ export class Spectator {
         this._secondVotingRoundSelection = "null";
         this.resetVotingRound();
 
-        broadcastShowVotingSequence("initialDisplay");
+        this.broadcastShowVotingSequence("initialDisplay");
         this.startCountdown();
 
         setTimeout(() => {
@@ -133,7 +137,7 @@ export class Spectator {
         this._secondVotingRoundSelection = votingSet;
         this.resetVotingRound();
 
-        broadcastShowVotingSequence(votingSet);
+        this.broadcastShowVotingSequence(votingSet);
         this.startCountdown();
 
         setTimeout(() => {
@@ -174,7 +178,7 @@ export class Spectator {
     public makeDecision(level: Level) {
         // FIXME: Ensure the game is still running before continuing.
 
-        broadcastHideVotingSequence();
+        this.broadcastHideVotingSequence();
         this._isAcceptingVotes = false;
         this._isVoteRunning = false;
 

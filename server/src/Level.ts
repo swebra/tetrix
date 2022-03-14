@@ -1,16 +1,18 @@
 import { ToServerEvents, ToClientEvents } from "common/messages/sceneGameArena";
-import { broadcastFallRate } from "../index";
 import { Socket } from "socket.io";
+import { broadcast } from "./broadcast";
 
 type SocketLevel = Socket<ToServerEvents, ToClientEvents>;
 
 export class Level {
     private _currentLevel: number;
     private _currentFallRate: number;
+    private broadcastFallRate: broadcast["fallRate"];
 
-    constructor() {
+    constructor(fallRateEvent: broadcast["fallRate"]) {
         this._currentLevel = 1;
         this._currentFallRate = 1000;
+        this.broadcastFallRate = fallRateEvent;
     }
 
     get currentLevel(): number {
@@ -73,7 +75,7 @@ export class Level {
             1000 *
             (0.8 - (this._currentLevel - 1) * 0.007) **
                 (this._currentLevel - 1);
-        broadcastFallRate(this._currentFallRate);
+        this.broadcastFallRate(this._currentFallRate);
     }
 
     /**
@@ -82,7 +84,7 @@ export class Level {
     private increaseFallRate() {
         this._currentFallRate =
             1000 * (0.8 - this._currentLevel * 0.007) ** this._currentLevel;
-        broadcastFallRate(this._currentFallRate);
+        this.broadcastFallRate(this._currentFallRate);
     }
 
     /**
@@ -93,7 +95,7 @@ export class Level {
             1000 *
             (0.8 - (this._currentLevel - 2) * 0.007) **
                 (this._currentLevel - 2);
-        broadcastFallRate(this._currentFallRate);
+        this.broadcastFallRate(this._currentFallRate);
     }
 
     /**
