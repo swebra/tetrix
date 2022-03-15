@@ -3,9 +3,14 @@ import { TetrominoType } from "common/TetrominoType";
 import { Tetromino } from "./Tetromino";
 import { BOARD_SIZE } from "common/shared";
 import { ToServerEvents, ToClientEvents } from "common/messages/game";
-import { cloneDeep } from "lodash";
 
 type GameSocket = Socket<ToClientEvents, ToServerEvents>;
+
+export type TetrominoLookahead = {
+    position: [number, number];
+    tiles: Array<[number, number]>;
+    rotation: 0 | 1 | 2 | 3;
+};
 
 export class GameState {
     // used for synchronization. not related to rendering (no sprites, scene, phaser3 stuff)
@@ -54,9 +59,9 @@ export class GameState {
         ];
 
         // initial rotation
-        this.otherTetrominoes.map((tetro, i) => {
+        this.otherTetrominoes.forEach((tetro, i) => {
             tetro.setRotatedPosition(tetro.position, i + 1);
-            tetro.setRotation(i + 1);
+            tetro.updateFromLookahead(Tetromino.rotate(tetro, i + 1));
         });
 
         this.socket.on("initPlayer", (playerId) => {
@@ -65,14 +70,14 @@ export class GameState {
 
         this.socket.on("playerMove", (playerId, state) => {
             const i = this.getPlayerIndex(playerId);
-            Tetromino.updateFromState(this.otherTetrominoes[i], state, i + 1);
+            this.otherTetrominoes[i].updateFromState(state, i + 1);
         });
 
         this.socket.on("playerPlace", (playerId, state) => {
             // place the tetro on our board
             const i = this.getPlayerIndex(playerId);
             const tetroToPlace = this.otherTetrominoes[i];
-            Tetromino.updateFromState(tetroToPlace, state, i + 1);
+            tetroToPlace.updateFromState(state, i + 1);
             this.placeTetromino(tetroToPlace);
             this.otherTetrominoes[i] = tetroToPlace;
 
@@ -116,24 +121,19 @@ export class GameState {
     }
 
     public moveIfCan(
-        movement: (tetro: Tetromino) => Tetromino | void
+        movement: (tetro: Tetromino) => TetrominoLookahead
     ): boolean {
-        let newTetro: Tetromino = cloneDeep(this.currentTetromino);
-
         // look-ahead for the next tetromino state after movement
-        newTetro = movement(newTetro) || newTetro;
+        const lookahead = movement(this.currentTetromino);
 
         if (
-            this.overlapWithBoard(newTetro) ||
-            this.overlapWithPlayers(newTetro, this.otherTetrominoes)
+            this.overlapWithBoard(lookahead) ||
+            this.overlapWithPlayers(lookahead, this.otherTetrominoes)
         ) {
             return false;
         }
 
-        this.currentTetromino.position = newTetro.position;
-        this.currentTetromino.tiles = newTetro.tiles;
-        this.currentTetromino.rotation = newTetro.rotation;
-        this.currentTetromino.type = newTetro.type;
+        this.currentTetromino.updateFromLookahead(lookahead);
         return true;
     }
 
@@ -141,8 +141,8 @@ export class GameState {
      * check against static board, see if newTetro is overlapping with static monominoes placed on board
      * @returns boolean - if `newTetro` overlaps with any blocks on the board
      */
-    private overlapWithBoard(newTetro: Tetromino): boolean {
-        return newTetro.tiles.some(([row, col]) => {
+    private overlapWithBoard(lookahead: TetrominoLookahead): boolean {
+        return lookahead.tiles.some(([row, col]) => {
             return this.board[row][col] != null;
         });
     }
@@ -152,14 +152,14 @@ export class GameState {
      * @returns boolean - if `newTetro` overlaps with any of the `tetrominoes`
      */
     private overlapWithPlayers(
-        newTetro: Tetromino,
+        lookahead: TetrominoLookahead,
         tetrominoes: Array<Tetromino>
     ): boolean {
         return tetrominoes.some((tetro) => {
             // if the bounding boxes are more than the-maximum-"manhattan distance" away
             const isFarAway =
-                Math.abs(tetro.position[0] - newTetro.position[0]) +
-                    Math.abs(tetro.position[1] - newTetro.position[1]) >
+                Math.abs(tetro.position[0] - lookahead.position[0]) +
+                    Math.abs(tetro.position[1] - lookahead.position[1]) >
                 8; // 8 is twice the max width of a tetromino bounding box
             if (isFarAway) {
                 return false;
@@ -167,7 +167,7 @@ export class GameState {
 
             // if newTetro has overlapping monominoes with those tetro
             return tetro.tiles.some(([row, col]) => {
-                return newTetro.tiles.some(
+                return lookahead.tiles.some(
                     ([newRow, newCol]) => newRow === row && newCol === col
                 );
             });
@@ -192,10 +192,9 @@ export class GameState {
             expandedSet.add([row, col - 1]);
         });
 
-        const expandedTetro = cloneDeep(tetro);
-        expandedTetro.tiles = Array.from(expandedSet);
-
+        const lookahead = tetro.toTetrominoLookahead();
+        lookahead.tiles = Array.from(expandedSet);
         // if the expanded tetromino is overlapping, then it's definitely adjacent, if not actually overlapping. (We don't have to care about excluding the actually overlapped case because that handles more scenarios when synchronization is not ideal.)
-        return this.overlapWithPlayers(expandedTetro, tetrominoes);
+        return this.overlapWithPlayers(lookahead, tetrominoes);
     }
 }

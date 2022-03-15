@@ -1,6 +1,7 @@
 import { TetrominoType } from "common/TetrominoType";
 import { BOARD_SIZE } from "common/shared";
 import { TetrominoState } from "common/message";
+import { TetrominoLookahead } from "./GameState";
 
 type Shape = {
     width: number;
@@ -133,14 +134,12 @@ export class Tetromino {
         };
     }
 
-    static updateFromState(
-        tetromino: Tetromino,
-        state: TetrominoState,
-        ccRotations: number
-    ) {
-        tetromino.setType(state.type);
-        tetromino.setRotatedPosition(state.position, ccRotations);
-        tetromino.setRotation(ccRotations + state.rotation);
+    updateFromState(state: TetrominoState, ccRotations: number) {
+        this.setType(state.type);
+        this.setRotatedPosition(state.position, ccRotations);
+        this.updateFromLookahead(
+            Tetromino.rotate(this, ccRotations + state.rotation)
+        );
     }
 
     setType(type: TetrominoType) {
@@ -183,49 +182,73 @@ export class Tetromino {
         this.position = [newRow, newCol];
     }
 
-    setRotation(rotation: number) {
-        if (this.rotation == rotation % 4) {
-            return;
+    updateFromLookahead(lookahead: TetrominoLookahead) {
+        this.position = lookahead.position;
+        this.tiles = lookahead.tiles;
+        this.rotation = lookahead.rotation;
+    }
+
+    toTetrominoLookahead(): TetrominoLookahead {
+        return {
+            position: [...this.position],
+            tiles: this.tiles,
+            rotation: this.rotation,
+        };
+    }
+
+    static rotate(tetromino: Tetromino, rotation: number): TetrominoLookahead {
+        const lookahead = tetromino.toTetrominoLookahead();
+        if (tetromino.rotation == rotation % 4) {
+            return lookahead;
         }
 
-        this.tiles = this.tiles
+        lookahead.tiles = lookahead.tiles
             .map((tile) => {
                 return Tetromino.rotateCoords(
-                    [tile[0] - this.position[0], tile[1] - this.position[1]],
-                    Tetromino.shapes[this.type].width,
-                    4 - this.rotation + rotation // circular distance
+                    [
+                        tile[0] - lookahead.position[0],
+                        tile[1] - lookahead.position[1],
+                    ],
+                    Tetromino.shapes[tetromino.type].width,
+                    4 - lookahead.rotation + rotation // circular distance
                 );
             })
             .map((tile) => {
-                return [tile[0] + this.position[0], tile[1] + this.position[1]];
+                return [
+                    tile[0] + lookahead.position[0],
+                    tile[1] + lookahead.position[1],
+                ];
             });
-
-        this.rotation = <0 | 1 | 2 | 3>(rotation % 4);
+        lookahead.rotation = <0 | 1 | 2 | 3>(rotation % 4);
+        return lookahead;
     }
 
-    static rotateCW(tetromino: Tetromino) {
-        tetromino.setRotation(tetromino.rotation + 1);
+    static rotateCW(tetromino: Tetromino): TetrominoLookahead {
+        return Tetromino.rotate(tetromino, tetromino.rotation + 1);
     }
 
-    static rotateCCW(tetromino: Tetromino) {
-        tetromino.setRotation(4 + tetromino.rotation - 1);
+    static rotateCCW(tetromino: Tetromino): TetrominoLookahead {
+        return Tetromino.rotate(tetromino, tetromino.rotation - 1);
     }
 
-    static fall(tetromino: Tetromino) {
+    static fall(tetromino: Tetromino): TetrominoLookahead {
+        const lookahead = tetromino.toTetrominoLookahead();
         // fall down by 1
-        tetromino.position[0] += 1;
-        tetromino.tiles.forEach((tile) => {
-            tile[0] += 1;
-        });
+        lookahead.position[0] += 1;
+        lookahead.tiles = lookahead.tiles.map(([row, col]) => [row + 1, col]);
+        return lookahead;
     }
 
-    static slide(direction: -1 | 1): (tetro: Tetromino) => void {
+    static slide(direction: -1 | 1): (tetro: Tetromino) => TetrominoLookahead {
         // move left/right by 1
         return (tetromino) => {
-            tetromino.position[1] += direction;
-            tetromino.tiles.forEach((tile) => {
-                tile[1] += direction;
-            });
+            const lookahead = tetromino.toTetrominoLookahead();
+            lookahead.position[1] += direction;
+            lookahead.tiles = lookahead.tiles.map(([row, col]) => [
+                row,
+                col + direction,
+            ]);
+            return lookahead;
         };
     }
 }
