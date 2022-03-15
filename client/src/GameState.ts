@@ -110,11 +110,7 @@ export class GameState {
     }
 
     public placeTetromino(tetromino: Tetromino) {
-        tetromino.tiles.forEach((tile) => {
-            const [row, col] = [
-                tetromino.position[0] + tile[0],
-                tetromino.position[1] + tile[1],
-            ];
+        tetromino.tiles.forEach(([row, col]) => {
             this.board[row][col] = tetromino.type;
         });
     }
@@ -128,7 +124,7 @@ export class GameState {
         newTetro = movement(newTetro) || newTetro;
 
         if (
-            this.overlapWithBoard(newTetro, this.currentTetromino) ||
+            this.overlapWithBoard(newTetro) ||
             this.overlapWithPlayers(newTetro, this.otherTetrominoes)
         ) {
             return false;
@@ -145,35 +141,10 @@ export class GameState {
      * check against static board, see if newTetro is overlapping with static monominoes placed on board
      * @returns boolean - if `newTetro` overlaps with any blocks on the board
      */
-    private overlapWithBoard(
-        newTetro: Tetromino,
-        oldTetro: Tetromino
-    ): boolean {
-        const oldTileCoords = oldTetro.tiles.map((tile) => [
-            oldTetro.position[0] + tile[0],
-            oldTetro.position[1] + tile[1],
-        ]);
-        for (let i = 0; i < newTetro.tiles.length; i++) {
-            const [row, col] = newTetro.tiles[i];
-
-            // conditions to check if there is something there already
-            // there is a tile already
-            const tileIsOccupied =
-                this.board[newTetro.position[0] + row][
-                    newTetro.position[1] + col
-                ] != null;
-
-            // the tile is not part of the old tetromino
-            const tileIsForeign = !oldTileCoords.some(
-                ([oldRow, oldCol]) =>
-                    newTetro.position[0] + row == oldRow &&
-                    newTetro.position[1] + col == oldCol
-            );
-            if (tileIsOccupied && tileIsForeign) {
-                return true;
-            }
-        }
-        return false;
+    private overlapWithBoard(newTetro: Tetromino): boolean {
+        return newTetro.tiles.some(([row, col]) => {
+            return this.board[row][col] != null;
+        });
     }
 
     /**
@@ -184,11 +155,6 @@ export class GameState {
         newTetro: Tetromino,
         tetrominoes: Array<Tetromino>
     ): boolean {
-        const newTileCoords = newTetro.tiles.map((tile) => [
-            newTetro.position[0] + tile[0],
-            newTetro.position[1] + tile[1],
-        ]);
-
         return tetrominoes.some((tetro) => {
             // if the bounding boxes are more than the-maximum-"manhattan distance" away
             const isFarAway =
@@ -200,22 +166,11 @@ export class GameState {
             }
 
             // if newTetro has overlapping monominoes with those tetro
-            const isOverLapping = tetro.tiles
-                // get coordinates on board
-                .map((tile) => [
-                    tetro.position[0] + tile[0],
-                    tetro.position[1] + tile[1],
-                ])
-                // each of those coordinates does not overlap with newTetro's coordinates
-                .some((tileCoord) => {
-                    return newTileCoords.some(
-                        ([row, col]) =>
-                            row === tileCoord[0] && col === tileCoord[1]
-                    );
-                });
-            if (isOverLapping) {
-                return true;
-            }
+            return tetro.tiles.some(([row, col]) => {
+                return newTetro.tiles.some(
+                    ([newRow, newCol]) => newRow === row && newCol === col
+                );
+            });
         });
     }
 
@@ -228,39 +183,19 @@ export class GameState {
         tetro: Tetromino,
         tetrominoes: Array<Tetromino>
     ): boolean {
-        const oldTiles = tetro.tiles;
-        const newTiles = cloneDeep(oldTiles);
-        const shapeWidth = Tetromino.shapes[tetro.type].width;
+        // No out of bounds check because overlapWithPlayers doesn't index board
+        const expandedSet = new Set(tetro.tiles);
+        tetro.tiles.forEach(([row, col]) => {
+            expandedSet.add([row + 1, col]);
+            expandedSet.add([row - 1, col]);
+            expandedSet.add([row, col + 1]);
+            expandedSet.add([row, col - 1]);
+        });
 
         const expandedTetro = cloneDeep(tetro);
-        // expand the tetromino by 1
-        // NOTE: careful about when the position of tetro is [0, 0], the resulting calculated board coordinates will exceed matrix border. BUT, this won't happen because we block corners with walls.
-        for (let row = -1; row <= shapeWidth; row++) {
-            for (let col = -1; col <= shapeWidth; col++) {
-                if (adjacentToMonomino(row, col, oldTiles)) {
-                    newTiles.push([row, col]);
-                }
-            }
-        }
-        expandedTetro.tiles = newTiles;
+        expandedTetro.tiles = Array.from(expandedSet);
 
         // if the expanded tetromino is overlapping, then it's definitely adjacent, if not actually overlapping. (We don't have to care about excluding the actually overlapped case because that handles more scenarios when synchronization is not ideal.)
         return this.overlapWithPlayers(expandedTetro, tetrominoes);
-
-        // Returns true if a coordinate is "adjacent" to the tiles
-        function adjacentToMonomino(
-            row: number,
-            col: number,
-            tiles: [number, number][]
-        ): boolean {
-            return tiles.some(([tileRow, tileCol]) => {
-                return (
-                    (Math.abs(row - tileRow) === 1 &&
-                        Math.abs(col - tileCol) === 0) ||
-                    (Math.abs(row - tileRow) === 0 &&
-                        Math.abs(col - tileCol) === 1)
-                );
-            });
-        }
     }
 }
