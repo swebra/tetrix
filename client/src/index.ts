@@ -16,6 +16,7 @@ const config = {
         mode: Phaser.Scale.FIT,
         autoCenter: Phaser.Scale.CENTER_BOTH,
     },
+    pixelArt: true,
     scene: import.meta.env.VITE_DISABLE_WAITING_ROOM
         ? [SceneGameArena, SceneGameOver]
         : [SceneWaitingRoom, SceneGameArena, SceneGameOver],
