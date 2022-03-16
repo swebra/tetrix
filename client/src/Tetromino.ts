@@ -1,11 +1,16 @@
 import { TetrominoType } from "common/TetrominoType";
 import { BOARD_SIZE } from "common/shared";
 import { TetrominoState } from "common/message";
-import { TetrominoLookahead } from "./GameState";
 
 type Shape = {
     width: number;
     tiles: Array<[number, number]>;
+};
+
+export type TetrominoLookahead = {
+    position: [number, number];
+    tiles: Array<[number, number]>;
+    rotation: 0 | 1 | 2 | 3;
 };
 
 export class Tetromino {
@@ -142,6 +147,20 @@ export class Tetromino {
         );
     }
 
+    updateFromLookahead(lookahead: TetrominoLookahead) {
+        this.position = lookahead.position;
+        this.tiles = lookahead.tiles;
+        this.rotation = lookahead.rotation;
+    }
+
+    toTetrominoLookahead(): TetrominoLookahead {
+        return {
+            position: [...this.position],
+            tiles: this.tiles,
+            rotation: this.rotation,
+        };
+    }
+
     setType(type: TetrominoType) {
         if (this.type == type) {
             return;
@@ -180,20 +199,6 @@ export class Tetromino {
                 offsetCol + newCol,
             ]);
         this.position = [newRow, newCol];
-    }
-
-    updateFromLookahead(lookahead: TetrominoLookahead) {
-        this.position = lookahead.position;
-        this.tiles = lookahead.tiles;
-        this.rotation = lookahead.rotation;
-    }
-
-    toTetrominoLookahead(): TetrominoLookahead {
-        return {
-            position: [...this.position],
-            tiles: this.tiles,
-            rotation: this.rotation,
-        };
     }
 
     static rotate(tetromino: Tetromino, rotation: number): TetrominoLookahead {

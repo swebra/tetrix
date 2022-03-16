@@ -3,14 +3,9 @@ import { TetrominoType } from "common/TetrominoType";
 import { Tetromino } from "./Tetromino";
 import { BOARD_SIZE } from "common/shared";
 import { ToServerEvents, ToClientEvents } from "common/messages/game";
+import { TetrominoLookahead } from "./Tetromino";
 
 type GameSocket = Socket<ToClientEvents, ToServerEvents>;
-
-export type TetrominoLookahead = {
-    position: [number, number];
-    tiles: Array<[number, number]>;
-    rotation: 0 | 1 | 2 | 3;
-};
 
 export class GameState {
     // used for synchronization. not related to rendering (no sprites, scene, phaser3 stuff)
@@ -138,8 +133,8 @@ export class GameState {
     }
 
     /**
-     * check against static board, see if newTetro is overlapping with static monominoes placed on board
-     * @returns boolean - if `newTetro` overlaps with any blocks on the board
+     * check against static board, see if lookahead is overlapping with static monominoes placed on board
+     * @returns boolean - if `lookahead` tiles overlaps with any blocks on the board
      */
     private overlapWithBoard(lookahead: TetrominoLookahead): boolean {
         return lookahead.tiles.some(([row, col]) => {
@@ -148,24 +143,23 @@ export class GameState {
     }
 
     /**
-     * check against other players' tetrominoes: see if newTetro is overlapping with other existing players
-     * @returns boolean - if `newTetro` overlaps with any of the `tetrominoes`
+     * check against other players' tetrominoes: see if lookahead tiles is overlapping with other existing players
+     * @returns boolean - if `lookahead` tiles overlap with any of the `tetrominoes`
      */
     private overlapWithPlayers(
         lookahead: TetrominoLookahead,
         tetrominoes: Array<Tetromino>
     ): boolean {
         return tetrominoes.some((tetro) => {
-            // if the bounding boxes are more than the-maximum-"manhattan distance" away
+            // if the bounding boxes are more than the-maximum-"manhattan distance" away in any axis
             const isFarAway =
-                Math.abs(tetro.position[0] - lookahead.position[0]) +
-                    Math.abs(tetro.position[1] - lookahead.position[1]) >
-                8; // 8 is twice the max width of a tetromino bounding box
+                Math.abs(tetro.position[0] - lookahead.position[0]) > 4 ||
+                Math.abs(tetro.position[1] - lookahead.position[1]) > 4; // 4 is the max width of a tetromino bounding box
             if (isFarAway) {
                 return false;
             }
 
-            // if newTetro has overlapping monominoes with those tetro
+            // if lookahead has overlapping monominoes with those tetro
             return tetro.tiles.some(([row, col]) => {
                 return lookahead.tiles.some(
                     ([newRow, newCol]) => newRow === row && newCol === col
