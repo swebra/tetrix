@@ -177,17 +177,29 @@ export class GameState {
         tetro: Tetromino,
         tetrominoes: Array<Tetromino>
     ): boolean {
-        // No out of bounds check because overlapWithPlayers doesn't index board
-        const expandedSet = new Set(tetro.tiles);
-        tetro.tiles.forEach(([row, col]) => {
-            expandedSet.add([row + 1, col]);
-            expandedSet.add([row - 1, col]);
-            expandedSet.add([row, col + 1]);
-            expandedSet.add([row, col - 1]);
-        });
-
         const lookahead = tetro.toTetrominoLookahead();
-        lookahead.tiles = Array.from(expandedSet);
+        lookahead.tiles = tetro.tiles
+            // insert tiles and their expanded positions
+            // No out of bounds check because overlapWithPlayers doesn't index board
+            .map(([row, col]) => {
+                return [
+                    [row, col],
+                    [row + 1, col],
+                    [row - 1, col],
+                    [row, col + 1],
+                    [row, col - 1],
+                ];
+            })
+            // flatten
+            .reduce((total, current) => [...total, ...current])
+            // deduplicate
+            .filter(
+                (tile, index, tiles) =>
+                    tiles.findIndex(
+                        ([row, col]) => row === tile[0] && col === tile[1]
+                    ) === index
+            ) as [number, number][];
+
         // if the expanded tetromino is overlapping, then it's definitely adjacent, if not actually overlapping. (We don't have to care about excluding the actually overlapped case because that handles more scenarios when synchronization is not ideal.)
         return this.overlapWithPlayers(lookahead, tetrominoes);
     }
