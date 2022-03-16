@@ -283,7 +283,7 @@ export class SceneGameArena extends Phaser.Scene {
             this.gameState.placeTetromino(this.gameState.currentTetromino);
 
             // start a new tetromino from the top
-            this.gameState.currentTetromino = new Tetromino(TetrominoType.T);
+            this.gameState.currentTetromino = new Tetromino(this.gameState.getNewPiece());
             this.currentTetro = new RenderedTetromino(
                 this.gameState.currentTetromino
             );

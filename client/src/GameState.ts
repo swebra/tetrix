@@ -5,6 +5,7 @@ import { BOARD_SIZE } from "common/shared";
 import { ToServerEvents, ToClientEvents } from "common/messages/game";
 import { TradeState } from "common/TradeState";
 
+import { RandomBag } from "./randomBag";
 type GameSocket = Socket<ToClientEvents, ToServerEvents>;
 
 export class GameState {
@@ -21,7 +22,11 @@ export class GameState {
     otherTetrominoes: Array<Tetromino>;
     playerId!: 0 | 1 | 2 | 3;
     tradingPlayerId: 0 | 1 | 2 | 3 | null;
+    randomBag: RandomBag;
 
+    public getNewPiece(): TetrominoType {
+        return this.randomBag.returnNextPiece();
+    }
     private newBoard() {
         const board = new Array(BOARD_SIZE);
         for (let r = 0; r < BOARD_SIZE; r++) {
@@ -46,8 +51,8 @@ export class GameState {
         this.tradeState = TradeState.NoTrade;
         this.tradingPlayerId = null;
         this.board = this.newBoard();
-
-        this.currentTetromino = new Tetromino(TetrominoType.T);
+        this.randomBag = new RandomBag();
+        this.currentTetromino = new Tetromino(this.getNewPiece());
         // other player's moving piece, TODO this is synchronized with the server
         // how they are rendered is not concerned.
         this.otherTetrominoes = [
