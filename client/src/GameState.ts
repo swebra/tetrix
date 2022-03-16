@@ -4,16 +4,10 @@ import { BOARD_SIZE } from "common/shared";
 import { TetrominoType } from "common/TetrominoType";
 import { ToServerEvents, ToClientEvents } from "common/messages/game";
 
-import { Tetromino } from "./Tetromino";
+import { Tetromino, TetrominoLookahead } from "./Tetromino";
 import { Monomino } from "./Monomino";
 
 type GameSocket = Socket<ToClientEvents, ToServerEvents>;
-
-export type TetrominoLookahead = {
-    position: [number, number];
-    tiles: Array<[number, number]>;
-    rotation: 0 | 1 | 2 | 3;
-};
 
 export class GameState {
     socket: GameSocket;
@@ -147,8 +141,8 @@ export class GameState {
     }
 
     /**
-     * check against static board, see if newTetro is overlapping with static monominoes placed on board
-     * @returns boolean - if `newTetro` overlaps with any blocks on the board
+     * check against static board, see if lookahead is overlapping with static monominoes placed on board
+     * @returns boolean - if `lookahead` tiles overlaps with any blocks on the board
      */
     private overlapWithBoard(lookahead: TetrominoLookahead): boolean {
         return lookahead.tiles.some(([row, col]) => {
@@ -157,24 +151,23 @@ export class GameState {
     }
 
     /**
-     * check against other players' tetrominoes: see if newTetro is overlapping with other existing players
-     * @returns boolean - if `newTetro` overlaps with any of the `tetrominoes`
+     * check against other players' tetrominoes: see if lookahead tiles is overlapping with other existing players
+     * @returns boolean - if `lookahead` tiles overlap with any of the `tetrominoes`
      */
     private overlapWithPlayers(
         lookahead: TetrominoLookahead,
         tetrominoes: Array<Tetromino>
     ): boolean {
         return tetrominoes.some((tetro) => {
-            // if the bounding boxes are more than the-maximum-"manhattan distance" away
+            // if the bounding boxes are more than the-maximum-"manhattan distance" away in any axis
             const isFarAway =
-                Math.abs(tetro.position[0] - lookahead.position[0]) +
-                    Math.abs(tetro.position[1] - lookahead.position[1]) >
-                8; // 8 is twice the max width of a tetromino bounding box
+                Math.abs(tetro.position[0] - lookahead.position[0]) > 4 ||
+                Math.abs(tetro.position[1] - lookahead.position[1]) > 4; // 4 is the max width of a tetromino bounding box
             if (isFarAway) {
                 return false;
             }
 
-            // if newTetro has overlapping monominoes with those tetro
+            // if lookahead has overlapping monominoes with those tetro
             return tetro.monominoes.some((monomino) => {
                 const [row, col] = monomino.position;
                 return lookahead.tiles.some(
@@ -196,14 +189,28 @@ export class GameState {
         const lookahead = tetro.toTetrominoLookahead();
 
         // No out of bounds check because overlapWithPlayers doesn't index board
-        const expandedSet = new Set(lookahead.tiles);
-        lookahead.tiles.forEach(([row, col]) => {
-            expandedSet.add([row + 1, col]);
-            expandedSet.add([row - 1, col]);
-            expandedSet.add([row, col + 1]);
-            expandedSet.add([row, col - 1]);
-        });
-        lookahead.tiles = Array.from(expandedSet);
+        lookahead.tiles = lookahead.tiles
+            // insert tiles and their expanded positions
+            // No out of bounds check because overlapWithPlayers doesn't index board
+            .map(([row, col]) => {
+                return [
+                    [row, col],
+                    [row + 1, col],
+                    [row - 1, col],
+                    [row, col + 1],
+                    [row, col - 1],
+                ];
+            })
+            // flatten
+            .reduce((total, current) => [...total, ...current])
+            // deduplicate
+            .filter(
+                (tile, index, tiles) =>
+                    tiles.findIndex(
+                        ([row, col]) => row === tile[0] && col === tile[1]
+                    ) === index
+            ) as [number, number][];
+
         // if the expanded tetromino is overlapping, then it's definitely adjacent, if not actually overlapping. (We don't have to care about excluding the actually overlapped case because that handles more scenarios when synchronization is not ideal.)
         return this.overlapWithPlayers(lookahead, tetrominoes);
     }

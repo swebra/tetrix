@@ -3,13 +3,17 @@ import { Scene } from "phaser";
 import { BOARD_SIZE } from "common/shared";
 import { TetrominoType } from "common/TetrominoType";
 import { TetrominoState } from "common/message";
-
-import { TetrominoLookahead } from "./GameState";
 import { Monomino } from "./Monomino";
 
 type Shape = {
     width: number;
     tiles: Array<[number, number]>;
+};
+
+export type TetrominoLookahead = {
+    position: [number, number];
+    tiles: Array<[number, number]>;
+    rotation: 0 | 1 | 2 | 3;
 };
 
 export class Tetromino {
@@ -136,6 +140,22 @@ export class Tetromino {
         );
     }
 
+    toTetrominoLookahead(): TetrominoLookahead {
+        return {
+            position: [...this.position],
+            tiles: this.monominoes.map((monomino) => monomino.position),
+            rotation: this.rotation,
+        };
+    }
+
+    updateFromLookahead(lookahead: TetrominoLookahead) {
+        this.position = lookahead.position;
+        this.rotation = lookahead.rotation;
+        this.monominoes.forEach((monomino, i) => {
+            monomino.position = lookahead.tiles[i];
+        });
+    }
+
     setType(type: TetrominoType) {
         if (this.type == type) {
             return;
@@ -194,22 +214,6 @@ export class Tetromino {
 
     draw(scene: Scene) {
         this.monominoes.forEach((monomino) => monomino.draw(scene));
-    }
-
-    updateFromLookahead(lookahead: TetrominoLookahead) {
-        this.position = lookahead.position;
-        this.rotation = lookahead.rotation;
-        this.monominoes.forEach((monomino, i) => {
-            monomino.position = lookahead.tiles[i];
-        });
-    }
-
-    toTetrominoLookahead(): TetrominoLookahead {
-        return {
-            position: [...this.position],
-            tiles: this.monominoes.map((monomino) => monomino.position),
-            rotation: this.rotation,
-        };
     }
 
     static rotate(tetromino: Tetromino, rotation: number): TetrominoLookahead {
