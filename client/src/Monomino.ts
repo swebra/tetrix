@@ -1,6 +1,6 @@
 import Phaser, { Scene } from "phaser";
 
-import { TILE_SIZE } from "common/shared";
+import { TILE_SIZE, TILE_SCALE } from "common/shared";
 import { TetrominoType } from "common/TetrominoType";
 
 export class Monomino {
@@ -48,6 +48,6 @@ export class Monomino {
             this.ownerId == null ? 12 : this.ownerId * 3 + (this.type % 3);
         this.sprite = scene.add.image(x, y, "monomino", spriteInd);
         this.sprite.setOrigin(0, 0);
-        this.sprite.setScale(TILE_SIZE / 8);
+        this.sprite.setScale(TILE_SCALE);
     }
 }
