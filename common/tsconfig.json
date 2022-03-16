@@ -6,16 +6,8 @@
     "esModuleInterop": true,
     "strict": true,
     "module": "CommonJS",
-    "paths": {
-      "common/*": [
-        "../common/*"
-      ],
-    }
+    "composite": true
   },
-  "include": ["./src", "./index.ts"],
-  "references": [
-    {
-      "path": "../common"
-    }
-  ]
+  "include": ["./**/*.ts"],
+  "exclude": ["./**/*.js", "./build"]
 }
