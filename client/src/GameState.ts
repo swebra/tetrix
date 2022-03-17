@@ -3,6 +3,7 @@ import { TetrominoType } from "common/TetrominoType";
 import { Tetromino } from "./Tetromino";
 import { BOARD_SIZE } from "common/shared";
 import { ToServerEvents, ToClientEvents } from "common/messages/game";
+import { RandomBag } from "./randomBag";
 import { TetrominoLookahead } from "./Tetromino";
 
 type GameSocket = Socket<ToClientEvents, ToServerEvents>;
@@ -20,6 +21,7 @@ export class GameState {
     // i.e. if you are player 1, these are of player 2, then 3, then 0
     otherTetrominoes: Array<Tetromino>;
     playerId!: 0 | 1 | 2 | 3;
+
 
     private newBoard() {
         const board = new Array(BOARD_SIZE);
@@ -42,15 +44,14 @@ export class GameState {
     constructor(socket: GameSocket) {
         this.socket = socket;
         this.board = this.newBoard();
-
-        this.currentTetromino = new Tetromino(TetrominoType.T);
+        this.currentTetromino = new Tetromino();
         // other player's moving piece, TODO this is synchronized with the server
         // how they are rendered is not concerned.
         this.otherTetrominoes = [
             // FIXME not good?
-            new Tetromino(TetrominoType.T),
-            new Tetromino(TetrominoType.T),
-            new Tetromino(TetrominoType.T),
+            new Tetromino(),
+            new Tetromino(),
+            new Tetromino(),
         ];
 
         // initial rotation
