@@ -21,11 +21,8 @@ export class GameState {
     // i.e. if you are player 1, these are of player 2, then 3, then 0
     otherTetrominoes: Array<Tetromino>;
     playerId!: 0 | 1 | 2 | 3;
-    randomBag: RandomBag;
 
-    public getNewPiece(): TetrominoType {
-        return this.randomBag.returnNextPiece();
-    }
+
     private newBoard() {
         const board = new Array(BOARD_SIZE);
         for (let r = 0; r < BOARD_SIZE; r++) {
@@ -47,15 +44,14 @@ export class GameState {
     constructor(socket: GameSocket) {
         this.socket = socket;
         this.board = this.newBoard();
-        this.randomBag = new RandomBag();
-        this.currentTetromino = new Tetromino(this.getNewPiece());
+        this.currentTetromino = new Tetromino();
         // other player's moving piece, TODO this is synchronized with the server
         // how they are rendered is not concerned.
         this.otherTetrominoes = [
             // FIXME not good?
-            new Tetromino(TetrominoType.T),
-            new Tetromino(TetrominoType.T),
-            new Tetromino(TetrominoType.T),
+            new Tetromino(),
+            new Tetromino(),
+            new Tetromino(),
         ];
 
         // initial rotation
