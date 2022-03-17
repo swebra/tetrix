@@ -5,12 +5,7 @@
     "outDir": "./build",
     "esModuleInterop": true,
     "strict": true,
-    "module": "CommonJS",
-    "paths": {
-      "common/*": [
-        "../common/*"
-      ],
-    }
+    "module": "CommonJS"
   },
   "include": ["./src", "./index.ts"],
   "references": [
