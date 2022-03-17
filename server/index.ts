@@ -78,11 +78,13 @@ export function broadcastToSceneWaitingRoom() {
 
 export function broadcastToSceneGameArena() {
     scene.setScene("SceneGameArena");
+    spectator.startVotingLoop(level);
     io.sockets.emit("toSceneGameArena");
 }
 
 export function broadcastToSceneGameOver(msg: Array<ColoredScore>) {
     scene.setScene("SceneGameOver");
+    spectator.isGameRunning = false;
     io.sockets.emit("toSceneGameOver", msg);
 }
 

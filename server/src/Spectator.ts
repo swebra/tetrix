@@ -22,6 +22,7 @@ export class Spectator {
     };
     private _countdownValue: number;
     private _secondVotingRoundSelection: string;
+    public isGameRunning: boolean;
 
     constructor() {
         this._isFirstRoundVoting = true;
@@ -36,6 +37,7 @@ export class Spectator {
         };
         this._countdownValue = 10;
         this._secondVotingRoundSelection = "null";
+        this.isGameRunning = false;
     }
 
     get countdownValue(): number {
@@ -59,6 +61,21 @@ export class Spectator {
                 socket.emit("sendVotingCountdown", this.countdownValue);
             }
         });
+    }
+
+    /**
+     * For the duration of the game, spawn in a new voting sequence every 40 seconds.
+     * @param level The level object.
+     */
+    public startVotingLoop(level: Level) {
+        this.isGameRunning = true;
+        const interval = setInterval(() => {
+            if (this.isGameRunning) {
+                this.generateFirstVotingSequence(level);
+            } else {
+                clearInterval(interval);
+            }
+        }, 40000);
     }
 
     /**
@@ -116,7 +133,7 @@ export class Spectator {
             this._countdownValue--;
 
             // Stop emitting the countdown if it hits -1 (we send '0' and then stop the interval).
-            if (this._countdownValue == -1) {
+            if (this._countdownValue == -1 || !this.isGameRunning) {
                 clearInterval(interval);
             }
         }, 1000);
@@ -172,7 +189,9 @@ export class Spectator {
      * @param level The current level of the game.
      */
     public makeDecision(level: Level) {
-        // FIXME: Ensure the game is still running before continuing.
+        if (!this.isGameRunning) {
+            return;
+        }
 
         broadcastHideVotingSequence();
         this._isAcceptingVotes = false;
