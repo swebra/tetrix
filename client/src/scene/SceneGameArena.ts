@@ -10,12 +10,6 @@ import { Socket } from "socket.io-client";
 import { ToClientEvents, ToServerEvents } from "common/messages/sceneGameArena";
 import { ControlsUI } from "./ControlsUI";
 
-import KEY_A from "../assets/controls/KEY_A.svg";
-import KEY_D from "../assets/controls/KEY_D.svg";
-import KEY_S from "../assets/controls/KEY_S.svg";
-import KEY_Q from "../assets/controls/KEY_Q.svg";
-import KEY_E from "../assets/controls/KEY_E.svg";
-
 type SocketGame = Socket<ToClientEvents, ToServerEvents>;
 
 interface SceneDataGameArena {
@@ -42,16 +36,20 @@ export class SceneGameArena extends Phaser.Scene {
 
     preload() {
         this.load.addFile(new WebFontFile(this.load, "VT323"));
+        this.load.bitmapFont(
+            "brawl",
+            "assets/barcade-brawl.png",
+            "assets/barcade-brawl.xml"
+        );
+
         this.load.spritesheet("monomino", "assets/monomino.png", {
             frameWidth: 8,
             frameHeight: 8,
         });
-
-        this.load.svg("keyA", KEY_A);
-        this.load.svg("keyD", KEY_D);
-        this.load.svg("keyS", KEY_S);
-        this.load.svg("keyE", KEY_E);
-        this.load.svg("keyQ", KEY_Q);
+        this.load.spritesheet("key", "assets/keys.png", {
+            frameWidth: 13,
+            frameHeight: 13,
+        });
     }
 
     init(data: SceneDataGameArena) {
@@ -62,14 +60,9 @@ export class SceneGameArena extends Phaser.Scene {
     create() {
         this.scoreboard = new ScoreboardUI(this, this.socket, true);
         this.spectator = new SpectatorUI(this, this.socket);
-        // NOTE: need to make sure playerId is valid when this scene is started
-        this.controls = new ControlsUI(this, [
-            "keyA",
-            "keyD",
-            "keyS",
-            "keyQ",
-            "keyE",
-        ]);
+
+        // TODO: need to make sure playerId is valid when this scene is started
+        new ControlsUI(this);
 
         // keyboard input
         this.keys = this.input.keyboard.addKeys(

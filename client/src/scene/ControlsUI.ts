@@ -1,28 +1,25 @@
+import { TILE_SIZE, TILE_SCALE, BOARD_PX } from "common/shared";
 import { SceneGameArena } from "./SceneGameArena";
 
 export class ControlsUI {
-    constructor(scene: SceneGameArena, keys: Array<string>) {
-        let y = 600;
-        let index = 0;
+    constructor(scene: SceneGameArena) {
+        const startX = 2 * TILE_SIZE + 7 * TILE_SCALE;
+        const startY = BOARD_PX - 11 * TILE_SIZE;
+
         const controlInfo = [
-            "Move Left",
-            "Move Right",
-            "Move Down",
-            "Rotate CCW",
-            "Rotate CW",
+            "move left",
+            "move right",
+            "rotate ccw",
+            "rotate cw",
+            "soft drop",
         ];
 
-        for (const key of keys) {
-            scene.add.image(50, y, key).setScale(0.2);
-
+        controlInfo.forEach((str, i) => {
+            const y = startY + i * (15 * TILE_SCALE);
+            scene.add.image(startX, y, "key", i).setScale(TILE_SCALE);
             scene.add
-                .text(70, y - 10, controlInfo[index++], {
-                    fontSize: `20px`,
-                    fontFamily: "VT323",
-                })
-                .setTint(0xffffff);
-
-            y += 40;
-        }
+                .bitmapText(startX + 9 * TILE_SCALE, y, "brawl", str, 31.5)
+                .setOrigin(0, 0.5);
+        });
     }
 }
