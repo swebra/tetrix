@@ -1,11 +1,16 @@
 import { TetrominoType } from "common/TetrominoType";
 import { BOARD_SIZE } from "common/shared";
 import { TetrominoState } from "common/message";
-import { cloneDeep } from "lodash";
 
 type Shape = {
     width: number;
     tiles: Array<[number, number]>;
+};
+
+export type TetrominoLookahead = {
+    position: [number, number];
+    tiles: Array<[number, number]>;
+    rotation: 0 | 1 | 2 | 3;
 };
 
 export class Tetromino {
@@ -100,18 +105,29 @@ export class Tetromino {
         }
     }
 
-    type: TetrominoType;
+    type!: TetrominoType;
     position: [number, number];
     rotation: 0 | 1 | 2 | 3;
-    tiles: Array<[number, number]>;
+    tiles!: Array<[number, number]>;
 
     constructor(type: TetrominoType) {
-        this.type = type;
-        this.tiles = cloneDeep(Tetromino.shapes[type].tiles);
         this.position = [
             0,
             Math.round((BOARD_SIZE - Tetromino.shapes[type].width) / 2),
         ];
+        this.setType(type);
+        this.rotation = 0; // default (no rotation)
+    }
+
+    respawn() {
+        // TODO generate from a sequence iterator (another singleton class?)
+        // use respawn instead of `new Tetromino` because right now rendered tetromino will lose reference if inner is created anew. FIXME this is not true when using extension style rendered tetromino
+        this.position = [
+            0,
+            Math.round((BOARD_SIZE - Tetromino.shapes[this.type].width) / 2),
+        ];
+        this.type = TetrominoType.J; // Very temporary fix, won't be needed once respawn doesn't exist
+        this.setType(this.type | TetrominoType.T);
         this.rotation = 0; // default (no rotation)
     }
 
@@ -123,14 +139,26 @@ export class Tetromino {
         };
     }
 
-    static updateFromState(
-        tetromino: Tetromino,
-        state: TetrominoState,
-        ccRotations: number
-    ) {
-        tetromino.setType(state.type);
-        tetromino.setRotatedPosition(state.position, ccRotations);
-        tetromino.setRotation(ccRotations + state.rotation);
+    updateFromState(state: TetrominoState, ccRotations: number) {
+        this.setType(state.type);
+        this.setRotatedPosition(state.position, ccRotations);
+        this.updateFromLookahead(
+            Tetromino.rotate(this, ccRotations + state.rotation)
+        );
+    }
+
+    updateFromLookahead(lookahead: TetrominoLookahead) {
+        this.position = lookahead.position;
+        this.tiles = lookahead.tiles;
+        this.rotation = lookahead.rotation;
+    }
+
+    toTetrominoLookahead(): TetrominoLookahead {
+        return {
+            position: [...this.position],
+            tiles: this.tiles,
+            rotation: this.rotation,
+        };
     }
 
     setType(type: TetrominoType) {
@@ -138,12 +166,16 @@ export class Tetromino {
             return;
         }
         this.type = type;
-        this.tiles = cloneDeep(Tetromino.shapes[type].tiles);
+        this.tiles = Tetromino.shapes[type].tiles.map(([row, col]) => [
+            this.position[0] + row,
+            this.position[1] + col,
+        ]);
+        this.rotation = 0;
     }
 
     setRotatedPosition(position: [number, number], ccRotations: number) {
         ccRotations %= 4;
-        let [row, col] = Tetromino.rotateCoords(
+        let [newRow, newCol] = Tetromino.rotateCoords(
             position,
             BOARD_SIZE,
             ccRotations
@@ -151,83 +183,77 @@ export class Tetromino {
         // Compensate for position needing to be at top left
         const adjustment = Tetromino.shapes[this.type].width - 1;
         if (ccRotations == 1 || ccRotations == 2) {
-            col -= adjustment;
+            newCol -= adjustment;
         }
         if (ccRotations == 3 || ccRotations == 2) {
-            row -= adjustment;
+            newRow -= adjustment;
         }
-        this.position = [row, col];
+
+        this.tiles = this.tiles
+            .map(([row, col]) => [
+                row - this.position[0],
+                col - this.position[1],
+            ])
+            .map(([offsetRow, offsetCol]) => [
+                offsetRow + newRow,
+                offsetCol + newCol,
+            ]);
+        this.position = [newRow, newCol];
     }
 
-    setRotation(rotation: number) {
-        if (this.rotation == rotation % 4) {
-            return;
+    static rotate(tetromino: Tetromino, rotation: number): TetrominoLookahead {
+        const lookahead = tetromino.toTetrominoLookahead();
+        if (tetromino.rotation == rotation % 4) {
+            return lookahead;
         }
-        for (let i = 0; i < this.tiles.length; i++) {
-            this.tiles[i] = Tetromino.rotateCoords(
-                this.tiles[i],
-                Tetromino.shapes[this.type].width,
-                4 - this.rotation + rotation // circular distance
-            );
-        }
-        this.rotation = <0 | 1 | 2 | 3>(rotation % 4);
+
+        lookahead.tiles = lookahead.tiles
+            .map((tile) => {
+                return Tetromino.rotateCoords(
+                    [
+                        tile[0] - lookahead.position[0],
+                        tile[1] - lookahead.position[1],
+                    ],
+                    Tetromino.shapes[tetromino.type].width,
+                    4 - lookahead.rotation + rotation // circular distance
+                );
+            })
+            .map((tile) => {
+                return [
+                    tile[0] + lookahead.position[0],
+                    tile[1] + lookahead.position[1],
+                ];
+            });
+        lookahead.rotation = <0 | 1 | 2 | 3>(rotation % 4);
+        return lookahead;
     }
 
-    static rotateCW(tetromino: Tetromino) {
-        tetromino.setRotation(tetromino.rotation + 1);
+    static rotateCW(tetromino: Tetromino): TetrominoLookahead {
+        return Tetromino.rotate(tetromino, tetromino.rotation + 1);
     }
 
-    static rotateCCW(tetromino: Tetromino) {
-        tetromino.setRotation(4 + tetromino.rotation + 1);
+    static rotateCCW(tetromino: Tetromino): TetrominoLookahead {
+        return Tetromino.rotate(tetromino, tetromino.rotation - 1);
     }
 
-    static fall(tetromino: Tetromino) {
+    static fall(tetromino: Tetromino): TetrominoLookahead {
+        const lookahead = tetromino.toTetrominoLookahead();
         // fall down by 1
-        tetromino.position[0] += 1;
+        lookahead.position[0] += 1;
+        lookahead.tiles = lookahead.tiles.map(([row, col]) => [row + 1, col]);
+        return lookahead;
     }
 
-    static slide(direction: -1 | 1): (tetro: Tetromino) => void {
+    static slide(direction: -1 | 1): (tetro: Tetromino) => TetrominoLookahead {
         // move left/right by 1
         return (tetromino) => {
-            tetromino.position[1] += direction;
+            const lookahead = tetromino.toTetrominoLookahead();
+            lookahead.position[1] += direction;
+            lookahead.tiles = lookahead.tiles.map(([row, col]) => [
+                row,
+                col + direction,
+            ]);
+            return lookahead;
         };
-    }
-
-    moveIfCan(
-        board: Array<Array<TetrominoType | null>>,
-        movement: (tetro: Tetromino) => Tetromino | void
-    ): boolean {
-        let newTetro: Tetromino = cloneDeep(this);
-        const oldTileCoords = newTetro.tiles.map((tile) => [
-            newTetro.position[0] + tile[0],
-            newTetro.position[1] + tile[1],
-        ]);
-
-        // look-ahead for the next tetromino state after movement
-        newTetro = movement(newTetro) || newTetro;
-        for (let i = 0; i < this.tiles.length; i++) {
-            const [row, col] = newTetro.tiles[i];
-
-            // conditions to check if there is something there already
-            // there is a tile already
-            const tileIsOccupied =
-                board[newTetro.position[0] + row][newTetro.position[1] + col] !=
-                null;
-            // the tile is not part of the old tetromino
-            const tileIsForeign = !oldTileCoords.some(
-                ([oldRow, oldCol]) =>
-                    newTetro.position[0] + row == oldRow &&
-                    newTetro.position[1] + col == oldCol
-            );
-            if (tileIsOccupied && tileIsForeign) {
-                return false;
-            }
-        }
-        // copy all attributes over
-        this.position = newTetro.position;
-        this.tiles = newTetro.tiles;
-        this.rotation = newTetro.rotation;
-        this.type = newTetro.type;
-        return true;
     }
 }
