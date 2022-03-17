@@ -129,7 +129,6 @@ export class Tetromino {
             0,
             Math.round((BOARD_SIZE - Tetromino.shapes[this.type].width) / 2),
         ];
-        this.type = TetrominoType.J; // Very temporary fix, won't be needed once respawn doesn't exist
         this.setType(this.randomBag.returnNextPiece());
         this.rotation = 0; // default (no rotation)
     }
