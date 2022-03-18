@@ -1,8 +1,8 @@
+import { Scene } from "phaser";
 import { TILE_SIZE, TILE_SCALE, BOARD_PX } from "common/shared";
-import { SceneGameArena } from "./SceneGameArena";
 
 export class ControlsUI {
-    constructor(scene: SceneGameArena) {
+    constructor(scene: Scene) {
         const startX = 2 * TILE_SIZE + 7 * TILE_SCALE;
         const startY = BOARD_PX - 11 * TILE_SIZE;
 
