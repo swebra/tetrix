@@ -1,8 +1,5 @@
 import { Level } from "./Level";
-import {
-    broadcastHideVotingSequence,
-    broadcastShowVotingSequence,
-} from "../index";
+import { broadcast } from "./broadcast";
 
 import { ToServerEvents, ToClientEvents } from "common/messages/spectator";
 import { Socket } from "socket.io";
@@ -23,8 +20,13 @@ export class Spectator {
     private _countdownValue: number;
     private _secondVotingRoundSelection: string;
     public isGameRunning: boolean;
+    private broadcastShowVotingSequence: broadcast["showVotingSequence"];
+    private broadcastHideVotingSequence: broadcast["hideVotingSequence"];
 
-    constructor() {
+    constructor(
+        showVotingSequenceEvent: broadcast["showVotingSequence"],
+        hideVotingSequenceEvent: broadcast["hideVotingSequence"]
+    ) {
         this._isFirstRoundVoting = true;
         this._isAcceptingVotes = false;
         this._isVoteRunning = false;
@@ -38,6 +40,8 @@ export class Spectator {
         this._countdownValue = 10;
         this._secondVotingRoundSelection = "null";
         this.isGameRunning = false;
+        this.broadcastShowVotingSequence = showVotingSequenceEvent;
+        this.broadcastHideVotingSequence = hideVotingSequenceEvent;
     }
 
     get countdownValue(): number {
@@ -117,12 +121,12 @@ export class Spectator {
         this._secondVotingRoundSelection = "null";
         this.resetVotingRound();
 
-        broadcastShowVotingSequence("initialDisplay");
+        this.broadcastShowVotingSequence("initialDisplay");
         this.startCountdown();
 
         setTimeout(() => {
             this.makeDecision(level);
-        }, 12000);
+        }, 10000);
     }
 
     /**
@@ -150,12 +154,12 @@ export class Spectator {
         this._secondVotingRoundSelection = votingSet;
         this.resetVotingRound();
 
-        broadcastShowVotingSequence(votingSet);
+        this.broadcastShowVotingSequence(votingSet);
         this.startCountdown();
 
         setTimeout(() => {
             this.makeDecision(level);
-        }, 12000);
+        }, 10000);
     }
 
     /**
@@ -193,7 +197,7 @@ export class Spectator {
             return;
         }
 
-        broadcastHideVotingSequence();
+        this.broadcastHideVotingSequence();
         this._isAcceptingVotes = false;
         this._isVoteRunning = false;
 
