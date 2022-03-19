@@ -6,6 +6,7 @@ import { Level } from "./src/Level";
 import { Scoreboard } from "./src/Scoreboard";
 import { PlayerQueue } from "./src/PlayerQueue";
 import { Spectator } from "./src/Spectator";
+import { broadcast } from "./src/broadcast";
 import path from "path";
 import { Trade } from "./src/Trade";
 
@@ -13,16 +14,6 @@ import { ServerToClientEvents, ClientToServerEvents } from "common/message";
 import { ColoredScore } from "common/shared";
 import { TetrominoType } from "common/TetrominoType";
 import { SceneTracker } from "./src/SceneTracker";
-
-interface InterServerEvents {
-    ping: () => void;
-}
-
-interface SocketData {
-    name: string;
-    age: number;
-}
-// =================== grab from tutorial ==============
 
 // Initialize the express engine
 const app: express.Application = express();
@@ -47,70 +38,82 @@ const port = process.env.PORT || 80;
 // Server setup
 server.listen(port);
 
-const io = new Server<
-    ClientToServerEvents,
-    ServerToClientEvents,
-    InterServerEvents,
-    SocketData
->(server, {
+const io = new Server<ClientToServerEvents, ServerToClientEvents>(server, {
     cors: {
         origin: "*",
     },
 });
 
-console.log(`Server started at port ${port}`);
-let playerCounter: 0 | 1 | 2 | 3 = 0; // FIXME: Remove this on final version.
-const scoreboard = new Scoreboard();
-const level = new Level();
-const queue = new PlayerQueue();
-const spectator = new Spectator();
-const scene = new SceneTracker();
-
 // =========== Emit to all sockets ================
-export function broadcastUpdateScoreboard(msg: Array<ColoredScore>) {
+const updateScoreboard: broadcast["updateScoreboard"] = (
+    msg: Array<ColoredScore>
+) => {
     io.sockets.emit("updateScoreboard", msg);
-}
+};
 
-export function broadcastToSceneWaitingRoom() {
+const toSceneWaitingRoom: broadcast["toSceneWaitingRoom"] = () => {
     queue.resetQueue();
     level.resetLevel();
+    scoreboard.resetScores();
     scene.setScene("SceneWaitingRoom");
     io.sockets.emit("toSceneWaitingRoom");
-}
+};
 
-export function broadcastToSceneGameArena() {
+const toSceneGameArena: broadcast["toSceneGameArena"] = () => {
     scene.setScene("SceneGameArena");
     io.sockets.emit("toSceneGameArena");
-}
+};
 
-export function broadcastToSceneGameOver(msg: Array<ColoredScore>) {
+const toSceneGameOver: broadcast["toSceneGameOver"] = (
+    msg: Array<ColoredScore>
+) => {
     scene.setScene("SceneGameOver");
     io.sockets.emit("toSceneGameOver", msg);
-}
+};
 
-export function broadcastShowVotingSequence(votingSequence: string) {
+const showVotingSequence: broadcast["showVotingSequence"] = (
+    votingSequence: string
+) => {
     io.sockets.emit("showVotingSequence", votingSequence);
-}
+};
 
-export function broadcastHideVotingSequence() {
+const hideVotingSequence: broadcast["hideVotingSequence"] = () => {
     io.sockets.emit("hideVotingSequence");
-}
+};
 
-export function broadcastRemainingPlayers(playersNeeded: number) {
+const remainingPlayers: broadcast["remainingPlayers"] = (
+    playersNeeded: number
+) => {
     io.sockets.emit("updateRemainingPlayers", playersNeeded);
-}
-
-// Uncomment to view the game end sequence:
-// setTimeout(() => {
-//   console.log("Sending clients to Game Over Screen!")
-//   scoreboard.displaySceneGameOver();
-// }, 30000);
+};
 
 const trader = new Trade();
-export function broadcastFallRate(fallRate: number) {
+
+const fallRate: broadcast["fallRate"] = (fallRate: number) => {
     io.sockets.emit("updateFallRate", fallRate);
-}
+};
 // ==============================================
+
+console.log(`Server started at port ${port}`);
+let playerCounter: 0 | 1 | 2 | 3 = 0; // FIXME: Remove this on final version.
+const scoreboard = new Scoreboard(updateScoreboard);
+const level = new Level(fallRate);
+const queue = new PlayerQueue(remainingPlayers, toSceneGameArena);
+const spectator = new Spectator(showVotingSequence, hideVotingSequence);
+const scene = new SceneTracker();
+
+/**
+ * End the game.
+ */
+function gameOver() {
+    // Show scoreboard to all connected users.
+    toSceneGameOver(scoreboard.getFinalScores());
+
+    // Return to starting scene after 30 seconds.
+    setTimeout(() => {
+        toSceneWaitingRoom();
+    }, 30000);
+}
 
 io.on("connection", (socket) => {
     scoreboard.initSocketListeners(socket, level);
@@ -118,11 +121,6 @@ io.on("connection", (socket) => {
     queue.initSocketListeners(socket);
     scene.initSocketListeners(socket, scoreboard.finalScores);
     level.initSocketListeners(socket);
-
-    // Uncomment to view the game end sequence:
-    // setTimeout(() => {
-    //     scoreboard.displaySceneGameOver();
-    // }, 20000);
 
     if (process.env.VITE_DISABLE_WAITING_ROOM) {
         socket.emit("initPlayer", playerCounter);
@@ -145,6 +143,4 @@ io.on("connection", (socket) => {
         console.log("player ", args[0], " placed.");
         socket.broadcast.emit("playerPlace", ...args);
     });
-
-    // FIXME need a state machine to tell which scene the game is at, conditionally tackle disconnections?
 });

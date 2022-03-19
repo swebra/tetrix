@@ -5,14 +5,14 @@
 		"start": "node ./build/index.js",
 		"dev": "pnpm ts-node index.ts",
 		"test": "jest",
-		"build": "tsc",
+		"build": "tsc --build",
 		"clean": "rm -rf ./build"
 	},
 	"dependencies": {
 		"@types/express": "^4.17.13",
 		"@types/node": "^17.0.12",
 		"client": "file:../client",
-		"common": "file:../common",
+		"common": "file:../common/build",
 		"cors": "^2.8.5",
 		"dotenv": "^14.3.2",
 		"express": "^4.17.2",

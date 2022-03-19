@@ -32,6 +32,7 @@ interface SceneDataGameArena {
 export class SceneGameArena extends Phaser.Scene {
     FRAMERATE: number = 12;
 
+    /* eslint-disable @typescript-eslint/no-explicit-any */
     keys!: any; // Phaser doesn't provide nice typing for keyboard.addKeys
     gameState!: GameState;
     socket!: SocketGame;
@@ -162,32 +163,25 @@ export class SceneGameArena extends Phaser.Scene {
         });
     }
 
-    // TODO
-    // 1. these update functions can have unified interface
-    // 2. they have duplicate logic with the Phaser.Scene.time.addEvent, consider moving the falling down here, but we need a internal state/class instance for each of them to track time delta in order to have a different function
     private updateUserInput() {
         let moved = false;
         let tradeChanged = false;
 
         if (this.keys.a.isDown || this.keys.left.isDown) {
-            moved = this.gameState.currentTetromino.moveIfCan(
-                this.gameState.board,
+            moved = this.gameState.moveIfCan(
                 Tetromino.slide(-1) // left
             );
         } else if (this.keys.d.isDown || this.keys.right.isDown) {
-            moved = this.gameState.currentTetromino.moveIfCan(
-                this.gameState.board,
+            moved = this.gameState.moveIfCan(
                 Tetromino.slide(1) // right
             );
         } else if (this.keys.q.isDown || this.keys.z.isDown) {
-            moved = this.gameState.currentTetromino.moveIfCan(
-                this.gameState.board,
-                Tetromino.rotateCCW
+            moved = this.gameState.moveIfCan(
+                Tetromino.rotateCCW // counter clock wise
             );
         } else if (this.keys.e.isDown || this.keys.x.isDown) {
-            moved = this.gameState.currentTetromino.moveIfCan(
-                this.gameState.board,
-                Tetromino.rotateCW
+            moved = this.gameState.moveIfCan(
+                Tetromino.rotateCW // clock wise
             );
         } else if (this.keys.shift.isDown) {
             if (
@@ -214,11 +208,7 @@ export class SceneGameArena extends Phaser.Scene {
         }
 
         if (moved) {
-            this.gameState.socket.emit(
-                "playerMove",
-                this.gameState.playerId,
-                this.gameState.currentTetromino.reportState()
-            );
+            this.gameState.emitPlayerMove();
         }
         if (tradeChanged) {
             this.gameState.emitTrade();
@@ -262,37 +252,12 @@ export class SceneGameArena extends Phaser.Scene {
     }
 
     private updateFalling() {
-        if (
-            this.gameState.currentTetromino.moveIfCan(
-                this.gameState.board,
-                Tetromino.fall
-            )
-        ) {
-            this.gameState.socket.emit(
-                "playerMove",
-                this.gameState.playerId,
-                this.gameState.currentTetromino.reportState()
-            );
+        if (this.gameState.moveIfCan(Tetromino.fall)) {
+            this.gameState.emitPlayerMove();
         } else {
-            // place on board and emit events to the server
-            this.gameState.socket.emit(
-                "playerPlace",
-                this.gameState.playerId,
-                this.gameState.currentTetromino.reportState()
-            );
-            this.gameState.placeTetromino(this.gameState.currentTetromino);
-
-            // start a new tetromino from the top
-            this.gameState.currentTetromino = new Tetromino(this.gameState.getNewPiece());
+            this.gameState.emitAndPlaceCurrentTetromino();
             this.currentTetro = new RenderedTetromino(
                 this.gameState.currentTetromino
-            );
-
-            // broadcast new tetromino position
-            this.gameState.socket.emit(
-                "playerMove",
-                this.gameState.playerId,
-                this.gameState.currentTetromino.reportState()
             );
         }
     }

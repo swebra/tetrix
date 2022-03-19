@@ -8,9 +8,7 @@
     "test": "vitest"
   },
   "dependencies": {
-    "@types/lodash": "^4.14.178",
     "common": "file:../common",
-    "lodash": "^4.17.21",
     "phaser": "^3.53.1",
     "prettier": "^2.5.1",
     "socket.io": "^4.4.1",
