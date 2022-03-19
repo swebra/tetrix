@@ -4,7 +4,7 @@ import * as gameMsgs from "./messages/game";
 import * as scoreboardMsgs from "./messages/scoreboard";
 import * as spectatorMsgs from "./messages/spectator";
 import * as sceneGameOverMsgs from "./messages/sceneGameOver";
-import * as tradeMsgs from "./messages/trade"
+import * as tradeMsgs from "./messages/trade";
 import { TetrominoType } from "./TetrominoType";
 
 export type ServerToClientEvents = sceneWaitingRoomMsgs.ToClientEvents &
