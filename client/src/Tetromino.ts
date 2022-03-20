@@ -133,15 +133,24 @@ export class Tetromino {
         this.setType(this.randomBag.returnNextPiece());
         this.rotation = 0; // default (no rotation)
     }
-
-    swapPiece(newType: TetrominoType) {
-        this.type = newType;
-        this.tiles = cloneDeep(Tetromino.shapes[this.type].tiles);
+    respawnPiece(tetrominoType: TetrominoType) {
+        // TODO generate from a sequence iterator (another singleton class?)
+        // use respawn instead of `new Tetromino` because right now rendered tetromino will lose reference if inner is created anew. FIXME this is not true when using extension style rendered tetromino
         this.position = [
             0,
             Math.round((BOARD_SIZE - Tetromino.shapes[this.type].width) / 2),
         ];
-        this.rotation = 0;
+        this.setType(tetrominoType);
+        this.rotation = 0; // default (no rotation)
+    }
+
+    swapPiece(newType: TetrominoType) {
+        this.position = [
+            0,
+            Math.round((BOARD_SIZE - Tetromino.shapes[this.type].width) / 2),
+        ];
+        this.setType(newType);
+        this.rotation = 0; // default (no rotation)
     }
 
     reportState(): TetrominoState {
