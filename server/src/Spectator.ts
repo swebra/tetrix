@@ -79,7 +79,7 @@ export class Spectator {
             } else {
                 clearInterval(interval);
             }
-        }, 40000);
+        }, 44000);
     }
 
     /**
