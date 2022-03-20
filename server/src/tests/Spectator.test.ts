@@ -42,10 +42,7 @@ describe("Testing 'Spectator'", () => {
     });
 
     test("Test Voting Loop", () => {
-        expect(spectator.isGameRunning).toBe(false);
-        spectator.isGameRunning = true;
         spectator.startVotingLoop(level);
-
         expect(setInterval).toHaveBeenCalled();
         expect(setInterval).toHaveBeenCalledWith(expect.any(Function), 44000);
     });
@@ -71,7 +68,7 @@ describe("Testing 'Spectator'", () => {
         );
 
         expect(spectator.isVoteRunning()).toBe("");
-        spectator.isGameRunning = true;
+        spectator.startVotingLoop(level);
         spectator.generateFirstVotingSequence(level);
         expect(spectator.isVoteRunning()).toBe("initialDisplay");
         spectator.getResult("option1");

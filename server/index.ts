@@ -67,7 +67,7 @@ const toSceneGameOver: broadcast["toSceneGameOver"] = (
     msg: Array<ColoredScore>
 ) => {
     scene.setScene("SceneGameOver");
-    spectator.isGameRunning = false;
+    spectator.stopVotingLoop();
     io.sockets.emit("toSceneGameOver", msg);
 };
 

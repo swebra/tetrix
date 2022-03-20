@@ -19,7 +19,8 @@ export class Spectator {
     };
     private _countdownValue: number;
     private _secondVotingRoundSelection: string;
-    public isGameRunning: boolean;
+    private _isGameRunning: boolean;
+    private votingInterval!: NodeJS.Timer;
     private broadcastShowVotingSequence: broadcast["showVotingSequence"];
     private broadcastHideVotingSequence: broadcast["hideVotingSequence"];
 
@@ -39,7 +40,7 @@ export class Spectator {
         };
         this._countdownValue = 10;
         this._secondVotingRoundSelection = "null";
-        this.isGameRunning = false;
+        this._isGameRunning = false;
         this.broadcastShowVotingSequence = showVotingSequenceEvent;
         this.broadcastHideVotingSequence = hideVotingSequenceEvent;
     }
@@ -72,14 +73,18 @@ export class Spectator {
      * @param level The level object.
      */
     public startVotingLoop(level: Level) {
-        this.isGameRunning = true;
-        const interval = setInterval(() => {
-            if (this.isGameRunning) {
-                this.generateFirstVotingSequence(level);
-            } else {
-                clearInterval(interval);
-            }
+        this._isGameRunning = true;
+        this.votingInterval = setInterval(() => {
+            this.generateFirstVotingSequence(level);
         }, 44000);
+    }
+
+    /**
+     * Stop the voting loop (server stops requesting votes from spectators).
+     */
+    public stopVotingLoop() {
+        this._isGameRunning = false;
+        clearInterval(this.votingInterval);
     }
 
     /**
@@ -137,7 +142,7 @@ export class Spectator {
             this._countdownValue--;
 
             // Stop emitting the countdown if it hits -1 (we send '0' and then stop the interval).
-            if (this._countdownValue == -1 || !this.isGameRunning) {
+            if (this._countdownValue == -1 || !this._isGameRunning) {
                 clearInterval(interval);
             }
         }, 1000);
@@ -193,7 +198,7 @@ export class Spectator {
      * @param level The current level of the game.
      */
     public makeDecision(level: Level) {
-        if (!this.isGameRunning) {
+        if (!this._isGameRunning) {
             return;
         }
 
