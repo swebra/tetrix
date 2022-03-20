@@ -132,7 +132,7 @@ io.on("connection", (socket) => {
         socket.broadcast.emit("playerMove", ...args);
     });
     socket.on("playerTrade", (...args) => {
-        socket.broadcast.emit("playerTrade", ...args);
+        socket.broadcast.emit("playerTrade", args[0], args[1], args[2]);
         const tetrominoType = args[1];
         trader.addTrade(socket, tetrominoType);
     });

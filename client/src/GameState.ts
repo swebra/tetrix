@@ -91,6 +91,23 @@ export class GameState {
                 this.emitAndPlaceCurrentTetromino();
             }
         });
+        this.socket.on("playerTrade", (playerId, _, otherTradeState) => {
+            console.log("Request received");
+            if (otherTradeState == TradeState.Offered) {
+                this.tradeState = TradeState.Pending;
+                this.tradingPlayerId = playerId;
+            } else if (otherTradeState == TradeState.Accepted) {
+                this.tradeState = TradeState.NoTrade;
+                this.tradingPlayerId = null;
+            }
+        });
+        this.socket.on("sendTradePiece", (tetrominoType) => {
+            this.currentTetromino.swapPiece(tetrominoType);
+            this.currentTetromino.isTraded = true;
+            this.tradeState = TradeState.NoTrade;
+            this.tradingPlayerId = null;
+            this.socket.emit("clearTrade");
+        });
     }
 
     public emitPlayerMove() {
@@ -118,23 +135,6 @@ export class GameState {
     public placeTetromino(tetromino: Tetromino) {
         tetromino.tiles.forEach(([row, col]) => {
             this.board[row][col] = tetromino.type;
-        });
-        this.socket.on("playerTrade", (playerId, _, otherTradeState) => {
-            console.log("Request received");
-            if (otherTradeState == TradeState.Offered) {
-                this.tradeState = TradeState.Pending;
-                this.tradingPlayerId = playerId;
-            } else if (otherTradeState == TradeState.Accepted) {
-                this.tradeState = TradeState.NoTrade;
-                this.tradingPlayerId = null;
-            }
-        });
-        this.socket.on("sendTradePiece", (tetrominoType) => {
-            this.currentTetromino.swapPiece(tetrominoType);
-            this.currentTetromino.isTraded = true;
-            this.tradeState = TradeState.NoTrade;
-            this.tradingPlayerId = null;
-            this.socket.emit("clearTrade");
         });
     }
     public emitTrade() {
