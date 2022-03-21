@@ -142,6 +142,9 @@ export class GameState {
         });
     }
 
+    /**
+     * @returns True if the current Tetromino is in the opposite players section.
+     */
     public isInOppositeSection() {
         return this.currentTetromino.position[0] >= 25;
     }
