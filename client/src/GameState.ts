@@ -143,7 +143,7 @@ export class GameState {
     }
 
     public isInOppositeSection() {
-        return this.currentTetromino.position[0] > 25;
+        return this.currentTetromino.position[0] >= 25;
     }
 
     /**
