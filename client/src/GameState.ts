@@ -1,6 +1,6 @@
 import { Socket } from "socket.io-client";
 
-import { BOARD_SIZE } from "common/shared";
+import { BOARD_SIZE, WALL_SIZE } from "common/shared";
 import { TetrominoType } from "common/TetrominoType";
 import { ToServerEvents, ToClientEvents } from "common/messages/game";
 
@@ -8,6 +8,17 @@ import { Tetromino, TetrominoLookahead } from "./Tetromino";
 import { Monomino } from "./Monomino";
 
 type GameSocket = Socket<ToClientEvents, ToServerEvents>;
+
+enum LineCheckAxis {
+    Row,
+    Column,
+}
+
+type LineCheck = {
+    axis: LineCheckAxis;
+    direction: -1 | 1;
+    range: Array<number>;
+};
 
 export class GameState {
     socket: GameSocket;
@@ -19,6 +30,55 @@ export class GameState {
     // i.e. if you are player 1, these are of player 2, then 3, then 0
     otherTetrominoes: Array<Tetromino>;
     playerId!: 0 | 1 | 2 | 3;
+
+    lineCheckSequence!: Array<LineCheck>;
+    // template used to generate lineCheckSequence once playerId is received
+    static LineCheckTemplate: Array<LineCheck> = [
+        {
+            axis: LineCheckAxis.Row,
+            direction: 1,
+            range: [],
+        },
+        {
+            axis: LineCheckAxis.Column,
+            direction: -1,
+            range: [],
+        },
+        {
+            axis: LineCheckAxis.Row,
+            direction: -1,
+            range: [],
+        },
+        {
+            axis: LineCheckAxis.Column,
+            direction: 1,
+            range: [],
+        },
+    ];
+
+    private generateLineCheckSequence(playerId: number = 0): Array<LineCheck> {
+        const sequence = GameState.LineCheckTemplate;
+        // rotate the line checking sequence to always start from player 0
+        [...Array((4 - playerId) % 4).keys()].forEach((_) => {
+            sequence.push(
+                sequence.shift() || {
+                    axis: LineCheckAxis.Row,
+                    direction: 1,
+                    range: [],
+                } // NOTE: this fallback can't happen
+            );
+        });
+
+        // generate the range of lines to check
+        // the range for each player is their own section plus half of the center section
+        return sequence.map(({ axis, direction }) => {
+            let range = [...Array(BOARD_SIZE / 2).keys()].map(
+                (i) => BOARD_SIZE - 1 + i * direction
+            );
+            if (direction === 1) range = range.map((x) => (x + 1) % BOARD_SIZE);
+            return { axis, direction, range };
+        });
+    }
 
     private initBoard() {
         this.board = new Array(BOARD_SIZE);
@@ -36,6 +96,27 @@ export class GameState {
                     [row, col],
                     null
                 );
+            });
+        });
+
+        // generate walls
+        // 0..14 and 25..39
+        // TODO use perimeter walls or boundary check instead
+        const [rangeStart, rangeEnd] = [
+            [...Array(WALL_SIZE).keys()],
+            [...Array(WALL_SIZE).keys()].map((x) => x + WALL_SIZE + 10),
+        ];
+        [rangeStart, rangeEnd].forEach((rangeRow) => {
+            [rangeStart, rangeEnd].forEach((rangeCol) => {
+                for (const row of rangeRow) {
+                    for (const col of rangeCol) {
+                        this.board[row][col] = new Monomino(
+                            TetrominoType.O,
+                            [row, col],
+                            null
+                        );
+                    }
+                }
             });
         });
     }
@@ -56,6 +137,7 @@ export class GameState {
             new Tetromino(TetrominoType.T, null),
             new Tetromino(TetrominoType.T, null),
         ];
+        this.lineCheckSequence = this.generateLineCheckSequence(0);
 
         // initial rotation
         this.otherTetrominoes.forEach((tetro, i) => {
@@ -69,6 +151,8 @@ export class GameState {
             this.otherTetrominoes.forEach((tetromino, i) =>
                 tetromino.setOwnerId(<0 | 1 | 2 | 3>((playerId + i + 1) % 4))
             );
+
+            this.lineCheckSequence = this.generateLineCheckSequence(playerId);
         });
 
         this.socket.on("playerMove", (playerId, state) => {
@@ -92,6 +176,8 @@ export class GameState {
             ) {
                 this.emitAndPlaceCurrentTetromino();
             }
+
+            this.updateLineClearing();
         });
     }
 
@@ -115,6 +201,151 @@ export class GameState {
         this.currentTetromino = new Tetromino(TetrominoType.T, this.playerId);
         // broadcast new tetromino position
         this.emitPlayerMove();
+    }
+
+    public updateLineClearing() {
+        // check from all four directions, starting from player 0 clockwise
+        if (this.playerId === null) {
+            return; // NOTE this unlikely to happen
+        }
+
+        this.lineCheckSequence.forEach((task) => {
+            const linesToClear = this.scanLinesToClear(task);
+            if (linesToClear.length === 0) {
+                return;
+            }
+            // create a map to record by how much we should fall/offset each lines after removing
+            const linesToFall = this.prepareLinesToFall(task, linesToClear);
+            this.removeLines(task, linesToClear);
+            this.fallLines(task, linesToFall);
+
+            // TODO scoring
+        });
+    }
+
+    private removeLines(task: LineCheck, linesToClear: Array<number>) {
+        if (task.axis === LineCheckAxis.Row) {
+            for (const row of task.range) {
+                // scan through each row
+                if (linesToClear.includes(row)) {
+                    for (let col = 15; col < 25; col++) {
+                        this.board[row][col]?.destroy();
+                        this.board[row][col] = null;
+                    }
+                }
+            }
+        } else if (task.axis === LineCheckAxis.Column) {
+            for (const col of task.range) {
+                // scan through each col
+                if (linesToClear.includes(col)) {
+                    for (let row = 15; row < 25; row++) {
+                        this.board[row][col]?.destroy();
+                        this.board[row][col] = null;
+                    }
+                }
+            }
+        }
+    }
+
+    private fallLines(task: LineCheck, linesToFall: Map<number, number>) {
+        task.range
+            .slice()
+            .reverse()
+            .forEach((lineIndex) => {
+                if (task.axis === LineCheckAxis.Row) {
+                    const offset =
+                        task.direction * (linesToFall.get(lineIndex) || 0);
+                    if (offset === 0) {
+                        return;
+                    }
+                    const newRow = lineIndex + offset;
+
+                    // swap line with the offset destination line
+                    // the old line should always be null since it's cleared/propagated
+                    for (let col = 15; col < 25; col++) {
+                        this.board[newRow][col] = this.board[lineIndex][col];
+                        this.board[lineIndex][col] = null;
+                        const newMonomino = this.board[newRow][col];
+                        if (newMonomino) {
+                            newMonomino.position[0] = newRow;
+                        }
+                    }
+                } else if (task.axis === LineCheckAxis.Column) {
+                    const offset =
+                        task.direction * (linesToFall.get(lineIndex) || 0);
+                    if (offset === 0) {
+                        return;
+                    }
+                    const newCol = lineIndex + offset;
+
+                    for (let row = 15; row < 25; row++) {
+                        this.board[row][newCol] = this.board[row][lineIndex];
+                        this.board[row][lineIndex] = null;
+                        const newMonomino = this.board[row][newCol];
+                        if (newMonomino) {
+                            newMonomino.position[1] = newCol;
+                        }
+                    }
+                }
+            });
+    }
+
+    private prepareLinesToFall(
+        task: LineCheck,
+        linesToClear: Array<number>
+    ): Map<number, number> {
+        const linesOffset = new Map<number, number>();
+        let offset = 0;
+        if (linesToClear.length > 0) {
+            task.range
+                .slice()
+                .reverse()
+                .forEach((lineIndex) => {
+                    if (lineIndex === linesToClear?.at(0)) {
+                        // this line is an empty, cleared line. all lines above should fall with one more offset
+                        offset += 1;
+                        linesToClear.push(linesToClear.shift() || 0);
+                    } else {
+                        linesOffset.set(lineIndex, offset);
+                    }
+                });
+        }
+        return linesOffset;
+    }
+
+    private scanLinesToClear(task: LineCheck): Array<number> {
+        const linesToClear = [];
+        if (task.axis === LineCheckAxis.Row) {
+            for (const row of task.range) {
+                // scan through each row
+                let canClear = true;
+                for (let col = 15; col < 25; col++) {
+                    if (this.board && this.board[row][col] === null) {
+                        canClear = false;
+                        break;
+                    }
+                }
+                if (canClear) {
+                    linesToClear.push(row);
+                }
+            }
+        } else if (task.axis === LineCheckAxis.Column) {
+            for (const col of task.range) {
+                // scan through each col
+                let canClear = true;
+                for (let row = 15; row < 25; row++) {
+                    if (this.board && this.board[row][col] === null) {
+                        canClear = false;
+                        break;
+                    }
+                }
+                if (canClear) {
+                    linesToClear.push(col);
+                }
+            }
+        }
+
+        return linesToClear.reverse();
     }
 
     public placeTetromino(tetromino: Tetromino) {
