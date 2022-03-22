@@ -3,7 +3,6 @@ import Phaser from "phaser";
 import { Tetromino } from "../Tetromino";
 import { ScoreboardUI } from "../scene/ScoreboardUI";
 import { SpectatorUI } from "../scene/SpectatorUI";
-import { WebFontFile } from "../plugins/WebFontFile";
 
 import { Socket } from "socket.io-client";
 
@@ -36,7 +35,6 @@ export class SceneGameArena extends Phaser.Scene {
     }
 
     preload() {
-        this.load.addFile(new WebFontFile(this.load, "VT323"));
         this.load.bitmapFont(
             "brawl",
             "assets/barcade-brawl.png",

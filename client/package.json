@@ -11,11 +11,9 @@
     "common": "file:../common",
     "phaser": "^3.53.1",
     "socket.io": "^4.4.1",
-    "socket.io-client": "^4.4.1",
-    "webfontloader": "^1.6.28"
+    "socket.io-client": "^4.4.1"
   },
   "devDependencies": {
-    "@types/webfontloader": "^1.6.34",
     "typescript": "^4.5.5",
     "vite": "^2.8.0",
     "vitest": "^0.3.0"
