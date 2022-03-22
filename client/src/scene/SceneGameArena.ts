@@ -167,19 +167,35 @@ export class SceneGameArena extends Phaser.Scene {
         let moved = false;
         let tradeChanged = false;
 
-        if (this.keys.a.isDown || this.keys.left.isDown) {
+        if (
+            (this.keys.a.isDown || this.keys.left.isDown) &&
+            this.gameState.playerId !== null &&
+            !this.gameState.isInOppositeSection()
+        ) {
             moved = this.gameState.moveIfCan(
                 Tetromino.slide(-1) // left
             );
-        } else if (this.keys.d.isDown || this.keys.right.isDown) {
+        } else if (
+            (this.keys.d.isDown || this.keys.right.isDown) &&
+            this.gameState.playerId !== null &&
+            !this.gameState.isInOppositeSection()
+        ) {
             moved = this.gameState.moveIfCan(
                 Tetromino.slide(1) // right
             );
-        } else if (this.keys.q.isDown || this.keys.z.isDown) {
+        } else if (
+            (this.keys.q.isDown || this.keys.z.isDown) &&
+            this.gameState.playerId !== null &&
+            !this.gameState.isInOppositeSection()
+        ) {
             moved = this.gameState.moveIfCan(
                 Tetromino.rotateCCW // counter clock wise
             );
-        } else if (this.keys.e.isDown || this.keys.x.isDown) {
+        } else if (
+            (this.keys.e.isDown || this.keys.x.isDown) &&
+            this.gameState.playerId !== null &&
+            !this.gameState.isInOppositeSection()
+        ) {
             moved = this.gameState.moveIfCan(
                 Tetromino.rotateCW // clock wise
             );
@@ -229,7 +245,7 @@ export class SceneGameArena extends Phaser.Scene {
         for (let row = 0; row < BOARD_SIZE; row++) {
             for (let col = 0; col < BOARD_SIZE; col++) {
                 this.renderedBoard[row][col]?.destroy();
-                if (this.gameState.board[row][col]) {
+                if (this.gameState.board[row][col] !== null) {
                     const x = (col + 0.5) * TILE_SIZE;
                     const y = (row + 0.5) * TILE_SIZE;
                     this.renderedBoard[row][col] = this.add.rectangle(

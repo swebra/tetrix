@@ -174,6 +174,13 @@ export class GameState {
     }
 
     /**
+     * @returns True if the current Tetromino is in the opposite players section.
+     */
+    public isInOppositeSection() {
+        return this.currentTetromino.position[0] >= 25;
+    }
+
+    /**
      * check against other players' tetrominoes: see if lookahead tiles is overlapping with other existing players
      * @returns boolean - if `lookahead` tiles overlap with any of the `tetrominoes`
      */
