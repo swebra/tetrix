@@ -134,8 +134,6 @@ export class Tetromino {
         this.rotation = 0; // default (no rotation)
     }
     respawnPiece(tetrominoType: TetrominoType) {
-        // TODO generate from a sequence iterator (another singleton class?)
-        // use respawn instead of `new Tetromino` because right now rendered tetromino will lose reference if inner is created anew. FIXME this is not true when using extension style rendered tetromino
         this.position = [
             0,
             Math.round((BOARD_SIZE - Tetromino.shapes[this.type].width) / 2),
