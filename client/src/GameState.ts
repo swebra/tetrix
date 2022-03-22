@@ -22,7 +22,6 @@ export class GameState {
     otherTetrominoes: Array<Tetromino>;
     playerId!: 0 | 1 | 2 | 3;
 
-
     private newBoard() {
         const board = new Array(BOARD_SIZE);
         for (let r = 0; r < BOARD_SIZE; r++) {
@@ -141,6 +140,13 @@ export class GameState {
         return lookahead.tiles.some(([row, col]) => {
             return this.board[row][col] != null;
         });
+    }
+
+    /**
+     * @returns True if the current Tetromino is in the opposite players section.
+     */
+    public isInOppositeSection() {
+        return this.currentTetromino.position[0] >= 25;
     }
 
     /**
