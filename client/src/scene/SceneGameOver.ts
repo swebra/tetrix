@@ -15,7 +15,6 @@ interface SceneDataGameOver {
 
 export class SceneGameOver extends Phaser.Scene {
     private playerData!: Array<ColoredScore>;
-    private scoreboard!: ScoreboardUI;
     private gameState!: GameState;
     private socket!: SocketGameOver;
 
@@ -29,8 +28,16 @@ export class SceneGameOver extends Phaser.Scene {
         this.socket = this.gameState.socket;
     }
 
+    preload() {
+        this.load.bitmapFont(
+            "brawl",
+            "assets/barcade-brawl.png",
+            "assets/barcade-brawl.xml"
+        );
+    }
+
     create() {
-        this.scoreboard = new ScoreboardUI(this, this.socket, this.playerData);
+        new ScoreboardUI(this, this.socket, this.playerData);
 
         // Clean out any old listeners to avoid accumulation.
         this.socket.removeListener("toSceneWaitingRoom");
