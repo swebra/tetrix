@@ -58,7 +58,7 @@ export class SceneGameArena extends Phaser.Scene {
     }
 
     create() {
-        this.scoreboard = new ScoreboardUI(this, this.socket, true);
+        this.scoreboard = new ScoreboardUI(this, this.socket);
         this.spectator = new SpectatorUI(this, this.socket);
 
         // TODO: need to make sure playerId is valid when this scene is started

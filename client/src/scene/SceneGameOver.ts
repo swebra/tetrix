@@ -30,9 +30,7 @@ export class SceneGameOver extends Phaser.Scene {
     }
 
     create() {
-        // Add in the updated UI.
-        this.scoreboard = new ScoreboardUI(this, this.socket);
-        this.scoreboard.createFullscreenScoreboard(this.playerData);
+        this.scoreboard = new ScoreboardUI(this, this.socket, this.playerData);
 
         // Clean out any old listeners to avoid accumulation.
         this.socket.removeListener("toSceneWaitingRoom");
