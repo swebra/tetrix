@@ -19,6 +19,7 @@ interface SceneDataGameArena {
 export class SceneGameArena extends Phaser.Scene {
     FRAMERATE: number = 12;
 
+    /* eslint-disable @typescript-eslint/no-explicit-any */
     keys!: any; // Phaser doesn't provide nice typing for keyboard.addKeys
     gameState!: GameState;
     socket!: SocketGame;
@@ -129,19 +130,35 @@ export class SceneGameArena extends Phaser.Scene {
 
     private updateUserInput() {
         let moved = false;
-        if (this.keys.a.isDown || this.keys.left.isDown) {
+        if (
+            (this.keys.a.isDown || this.keys.left.isDown) &&
+            this.gameState.playerId !== null &&
+            !this.gameState.isInOppositeSection()
+        ) {
             moved = this.gameState.moveIfCan(
                 Tetromino.slide(-1) // left
             );
-        } else if (this.keys.d.isDown || this.keys.right.isDown) {
+        } else if (
+            (this.keys.d.isDown || this.keys.right.isDown) &&
+            this.gameState.playerId !== null &&
+            !this.gameState.isInOppositeSection()
+        ) {
             moved = this.gameState.moveIfCan(
                 Tetromino.slide(1) // right
             );
-        } else if (this.keys.q.isDown || this.keys.z.isDown) {
+        } else if (
+            (this.keys.q.isDown || this.keys.z.isDown) &&
+            this.gameState.playerId !== null &&
+            !this.gameState.isInOppositeSection()
+        ) {
             moved = this.gameState.moveIfCan(
                 Tetromino.rotateCCW // counter clock wise
             );
-        } else if (this.keys.e.isDown || this.keys.x.isDown) {
+        } else if (
+            (this.keys.e.isDown || this.keys.x.isDown) &&
+            this.gameState.playerId !== null &&
+            !this.gameState.isInOppositeSection()
+        ) {
             moved = this.gameState.moveIfCan(
                 Tetromino.rotateCW // clock wise
             );

@@ -6,12 +6,14 @@ import { ToServerEvents, ToClientEvents } from "common/messages/game";
 
 import { Tetromino, TetrominoLookahead } from "./Tetromino";
 import { Monomino } from "./Monomino";
+import { RandomBag } from "./RandomBag";
 
 type GameSocket = Socket<ToClientEvents, ToServerEvents>;
 
 export class GameState {
     socket: GameSocket;
     board!: Array<Array<Monomino | null>>;
+    randomBag: RandomBag;
 
     // synced to server
     currentTetromino: Tetromino;
@@ -47,11 +49,15 @@ export class GameState {
     constructor(socket: GameSocket) {
         this.socket = socket;
         this.initBoard();
+        this.randomBag = new RandomBag();
 
         // Owner ID set on initPlayer
-        this.currentTetromino = new Tetromino(TetrominoType.T, null);
+        this.currentTetromino = new Tetromino(
+            this.randomBag.getNextType(),
+            null
+        );
         this.otherTetrominoes = [
-            // FIXME not good?
+            // TODO: perhaps avoid initializing until we know peers' types?
             new Tetromino(TetrominoType.T, null),
             new Tetromino(TetrominoType.T, null),
             new Tetromino(TetrominoType.T, null),
@@ -112,7 +118,10 @@ export class GameState {
         );
         this.placeTetromino(this.currentTetromino);
         // start a new tetromino from the top
-        this.currentTetromino = new Tetromino(TetrominoType.T, this.playerId);
+        this.currentTetromino = new Tetromino(
+            this.randomBag.getNextType(),
+            this.playerId
+        );
         // broadcast new tetromino position
         this.emitPlayerMove();
     }
@@ -148,6 +157,13 @@ export class GameState {
         return lookahead.tiles.some(([row, col]) => {
             return this.board[row][col] != null;
         });
+    }
+
+    /**
+     * @returns True if the current Tetromino is in the opposite players section.
+     */
+    public isInOppositeSection() {
+        return this.currentTetromino.position[0] >= 25;
     }
 
     /**

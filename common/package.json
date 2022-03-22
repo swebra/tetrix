@@ -1,3 +1,7 @@
 {
-    "name": "tetrix-common"
+    "name": "tetrix-common",
+    "scripts": {
+        "prepare": "tsc -b",
+        "build": "tsc -b"
+    }
 }
