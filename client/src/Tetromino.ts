@@ -132,6 +132,7 @@ export class Tetromino {
         ];
         this.setType(this.randomBag.returnNextPiece());
         this.rotation = 0; // default (no rotation)
+        this.isTraded = false;
     }
     respawnPiece(tetrominoType: TetrominoType) {
         this.position = [

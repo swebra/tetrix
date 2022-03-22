@@ -104,10 +104,19 @@ export class GameState {
         this.socket.on("sendTradePiece", (tetrominoType) => {
             this.currentTetromino.swapPiece(tetrominoType);
             this.currentTetromino.isTraded = true;
-            this.tradeState = TradeState.NoTrade;
-            this.tradingPlayerId = null;
-            this.socket.emit("clearTrade");
+            this.clearTradeAndEmit();
         });
+        this.socket.on("clearTrade", () => {
+            this.clearLocalTrade();
+        });
+    }
+    public clearLocalTrade() {
+        this.tradeState = TradeState.NoTrade;
+        this.tradingPlayerId = null;
+    }
+    public clearTradeAndEmit() {
+        this.clearLocalTrade();
+        this.socket.emit("clearTrade");
     }
 
     public emitPlayerMove() {
@@ -126,6 +135,7 @@ export class GameState {
             this.currentTetromino.reportState()
         );
         this.placeTetromino(this.currentTetromino);
+        this.clearTradeAndEmit();
         // start a new tetromino from the top
         this.currentTetromino.respawn();
         // broadcast new tetromino position

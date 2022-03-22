@@ -140,6 +140,7 @@ io.on("connection", (socket) => {
     });
     socket.on("clearTrade", () => {
         trader.clearTrade();
+        socket.broadcast.emit("clearTrade");
     });
     socket.on("playerPlace", (...args) => {
         console.log("player ", args[0], " placed.");
