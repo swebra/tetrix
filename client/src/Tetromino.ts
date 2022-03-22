@@ -1,7 +1,7 @@
 import { TetrominoType } from "common/TetrominoType";
 import { BOARD_SIZE } from "common/shared";
 import { TetrominoState } from "common/message";
-import { RandomBag } from "./randomBag";
+import { RandomBag } from "./RandomBag";
 
 type Shape = {
     width: number;
@@ -113,7 +113,7 @@ export class Tetromino {
     randomBag!: RandomBag;
     constructor() {
         this.randomBag = new RandomBag();
-        const type = this.randomBag.returnNextPiece();
+        const type = this.randomBag.getNextType();
         this.position = [
             0,
             Math.round((BOARD_SIZE - Tetromino.shapes[type].width) / 2),
@@ -129,7 +129,7 @@ export class Tetromino {
             0,
             Math.round((BOARD_SIZE - Tetromino.shapes[this.type].width) / 2),
         ];
-        this.setType(this.randomBag.returnNextPiece());
+        this.setType(this.randomBag.getNextType());
         this.rotation = 0; // default (no rotation)
     }
 
