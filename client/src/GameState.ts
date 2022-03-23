@@ -5,7 +5,6 @@ import { BOARD_SIZE } from "common/shared";
 import { ToServerEvents, ToClientEvents } from "common/messages/game";
 import { TradeState } from "common/TradeState";
 
-import { RandomBag } from "./randomBag";
 import { TetrominoLookahead } from "./Tetromino";
 
 type GameSocket = Socket<ToClientEvents, ToServerEvents>;
