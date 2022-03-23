@@ -113,7 +113,7 @@ export class Tetromino {
     isTraded: boolean = false;
     constructor() {
         this.randomBag = new RandomBag();
-        const type = this.randomBag.getNextType();
+        const type = this.randomBag.returnNextPiece();
         this.position = [
             0,
             Math.round((BOARD_SIZE - Tetromino.shapes[type].width) / 2),
@@ -129,7 +129,7 @@ export class Tetromino {
             0,
             Math.round((BOARD_SIZE - Tetromino.shapes[this.type].width) / 2),
         ];
-        this.setType(this.randomBag.getNextType());
+        this.setType(this.randomBag.returnNextPiece());
         this.rotation = 0; // default (no rotation)
         this.isTraded = false;
     }
