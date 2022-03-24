@@ -15,7 +15,7 @@ enum LineCheckAxis {
     Column,
 }
 
-type LineCheck = {
+type LineCheckTask = {
     axis: LineCheckAxis;
     direction: -1 | 1;
     range: Array<number>;
@@ -34,9 +34,9 @@ export class GameState {
     otherTetrominoes: Array<Tetromino>;
     playerId!: 0 | 1 | 2 | 3;
 
-    lineCheckSequence!: Array<LineCheck>;
+    lineCheckSequence!: Array<LineCheckTask>;
     // template used to generate lineCheckSequence once playerId is received
-    static LineCheckTemplate: Array<LineCheck> = [
+    static LineCheckTemplate: Array<LineCheckTask> = [
         {
             axis: LineCheckAxis.Row,
             direction: 1,
@@ -59,21 +59,18 @@ export class GameState {
         },
     ];
 
-    private generateLineCheckSequence(playerId: number = 0): Array<LineCheck> {
+    private generateLineCheckSequence(
+        playerId: number = 0
+    ): Array<LineCheckTask> {
         const sequence = GameState.LineCheckTemplate;
+        const distanceToPlayer0 = (4 - playerId) % 4;
         // rotate the line checking sequence to always start from player 0
-        [...Array((4 - playerId) % 4).keys()].forEach((_) => {
-            sequence.push(
-                sequence.shift() || {
-                    axis: LineCheckAxis.Row,
-                    direction: 1,
-                    range: [],
-                } // NOTE: this fallback can't happen
-            );
+        [...Array(distanceToPlayer0).keys()].forEach((_) => {
+            sequence.push(sequence.shift()!);
         });
 
-        // generate the range of lines to check
-        // the range for each player is their own section plus half of the center section
+        // for each task, generate the range of lines to check with, i.e. rows from top to center (before rotation)
+        // e.g. for current player it will be [0..19], for opposite it's [39..20]
         return sequence.map(({ axis, direction }) => {
             let range = [...Array(BOARD_SIZE / 2).keys()].map(
                 (i) => BOARD_SIZE - 1 + i * direction
@@ -228,7 +225,7 @@ export class GameState {
         });
     }
 
-    private removeLines(task: LineCheck, linesToClear: Array<number>) {
+    private removeLines(task: LineCheckTask, linesToClear: Array<number>) {
         if (task.axis === LineCheckAxis.Row) {
             for (const row of task.range) {
                 // scan through each row
@@ -258,7 +255,7 @@ export class GameState {
         }
     }
 
-    private fallLines(task: LineCheck, linesToFall: Map<number, number>) {
+    private fallLines(task: LineCheckTask, linesToFall: Map<number, number>) {
         task.range
             .slice()
             .reverse()
@@ -302,7 +299,7 @@ export class GameState {
     }
 
     private prepareLinesToFall(
-        task: LineCheck,
+        task: LineCheckTask,
         linesToClear: Array<number>
     ): Map<number, number> {
         const linesOffset = new Map<number, number>();
@@ -315,7 +312,7 @@ export class GameState {
                     if (lineIndex === linesToClear?.at(0)) {
                         // this line is an empty, cleared line. all lines above should fall with one more offset
                         offset += 1;
-                        linesToClear.push(linesToClear.shift() || 0);
+                        linesToClear.push(linesToClear.shift()!);
                     } else {
                         linesOffset.set(lineIndex, offset);
                     }
@@ -324,7 +321,7 @@ export class GameState {
         return linesOffset;
     }
 
-    private scanLinesToClear(task: LineCheck): Array<number> {
+    private scanLinesToClear(task: LineCheckTask): Array<number> {
         const linesToClear = [];
         if (task.axis === LineCheckAxis.Row) {
             for (const row of task.range) {
