@@ -108,6 +108,7 @@ export class SpectatorUI {
 
         this.socket.on("hideVotingSequence", () => {
             this.removeTimedEvent();
+            this.cookieTracker.deleteCookie("hasVoted");
         });
 
         this.socket.on("sendVotingCountdown", (secondsLeft) => {
@@ -135,7 +136,6 @@ export class SpectatorUI {
         this.countdown.setVisible(false);
         this.alreadyVoted.setVisible(false);
         this.hideButtons();
-        this.cookieTracker.deleteCookie("hasVoted");
     }
 
     /**
