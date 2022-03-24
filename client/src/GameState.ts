@@ -23,7 +23,8 @@ type LineCheck = {
 
 export class GameState {
     socket: GameSocket;
-    board!: Array<Array<Monomino | null>>;
+    // false indicates the corner area that pieces cannot enter
+    board!: Array<Array<Monomino | false | null>>;
     randomBag: RandomBag;
 
     // synced to server
@@ -103,7 +104,6 @@ export class GameState {
 
         // generate walls
         // 0..14 and 25..39
-        // TODO use perimeter walls or boundary check instead
         const [rangeStart, rangeEnd] = [
             [...Array(WALL_SIZE).keys()],
             [...Array(WALL_SIZE).keys()].map((x) => x + WALL_SIZE + 10),
@@ -112,11 +112,7 @@ export class GameState {
             [rangeStart, rangeEnd].forEach((rangeCol) => {
                 for (const row of rangeRow) {
                     for (const col of rangeCol) {
-                        this.board[row][col] = new Monomino(
-                            TetrominoType.O,
-                            [row, col],
-                            null
-                        );
+                        this.board[row][col] = false;
                     }
                 }
             });
@@ -238,7 +234,10 @@ export class GameState {
                 // scan through each row
                 if (linesToClear.includes(row)) {
                     for (let col = 15; col < 25; col++) {
-                        this.board[row][col]?.destroy();
+                        const monominoToRemove = this.board[row][col];
+                        if (monominoToRemove) {
+                            monominoToRemove.destroy();
+                        }
                         this.board[row][col] = null;
                     }
                 }
@@ -248,7 +247,10 @@ export class GameState {
                 // scan through each col
                 if (linesToClear.includes(col)) {
                     for (let row = 15; row < 25; row++) {
-                        this.board[row][col]?.destroy();
+                        const monominoToRemove = this.board[row][col];
+                        if (monominoToRemove) {
+                            monominoToRemove.destroy();
+                        }
                         this.board[row][col] = null;
                     }
                 }
