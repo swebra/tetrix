@@ -5,17 +5,18 @@ import { SceneWaitingRoom } from "./scene/SceneWaitingRoom";
 import { SceneGameArena } from "./scene/SceneGameArena";
 import { SceneGameOver } from "./scene/SceneGameOver";
 import { GameState } from "./GameState";
-import { BOARD_SIZE, TILE_SIZE } from "common/shared";
+import { BOARD_PX } from "common/shared";
 
 const config = {
     type: Phaser.AUTO,
     parent: "root",
-    width: BOARD_SIZE * TILE_SIZE,
-    height: BOARD_SIZE * TILE_SIZE,
+    width: BOARD_PX,
+    height: BOARD_PX,
     scale: {
         mode: Phaser.Scale.FIT,
         autoCenter: Phaser.Scale.CENTER_BOTH,
     },
+    pixelArt: true,
     scene: import.meta.env.VITE_DISABLE_WAITING_ROOM
         ? [SceneGameArena, SceneGameOver]
         : [SceneWaitingRoom, SceneGameArena, SceneGameOver],

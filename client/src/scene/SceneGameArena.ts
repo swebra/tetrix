@@ -1,24 +1,13 @@
 import { GameState } from "../GameState";
-import Phaser, { GameObjects } from "phaser";
-import { RenderedTetromino } from "../RenderedTetromino";
-import { BOARD_SIZE } from "common/shared";
-import { TetrominoType } from "common/TetrominoType";
+import Phaser from "phaser";
 import { Tetromino } from "../Tetromino";
 import { ScoreboardUI } from "../scene/ScoreboardUI";
 import { SpectatorUI } from "../scene/SpectatorUI";
-import { WebFontFile } from "../plugins/WebFontFile";
 
 import { Socket } from "socket.io-client";
 
 import { ToClientEvents, ToServerEvents } from "common/messages/sceneGameArena";
-import { TILE_SIZE } from "common/shared";
 import { ControlsUI } from "./ControlsUI";
-
-import KEY_A from "../assets/controls/KEY_A.svg";
-import KEY_D from "../assets/controls/KEY_D.svg";
-import KEY_S from "../assets/controls/KEY_S.svg";
-import KEY_Q from "../assets/controls/KEY_Q.svg";
-import KEY_E from "../assets/controls/KEY_E.svg";
 
 type SocketGame = Socket<ToClientEvents, ToServerEvents>;
 
@@ -35,10 +24,6 @@ export class SceneGameArena extends Phaser.Scene {
     socket!: SocketGame;
     fallRateTimer!: Phaser.Time.TimerEvent | null;
 
-    currentTetro!: RenderedTetromino;
-    otherTetros!: Array<RenderedTetromino>;
-    renderedBoard!: Array<Array<GameObjects.Rectangle | null>>;
-
     scoreboard!: ScoreboardUI;
     spectator!: SpectatorUI;
     controls!: ControlsUI | null;
@@ -50,13 +35,20 @@ export class SceneGameArena extends Phaser.Scene {
     }
 
     preload() {
-        this.load.addFile(new WebFontFile(this.load, "VT323"));
+        this.load.bitmapFont(
+            "brawl",
+            "assets/barcade-brawl.png",
+            "assets/barcade-brawl.xml"
+        );
 
-        this.load.svg("keyA", KEY_A);
-        this.load.svg("keyD", KEY_D);
-        this.load.svg("keyS", KEY_S);
-        this.load.svg("keyE", KEY_E);
-        this.load.svg("keyQ", KEY_Q);
+        this.load.spritesheet("monomino", "assets/monomino.png", {
+            frameWidth: 8,
+            frameHeight: 8,
+        });
+        this.load.spritesheet("key", "assets/keys.png", {
+            frameWidth: 13,
+            frameHeight: 13,
+        });
     }
 
     init(data: SceneDataGameArena) {
@@ -65,49 +57,31 @@ export class SceneGameArena extends Phaser.Scene {
     }
 
     create() {
-        this.scoreboard = new ScoreboardUI(this, this.socket, true);
+        this.scoreboard = new ScoreboardUI(this, this.socket);
         this.spectator = new SpectatorUI(this, this.socket);
-        // NOTE: need to make sure playerId is valid when this scene is started
-        this.controls = new ControlsUI(this, [
-            "keyA",
-            "keyD",
-            "keyS",
-            "keyQ",
-            "keyE",
-        ]);
 
-        // Initialize the fall rate to 1000 until we get confirmation from the server.
-        this.updateFallTimer(1000);
-
-        // initialize an empty rendered board
-        this.renderedBoard = [];
-        for (let row = 0; row < BOARD_SIZE; row++) {
-            const r = [];
-            for (let col = 0; col < BOARD_SIZE; col++) {
-                r.push(null);
-            }
-            this.renderedBoard.push(r);
-        }
+        // TODO: need to make sure playerId is valid when this scene is started
+        new ControlsUI(this);
 
         // keyboard input
         this.keys = this.input.keyboard.addKeys(
             "w,up,a,left,s,down,d,right,q,z,e,x"
         );
 
-        // falling, controllable tetromino
-        this.currentTetro = new RenderedTetromino(
-            this.gameState.currentTetromino
-        );
-        this.otherTetros = [];
-        for (let i = 0; i < 3; i++) {
-            this.otherTetros.push(
-                new RenderedTetromino(this.gameState.otherTetrominoes[i])
-            );
-        }
-
+        // Initialize the fall rate to 1000 until we get confirmation from the server.
+        this.updateFallTimer(1000);
         this.socket.emit("requestFallRate");
 
         this.initListeners();
+
+        // Initial board drawing
+        this.gameState.board.forEach((row) =>
+            row.forEach((monomino) => {
+                if (monomino) {
+                    monomino.draw(this);
+                }
+            })
+        );
     }
 
     private initListeners() {
@@ -133,7 +107,6 @@ export class SceneGameArena extends Phaser.Scene {
         // 12 fps
         if (this.frameTimeElapsed > 1000 / this.FRAMERATE) {
             this.updateUserInput();
-            this.updateDrawBoard();
             this.updateDrawPlayers();
 
             // start next frame
@@ -194,31 +167,11 @@ export class SceneGameArena extends Phaser.Scene {
         }
     }
 
-    private updateDrawBoard() {
-        // re-render the board
-        for (let row = 0; row < BOARD_SIZE; row++) {
-            for (let col = 0; col < BOARD_SIZE; col++) {
-                this.renderedBoard[row][col]?.destroy();
-                if (this.gameState.board[row][col] !== null) {
-                    const x = (col + 0.5) * TILE_SIZE;
-                    const y = (row + 0.5) * TILE_SIZE;
-                    this.renderedBoard[row][col] = this.add.rectangle(
-                        x,
-                        y,
-                        TILE_SIZE,
-                        TILE_SIZE,
-                        0xffee00
-                    );
-                }
-            }
-        }
-    }
-
     private updateDrawPlayers() {
-        this.currentTetro.draw(this);
-        for (const tetromino of this.otherTetros) {
-            tetromino.draw(this);
-        }
+        this.gameState.currentTetromino.draw(this);
+        this.gameState.otherTetrominoes.forEach((tetromino) =>
+            tetromino.draw(this)
+        );
     }
 
     private updateFalling() {
@@ -226,9 +179,6 @@ export class SceneGameArena extends Phaser.Scene {
             this.gameState.emitPlayerMove();
         } else {
             this.gameState.emitAndPlaceCurrentTetromino();
-            this.currentTetro = new RenderedTetromino(
-                this.gameState.currentTetromino
-            );
         }
     }
 }

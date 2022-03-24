@@ -1,73 +1,100 @@
-import { BOARD_SIZE } from "common/shared";
-import { CookieTracker } from "../CookieTracker";
-import { SceneGameArena } from "./SceneGameArena";
-import { TextConfig } from "../TextConfig";
-
 import { Socket } from "socket.io-client";
+import { Scene } from "phaser";
+
+import { BOARD_PX, TILE_SIZE, COLORS } from "common/shared";
 import { ToServerEvents, ToClientEvents } from "common/messages/spectator";
+
+import { CookieTracker } from "../CookieTracker";
 
 type SocketSpectator = Socket<ToClientEvents, ToServerEvents>;
 
 export class SpectatorUI {
-    private cookieTracker: CookieTracker;
-    private scene: SceneGameArena;
-    private countdown: Phaser.GameObjects.Text;
-    private buttons: Array<Phaser.GameObjects.Text>;
-    private alreadyVoted: Phaser.GameObjects.Text;
-    private countdownConfig: TextConfig;
-    private buttonConfig: TextConfig;
+    static readonly options: {
+        [index: string]: Array<
+            [string, "option1" | "option2" | "option3" | "noAction"]
+        >;
+    } = {
+        initialDisplay: [
+            ["change fall rate", "option1"],
+            ["choose next piece", "option2"],
+            ["random piece swap", "option3"],
+            ["no action", "noAction"],
+        ],
+        fallRate: [
+            ["increase fall rate", "option1"],
+            ["decrease fall rate", "option2"],
+        ],
+        tetrominoSelection: [
+            ["fixme piece", "option1"],
+            ["fixme", "option2"],
+            ["fixme", "option3"],
+        ],
+    };
 
     private socket: SocketSpectator;
+    private cookieTracker: CookieTracker;
+    private countdownTimer?: NodeJS.Timeout;
+    private header: Phaser.GameObjects.BitmapText;
+    private countdown: Phaser.GameObjects.BitmapText;
+    private alreadyVoted: Phaser.GameObjects.BitmapText;
+    private buttons: Array<Phaser.GameObjects.BitmapText>;
 
-    constructor(scene: SceneGameArena, socket: SocketSpectator) {
-        this.cookieTracker = new CookieTracker();
+    constructor(scene: Scene, socket: SocketSpectator) {
         this.socket = socket;
+        this.cookieTracker = new CookieTracker();
+
+        const startX = BOARD_PX - 13.75 * TILE_SIZE;
+        let startY = BOARD_PX - 11 * TILE_SIZE;
+
+        this.header = scene.add
+            .bitmapText(startX, startY, "brawl", "vote on next event")
+            .setVisible(false);
+        this.countdown = scene.add
+            .bitmapText(startX, startY + 35, "brawl", "")
+            .setVisible(false);
+
+        startY += 105;
+        this.alreadyVoted = scene.add
+            .bitmapText(startX, startY, "brawl", "vote sent")
+            .setVisible(false);
+
+        // Initially set all buttons to longest option for equal hitboxes
+        const longestOption = Object.values(SpectatorUI.options)
+            .flat()
+            .map((value) => value[0])
+            .reduce((str1, str2) => (str1.length > str2.length ? str1 : str2));
+
+        this.buttons = new Array(4);
+        for (let i = 0; i < this.buttons.length; i++) {
+            this.buttons[i] = scene.add
+                .bitmapText(startX, startY + i * 35, "brawl", longestOption)
+                .setVisible(false)
+                .setInteractive({ useHandCursor: true })
+                .on("pointerover", () => {
+                    this.buttons[i].setTint(COLORS.lGreen);
+                })
+                .on("pointerout", () => {
+                    this.buttons[i].clearTint();
+                });
+        }
+
         this.initListeners();
-
-        this.scene = scene;
-        this.countdownConfig = {
-            fontSize: `${BOARD_SIZE / 1.5}px`,
-            fontFamily: "VT323",
-        };
-        this.buttonConfig = {
-            fontSize: `${BOARD_SIZE / 1.7}px`,
-            fontFamily: "VT323",
-        };
-
-        this.buttons = [];
-
-        // Creating a blank text object(s).
-        const y: number = BOARD_SIZE * 14;
-        this.countdown = this.scene.add
-            .text(14 * BOARD_SIZE, y, "", this.countdownConfig)
-            .setTint(0x53bb74);
-
-        this.alreadyVoted = this.scene.add
-            .text(14 * BOARD_SIZE + 20, y + 90, "", this.buttonConfig)
-            .setTint(0xe6e4da);
-
-        this.buttons[0] = this.scene.add
-            .text(14 * BOARD_SIZE + 20, y + 60, "", this.buttonConfig)
-            .setTint(0xe6e4da);
-
-        this.buttons[1] = this.scene.add
-            .text(14 * BOARD_SIZE + 20, y + 90, "", this.buttonConfig)
-            .setTint(0xe6e4da);
-
-        this.buttons[2] = this.scene.add
-            .text(14 * BOARD_SIZE + 20, y + 120, "", this.buttonConfig)
-            .setTint(0xe6e4da);
-
-        this.buttons[3] = this.scene.add
-            .text(14 * BOARD_SIZE + 20, y + 150, "", this.buttonConfig)
-            .setTint(0xe6e4da);
-
         // Request info on any on-going voting sequences.
         this.socket.emit("requestVotingSequence");
     }
 
     /**
-     * Initalize the listeners for events received from the server.
+     * Destroys all GameObjects belonging to this class.
+     */
+    public destroy() {
+        this.header.destroy();
+        this.countdown.destroy();
+        this.alreadyVoted.destroy();
+        this.buttons.forEach((button) => button.destroy());
+    }
+
+    /**
+     * Initialize the listeners for events received from the server.
      */
     private initListeners() {
         // Clean out any old listeners to avoid accumulation.
@@ -76,14 +103,12 @@ export class SpectatorUI {
         this.socket.removeListener("sendVotingCountdown");
 
         this.socket.on("showVotingSequence", (votingSequence) => {
-            // Only display the voting sequence for spectators.
-            if (this.scene.gameState.playerId == null) {
-                this.generateTimedEvent(votingSequence);
-            }
+            this.generateTimedEvent(votingSequence);
         });
 
         this.socket.on("hideVotingSequence", () => {
             this.removeTimedEvent();
+            this.cookieTracker.deleteCookie("hasVoted");
         });
 
         this.socket.on("sendVotingCountdown", (secondsLeft) => {
@@ -104,12 +129,13 @@ export class SpectatorUI {
      * Remove the spectator voting section.
      */
     private removeTimedEvent() {
-        this.countdown.setText("");
-        this.alreadyVoted.setText("");
-
-        this.cookieTracker.deleteCookie("hasVoted");
-
-        this.hideOptions();
+        if (this.countdownTimer) {
+            clearInterval(this.countdownTimer);
+        }
+        this.header.setVisible(false);
+        this.countdown.setVisible(false);
+        this.alreadyVoted.setVisible(false);
+        this.hideButtons();
     }
 
     /**
@@ -117,134 +143,52 @@ export class SpectatorUI {
      * @param votingOption This value is received from the server. Based off the value obtained, display a different set of buttons.
      */
     private createOptions(votingOption: string) {
-        this.countdown
-            .setText("Vote on what happens!\n  Time left: 10")
-            .setTint(0x53bb74);
-
+        this.header.setVisible(true);
+        this.countdown.setTint(COLORS.green).setVisible(true);
+        this.updateCountdown(10);
         this.socket.emit("requestVotingCountdown");
 
         // Only show options if the user has not already voted.
         if (this.cookieTracker.getCookie("hasVoted")) {
-            this.alreadyVoted.setText("  Your vote has\n    been sent!");
+            this.alreadyVoted.setVisible(true);
             return;
         }
 
-        switch (votingOption) {
-            case "initialDisplay":
-                // Initial voting step. Generate round 1 of votes.
-                this.setVotingButton(
-                    this.buttons[0],
-                    "> Change Fall Rate",
-                    "option1"
-                );
-                this.setVotingButton(
-                    this.buttons[1],
-                    "> Choose Next Block",
-                    "option2"
-                );
-                this.setVotingButton(
-                    this.buttons[2],
-                    "> Randomize Their Blocks",
-                    "option3"
-                );
-                this.setVotingButton(
-                    this.buttons[3],
-                    "> No Action",
-                    "noAction"
-                );
-                break;
-            case "fallRate":
-                // Second voting step. Generate Fall rate options.
-                this.setVotingButton(
-                    this.buttons[0],
-                    "> Increase Fall Rate",
-                    "option1"
-                );
-                this.setVotingButton(
-                    this.buttons[1],
-                    "> Decrease Fall Rate",
-                    "option2"
-                );
-                break;
-            case "tetrominoSelection":
-                // Second voting step. Generate next block options.
-                this.setVotingButton(this.buttons[0], "> FIXME", "option1");
-                this.setVotingButton(this.buttons[1], "> FIXME", "option2");
-                this.setVotingButton(this.buttons[2], "> FIXME", "option3");
-                break;
-        }
+        SpectatorUI.options[votingOption].forEach(([str, val], i) => {
+            this.buttons[i]
+                .setVisible(true)
+                .setText("> " + str)
+                .on("pointerup", () => {
+                    this.hideButtons();
+                    this.socket.emit("vote", val);
+                    this.cookieTracker.setCookie("hasVoted", "true");
+                    this.alreadyVoted.setVisible(true);
+                });
+        });
     }
 
     /**
-     * Setup the voting buttons with interactions.
-     * @param button The button to modify.
-     * @param buttonText The new text to set for the button.
-     * @param valForServer The value to send to the server if the button is clicked.
+     * Hide the voting buttons.
      */
-    private setVotingButton(
-        button: Phaser.GameObjects.Text,
-        buttonText: string,
-        valForServer: "option1" | "option2" | "option3" | "noAction"
-    ) {
-        button
-            .setText(buttonText)
-            .setInteractive({ useHandCursor: true })
-            .on("pointerover", () => {
-                this.isHovered(button, true);
-            })
-            .on("pointerout", () => {
-                this.isHovered(button, false);
-            })
-            .on("pointerup", () => {
-                this.hideOptions();
-                this.socket.emit("vote", valForServer);
-                this.cookieTracker.setCookie("hasVoted", "true");
-                this.alreadyVoted.setText("  Your vote has\n    been sent!");
-            });
+    private hideButtons() {
+        this.buttons.forEach((button) => button.setVisible(false));
     }
 
     /**
-     * Change the color of the button if it is hovered or not.
-     * @param button The button to modify.
-     * @param isHovered Whether the button is being hovered or not.
-     */
-    private isHovered(button: Phaser.GameObjects.Text, isHovered: boolean) {
-        if (isHovered) {
-            button.setTint(0xd4cb22);
-        } else {
-            button.setTint(0xe6e4da);
-        }
-    }
-
-    /**
-     * Hide the voting sequence.
-     */
-    private hideOptions() {
-        for (const element of this.buttons) {
-            element.setText("");
-        }
-    }
-
-    /**
-     * Modifies the countdown numbers and css depending on the number of seconds remaining.
+     * Modifies the countdown number and color depending on the number of seconds remaining.
      * @param secondsLeft The seconds left on the counter.
      * @returns Whether to stop the 1second interval that the countdown runs on.
      */
     private updateCountdown(secondsLeft: number) {
-        this.countdown.setText(
-            `Vote on what happens!\n Time left: ${secondsLeft}`
-        );
+        this.countdown.setText(`time left: ${secondsLeft}`);
 
         if (secondsLeft < 0) {
             this.removeTimedEvent();
-            this.cookieTracker.deleteCookie("hasVoted");
             return true;
         } else if (secondsLeft < 4) {
-            // Add the Red background.
-            this.countdown.setTint(0xe5554e);
+            this.countdown.setTint(COLORS.orange);
         } else if (secondsLeft < 7) {
-            // Add the Yellow background.
-            this.countdown.setTint(0xebc85d);
+            this.countdown.setTint(COLORS.lOrange);
         }
 
         return false;
@@ -258,11 +202,12 @@ export class SpectatorUI {
         this.updateCountdown(secondsLeft);
 
         // Start the countdown.
-        const interval = setInterval(() => {
+        this.countdownTimer = setInterval(() => {
             if (this.updateCountdown(secondsLeft)) {
-                clearInterval(interval);
+                if (this.countdownTimer) {
+                    clearInterval(this.countdownTimer);
+                }
             }
-
             secondsLeft--;
         }, 1000);
     }
