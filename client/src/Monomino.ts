@@ -27,7 +27,12 @@ export class Monomino {
     }
 
     public getCopy(): Monomino {
-        return new Monomino(this.type, this.position, this.ownerId);
+        return new Monomino(
+            this.type,
+            // Clone of position, not reference
+            this.position.slice() as [number, number],
+            this.ownerId
+        );
     }
 
     public setOwnerId(ownerId: 0 | 1 | 2 | 3 | null) {
