@@ -16,8 +16,8 @@ export class SpectatorUI {
     } = {
         initialDisplay: [
             ["change fall rate", "option1"],
-            ["choose next tetromino", "option2"],
-            ["rndm tetromino swap", "option3"],
+            ["choose next piece", "option2"],
+            ["random piece swap", "option3"],
             ["no action", "noAction"],
         ],
         fallRate: [
@@ -25,7 +25,7 @@ export class SpectatorUI {
             ["decrease fall rate", "option2"],
         ],
         tetrominoSelection: [
-            ["fixme tetromino", "option1"],
+            ["fixme piece", "option1"],
             ["fixme", "option2"],
             ["fixme", "option3"],
         ],
