@@ -16,8 +16,8 @@ export class SpectatorUI {
     } = {
         initialDisplay: [
             ["change fall rate", "option1"],
-            ["choose next tetromino", "option2"],
-            ["rndm tetromino swap", "option3"],
+            ["choose next piece", "option2"],
+            ["random piece swap", "option3"],
             ["no action", "noAction"],
         ],
         fallRate: [
@@ -25,7 +25,7 @@ export class SpectatorUI {
             ["decrease fall rate", "option2"],
         ],
         tetrominoSelection: [
-            ["fixme tetromino", "option1"],
+            ["fixme piece", "option1"],
             ["fixme", "option2"],
             ["fixme", "option3"],
         ],
@@ -108,6 +108,7 @@ export class SpectatorUI {
 
         this.socket.on("hideVotingSequence", () => {
             this.removeTimedEvent();
+            this.cookieTracker.deleteCookie("hasVoted");
         });
 
         this.socket.on("sendVotingCountdown", (secondsLeft) => {
@@ -135,7 +136,6 @@ export class SpectatorUI {
         this.countdown.setVisible(false);
         this.alreadyVoted.setVisible(false);
         this.hideButtons();
-        this.cookieTracker.deleteCookie("hasVoted");
     }
 
     /**

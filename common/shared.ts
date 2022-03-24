@@ -15,4 +15,4 @@ export const COLORS = {
     lBlue: 0x3fbfff,
 };
 
-export type ColoredScore = { color: string; hex: number; points: number };
+export type ColoredScore = { color: string; points: number };

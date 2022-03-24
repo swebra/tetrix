@@ -3,7 +3,6 @@ import Phaser from "phaser";
 import { Tetromino } from "../Tetromino";
 import { ScoreboardUI } from "../scene/ScoreboardUI";
 import { SpectatorUI } from "../scene/SpectatorUI";
-import { WebFontFile } from "../plugins/WebFontFile";
 
 import { Socket } from "socket.io-client";
 
@@ -20,6 +19,7 @@ interface SceneDataGameArena {
 export class SceneGameArena extends Phaser.Scene {
     FRAMERATE: number = 12;
 
+    /* eslint-disable @typescript-eslint/no-explicit-any */
     keys!: any; // Phaser doesn't provide nice typing for keyboard.addKeys
     gameState!: GameState;
     socket!: SocketGame;
@@ -36,7 +36,6 @@ export class SceneGameArena extends Phaser.Scene {
     }
 
     preload() {
-        this.load.addFile(new WebFontFile(this.load, "VT323"));
         this.load.bitmapFont(
             "brawl",
             "assets/barcade-brawl.png",
@@ -59,7 +58,7 @@ export class SceneGameArena extends Phaser.Scene {
     }
 
     create() {
-        this.scoreboard = new ScoreboardUI(this, this.socket, true);
+        this.scoreboard = new ScoreboardUI(this, this.socket);
         this.spectator = new SpectatorUI(this, this.socket);
 
         // TODO: need to make sure playerId is valid when this scene is started
@@ -146,21 +145,41 @@ export class SceneGameArena extends Phaser.Scene {
 
     private updateUserInput() {
         let moved = false;
-        if (this.keys.a.isDown || this.keys.left.isDown) {
+        if (
+            (this.keys.a.isDown || this.keys.left.isDown) &&
+            this.gameState.playerId !== null &&
+            !this.gameState.isInOppositeSection()
+        ) {
             moved = this.gameState.moveIfCan(
                 Tetromino.slide(-1) // left
             );
-        } else if (this.keys.s.isDown || this.keys.down.isDown) {
+        } else if (
+            (this.keys.s.isDown || this.keys.down.isDown) &&
+            this.gameState.playerId !== null &&
+            !this.gameState.isInOppositeSection()
+        ) {
             moved = this.gameState.moveIfCan(Tetromino.fall); // down
-        } else if (this.keys.d.isDown || this.keys.right.isDown) {
+        } else if (
+            (this.keys.d.isDown || this.keys.right.isDown) &&
+            this.gameState.playerId !== null &&
+            !this.gameState.isInOppositeSection()
+        ) {
             moved = this.gameState.moveIfCan(
                 Tetromino.slide(1) // right
             );
-        } else if (this.keys.q.isDown || this.keys.z.isDown) {
+        } else if (
+            (this.keys.q.isDown || this.keys.z.isDown) &&
+            this.gameState.playerId !== null &&
+            !this.gameState.isInOppositeSection()
+        ) {
             moved = this.gameState.moveIfCan(
                 Tetromino.rotateCCW // counter clock wise
             );
-        } else if (this.keys.e.isDown || this.keys.x.isDown) {
+        } else if (
+            (this.keys.e.isDown || this.keys.x.isDown) &&
+            this.gameState.playerId !== null &&
+            !this.gameState.isInOppositeSection()
+        ) {
             moved = this.gameState.moveIfCan(
                 Tetromino.rotateCW // clock wise
             );

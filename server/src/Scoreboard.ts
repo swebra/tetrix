@@ -1,10 +1,6 @@
 import { PlayerColor } from "./PlayerAttributes";
 import { Level } from "./Level";
-import {
-    broadcastUpdateScoreboard,
-    broadcastToSceneWaitingRoom,
-    broadcastToSceneGameOver,
-} from "../index";
+import { broadcast } from "./broadcast";
 
 import { ToServerEvents, ToClientEvents } from "common/messages/scoreboard";
 import { ColoredScore } from "common/shared";
@@ -20,38 +16,37 @@ export class Scoreboard {
     private _accumulatedScore: number;
     private _scoreMap: Array<ColoredScore>;
     private _finalScores: Array<ColoredScore>;
+    private broadcastUpdateScoreboard: broadcast["updateScoreboard"];
 
-    constructor() {
+    constructor(updateScoreboardEvent: broadcast["updateScoreboard"]) {
         this._orangeScore = 0;
         this._greenScore = 0;
         this._pinkScore = 0;
         this._blueScore = 0;
         this._accumulatedScore = 0;
 
+        this.broadcastUpdateScoreboard = updateScoreboardEvent;
+
         this._finalScores = [];
 
         this._scoreMap = [];
         this._scoreMap.push({
-            color: "Orange",
-            hex: 0xffa500,
+            color: "orange",
             points: this.orangeScore,
         });
 
         this._scoreMap.push({
-            color: "Green",
-            hex: 0x00ff00,
+            color: "green",
             points: this.greenScore,
         });
 
         this._scoreMap.push({
-            color: "Pink",
-            hex: 0xff00ff,
+            color: "pink",
             points: this.pinkScore,
         });
 
         this._scoreMap.push({
-            color: "Blue",
-            hex: 0x00bfff,
+            color: "blue",
             points: this.blueScore,
         });
     }
@@ -60,8 +55,7 @@ export class Scoreboard {
         socket.on("requestScoreboardData", () => {
             const clonedData = Object.assign([], this.scoreMap);
             clonedData.push({
-                color: "Level",
-                hex: 0xffffff,
+                color: "level",
                 points: level.currentLevel,
             });
 
@@ -102,6 +96,10 @@ export class Scoreboard {
         return this._finalScores;
     }
 
+    get accumulatedScore(): number {
+        return this._accumulatedScore;
+    }
+
     /**
      * Reset all scores.
      */
@@ -111,6 +109,7 @@ export class Scoreboard {
         this._pinkScore = 0;
         this._blueScore = 0;
         this._accumulatedScore = 0;
+        this._finalScores = [];
     }
 
     /**
@@ -192,16 +191,16 @@ export class Scoreboard {
     private updateScoreMap() {
         for (let i = 0; i < this._scoreMap.length; i++) {
             switch (this._scoreMap[i].color) {
-                case "Orange":
+                case "orange":
                     this._scoreMap[i].points = this.orangeScore;
                     break;
-                case "Green":
+                case "green":
                     this._scoreMap[i].points = this.greenScore;
                     break;
-                case "Pink":
+                case "pink":
                     this._scoreMap[i].points = this.pinkScore;
                     break;
-                case "Blue":
+                case "blue":
                     this._scoreMap[i].points = this.blueScore;
                     break;
             }
@@ -222,35 +221,27 @@ export class Scoreboard {
         // Temporary clone of the data so that we can append the level of the game.
         const clonedData = Object.assign([], this._scoreMap);
         clonedData.push({
-            color: "Level",
-            hex: 0xffffff,
+            color: "level",
             points: level,
         });
 
         // Notify all connected users.
-        broadcastUpdateScoreboard(clonedData);
+        this.broadcastUpdateScoreboard(clonedData);
     }
 
     /**
-     * Display the game over screen with the fullscreen scoreboard UI.
+     * Get the final player scores.
+     * @returns The final scores of the players.
      */
-    public displaySceneGameOver() {
+    public getFinalScores() {
         this.updateScoreMap();
 
         this._finalScores = Object.assign([], this._scoreMap);
         this._finalScores.push({
-            color: "TEAM SCORE",
-            hex: 0xffff00,
+            color: "total",
             points: this.currentTeamScore,
         });
 
-        // Show scoreboard to all connected users.
-        broadcastToSceneGameOver(this._finalScores);
-
-        // Return to starting sequence after 30 seconds.
-        setTimeout(() => {
-            broadcastToSceneWaitingRoom();
-            this.resetScores();
-        }, 30000);
+        return this._finalScores;
     }
 }

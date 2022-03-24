@@ -29,7 +29,7 @@ export class Monomino {
     public getCopy(): Monomino {
         return new Monomino(
             this.type,
-            // clone position array in case the monomino position is modified by line clearing
+            // Clone of position, not reference
             this.position.slice() as [number, number],
             this.ownerId
         );
