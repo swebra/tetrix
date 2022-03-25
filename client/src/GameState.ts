@@ -118,12 +118,27 @@ export class GameState {
         );
         this.placeTetromino(this.currentTetromino);
         // start a new tetromino from the top
-        this.currentTetromino = new Tetromino(
-            this.randomBag.getNextType(),
-            this.playerId
-        );
+        const nextTetro = this.randomBag.getNextType();
+        if (this.canSpawnTetro(nextTetro)) {
+            this.currentTetromino = new Tetromino(nextTetro, this.playerId);
+        } else {
+            this.socket.emit("endGame");
+        }
         // broadcast new tetromino position
         this.emitPlayerMove();
+    }
+
+    private canSpawnTetro(type: TetrominoType) {
+        const simulatedTetromino: TetrominoLookahead = {
+            position: [
+                0,
+                Math.round((BOARD_SIZE - Tetromino.shapes[type].width) / 2),
+            ],
+            tiles: Tetromino.shapes[type].tiles,
+            rotation: 0,
+        };
+
+        return !this.overlapWithBoard(simulatedTetromino);
     }
 
     public placeTetromino(tetromino: Tetromino) {

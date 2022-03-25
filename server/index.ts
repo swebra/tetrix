@@ -133,4 +133,8 @@ io.on("connection", (socket) => {
         console.log("player ", args[0], " placed.");
         socket.broadcast.emit("playerPlace", ...args);
     });
+
+    socket.on("endGame", () => {
+        gameOver();
+    });
 });
