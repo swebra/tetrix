@@ -72,9 +72,10 @@ const toSceneGameOver: broadcast["toSceneGameOver"] = (
 };
 
 const showVotingSequence: broadcast["showVotingSequence"] = (
-    votingSequence: string
+    votingSequence: string,
+    randTetros: Array<number>
 ) => {
-    io.sockets.emit("showVotingSequence", votingSequence);
+    io.sockets.emit("showVotingSequence", votingSequence, randTetros);
 };
 
 const hideVotingSequence: broadcast["hideVotingSequence"] = () => {
