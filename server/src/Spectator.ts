@@ -25,10 +25,12 @@ export class Spectator {
     private votingInterval!: NodeJS.Timer;
     private broadcastShowVotingSequence: broadcast["showVotingSequence"];
     private broadcastHideVotingSequence: broadcast["hideVotingSequence"];
+    private broadcastVotedTetroToSpawn: broadcast["votedTetroToSpawn"];
 
     constructor(
         showVotingSequenceEvent: broadcast["showVotingSequence"],
-        hideVotingSequenceEvent: broadcast["hideVotingSequence"]
+        hideVotingSequenceEvent: broadcast["hideVotingSequence"],
+        votedTetroToSpawn: broadcast["votedTetroToSpawn"]
     ) {
         this._isFirstRoundVoting = true;
         this._isAcceptingVotes = false;
@@ -46,6 +48,7 @@ export class Spectator {
         this._isGameRunning = false;
         this.broadcastShowVotingSequence = showVotingSequenceEvent;
         this.broadcastHideVotingSequence = hideVotingSequenceEvent;
+        this.broadcastVotedTetroToSpawn = votedTetroToSpawn;
     }
 
     get countdownValue(): number {
@@ -246,7 +249,7 @@ export class Spectator {
                 } else if (this._previouslyVotedOption == "option1") {
                     level.spectatorIncreaseFallRate();
                 } else if (this._previouslyVotedOption == "option2") {
-                    console.log("Spawning in tetromino option 1..."); // FIXME: Need to spawn in a tetromino for the players for 20 seconds.
+                    this.broadcastVotedTetroToSpawn(this._randTetros[0]);
                 }
                 break;
             case "option2":
@@ -259,14 +262,14 @@ export class Spectator {
                 } else if (this._previouslyVotedOption == "option1") {
                     level.spectatorDecreaseFallRate();
                 } else if (this._previouslyVotedOption == "option2") {
-                    console.log("Spawning in tetromino option 2 ..."); // FIXME: Spawn in tetrominos for players for 20 seconds.
+                    this.broadcastVotedTetroToSpawn(this._randTetros[1]);
                 }
                 break;
             case "option3":
                 if (this._isFirstRoundVoting) {
                     console.log("Randomizing player blocks"); // FIXME: Randomize player blocks.
                 } else if (this._previouslyVotedOption == "option2") {
-                    console.log("Spawning in tetromino option 3..."); // FIXME: Spawn in tetrominos for players for 20 seconds.
+                    this.broadcastVotedTetroToSpawn(this._randTetros[2]);
                 }
                 break;
         }
