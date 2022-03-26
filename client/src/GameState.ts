@@ -117,14 +117,15 @@ export class GameState {
             this.currentTetromino.reportState()
         );
         this.placeTetromino(this.currentTetromino);
-        // start a new tetromino from the top
-        const nextTetro = this.randomBag.getNextType();
-        if (this.canSpawnTetro(nextTetro)) {
-            this.currentTetromino = new Tetromino(nextTetro, this.playerId);
-        } else {
+        this.currentTetromino = new Tetromino(
+            this.randomBag.getNextType(),
+            this.playerId
+        );
+        if (
+            this.overlapWithBoard(this.currentTetromino.toTetrominoLookahead())
+        ) {
             this.socket.emit("endGame");
         }
-        // broadcast new tetromino position
         this.emitPlayerMove();
     }
 
