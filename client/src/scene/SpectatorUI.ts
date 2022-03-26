@@ -170,18 +170,14 @@ export class SpectatorUI {
                 });
         });
 
-        // FIXME: Improperly displaying data on screen.
-        console.log(`> Spawn ${TetrominoType[randTetros[0]]} pieces`);
         if (votingOption == "tetrominoSelection") {
-            this.buttons[0].setText(
-                `> Spawn ${TetrominoType[randTetros[0]]} pieces`
-            );
-            this.buttons[1].setText(
-                `> Spawn ${TetrominoType[randTetros[1]]} pieces`
-            );
-            this.buttons[2].setText(
-                `> Spawn ${TetrominoType[randTetros[2]]} pieces`
-            );
+            for (let i = 0; i < randTetros.length; i++) {
+                this.buttons[i].setText(
+                    `> spawn ${TetrominoType[
+                        randTetros[i]
+                    ].toLowerCase()} pieces`
+                );
+            }
         }
     }
 
