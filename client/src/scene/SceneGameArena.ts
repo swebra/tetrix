@@ -168,13 +168,23 @@ export class SceneGameArena extends Phaser.Scene {
     }
 
     private updateDrawPlayers() {
-        this.gameState.currentTetromino.draw(this);
+        if (
+            this.gameState.playerId !== null &&
+            this.gameState.playerId !== undefined
+        )
+            this.gameState.currentTetromino.draw(this);
         this.gameState.otherTetrominoes.forEach((tetromino) =>
             tetromino.draw(this)
         );
     }
 
     private updateFalling() {
+        if (
+            this.gameState.playerId === null ||
+            this.gameState.playerId === undefined
+        ) {
+            return;
+        }
         if (this.gameState.moveIfCan(Tetromino.fall)) {
             this.gameState.emitPlayerMove();
         } else {

@@ -176,6 +176,10 @@ export class Tetromino {
         this.rotation = 0;
     }
 
+    getOwnerId() {
+        return this.ownerId;
+    }
+
     setOwnerId(ownerId: 0 | 1 | 2 | 3) {
         this.ownerId = ownerId;
         this.monominoes.forEach((monomino) => monomino.setOwnerId(ownerId));

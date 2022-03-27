@@ -1,7 +1,7 @@
 // Import the express in typescript file
 import express from "express";
 import http from "http";
-import { Server } from "socket.io";
+import { Server, Socket } from "socket.io";
 import { Level } from "./src/Level";
 import { Scoreboard } from "./src/Scoreboard";
 import { PlayerQueue } from "./src/PlayerQueue";
@@ -10,7 +10,7 @@ import { broadcast } from "./src/broadcast";
 import path from "path";
 
 import { ServerToClientEvents, ClientToServerEvents } from "common/message";
-import { ColoredScore } from "common/shared";
+import { ColoredScore, BOARD_SIZE, BoardState } from "common/shared";
 import { SceneTracker } from "./src/SceneTracker";
 
 // Initialize the express engine
@@ -92,6 +92,52 @@ const fallRate: broadcast["fallRate"] = (fallRate: number) => {
 };
 // ==============================================
 
+class BoardSync {
+    private socketsWithTruth: Map<string, Socket> = new Map();
+    public initSocketListeners(
+        socket: Socket<ClientToServerEvents, ServerToClientEvents>
+    ) {
+        // is first socket, automatically source of truth
+        if (this.socketsWithTruth.size === 0) {
+            this.socketsWithTruth.set(socket.id, socket);
+        }
+
+        socket.on(
+            "syncBoard",
+            async (callback: (board: BoardState) => void) => {
+                // client requesting the latest board state
+                const socketToAsk = this.pickRandomSourceOfTruth();
+                const boardState = await this.getBoardFromClient(socketToAsk);
+                this.socketsWithTruth.set(socket.id, socket);
+                callback(boardState);
+            }
+        );
+    }
+
+    private pickRandomSourceOfTruth(): Socket {
+        // randomly pick a client socket that we know has at least one update
+        let socketToAsk: Socket = this.socketsWithTruth.values().next().value;
+        const iterSocket = this.socketsWithTruth.values();
+        for (
+            let i = 0;
+            i < Math.floor(Math.random() * this.socketsWithTruth.size);
+            i++
+        ) {
+            socketToAsk = iterSocket.next().value;
+        }
+
+        return socketToAsk;
+    }
+
+    private async getBoardFromClient(socket: Socket): Promise<BoardState> {
+        return new Promise((res, _) => {
+            socket.emit("cacheBoard", (clientBoard: BoardState) => {
+                res(clientBoard);
+            });
+        });
+    }
+}
+
 console.log(`Server started at port ${port}`);
 let playerCounter: 0 | 1 | 2 | 3 = 0; // FIXME: Remove this on final version.
 const scoreboard = new Scoreboard(updateScoreboard);
@@ -99,6 +145,7 @@ const level = new Level(fallRate);
 const queue = new PlayerQueue(remainingPlayers, toSceneGameArena);
 const spectator = new Spectator(showVotingSequence, hideVotingSequence);
 const scene = new SceneTracker();
+const boardSync = new BoardSync();
 
 /**
  * End the game.
@@ -119,6 +166,7 @@ io.on("connection", (socket) => {
     queue.initSocketListeners(socket);
     scene.initSocketListeners(socket, scoreboard.finalScores);
     level.initSocketListeners(socket);
+    boardSync.initSocketListeners(socket);
 
     if (process.env.VITE_DISABLE_WAITING_ROOM) {
         socket.emit("initPlayer", playerCounter);
@@ -126,11 +174,17 @@ io.on("connection", (socket) => {
         playerCounter %= 4;
     }
 
-    socket.on("playerMove", (...args) => {
-        socket.broadcast.emit("playerMove", ...args);
+    socket.on("playerMove", (playerId, state) => {
+        if (playerId === null || playerId === undefined) {
+            return;
+        }
+        socket.broadcast.emit("playerMove", playerId, state);
     });
-    socket.on("playerPlace", (...args) => {
-        console.log("player ", args[0], " placed.");
-        socket.broadcast.emit("playerPlace", ...args);
+    socket.on("playerPlace", (playerId, state) => {
+        if (playerId === null || playerId === undefined) {
+            return;
+        }
+        console.log("player ", playerId, " placed.");
+        socket.broadcast.emit("playerPlace", playerId, state);
     });
 });

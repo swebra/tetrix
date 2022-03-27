@@ -1,6 +1,6 @@
 import { Socket } from "socket.io-client";
 
-import { BOARD_SIZE } from "common/shared";
+import { BoardState, BOARD_SIZE } from "common/shared";
 import { TetrominoType } from "common/TetrominoType";
 import { ToServerEvents, ToClientEvents } from "common/messages/game";
 
@@ -12,7 +12,7 @@ type GameSocket = Socket<ToClientEvents, ToServerEvents>;
 
 export class GameState {
     socket: GameSocket;
-    board!: Array<Array<Monomino | null>>;
+    board!: Array<Array<Monomino | null | false>>;
     randomBag: RandomBag;
 
     // synced to server
@@ -43,7 +43,34 @@ export class GameState {
     }
 
     private getPlayerIndex(playerId: number) {
-        return (3 - this.playerId + playerId) % 4;
+        return (3 - (this.playerId || 0) + playerId) % 4;
+    }
+
+    private toBoardState(): BoardState {
+        return this.board.map((row) => {
+            return row.map((el) => {
+                if (!el) {
+                    return el;
+                }
+                return el.toMonominoState();
+            });
+        });
+    }
+
+    private fromBoardState(boardState: BoardState) {
+        this.board.forEach((rowArray, row) => {
+            rowArray.forEach((el, col) => {
+                const monominoState = boardState[row][col];
+                if (!monominoState) {
+                    this.board[row][col] = monominoState;
+                } else {
+                    this.board[row][col] = Monomino.upcreateFromMonominoState(
+                        monominoState,
+                        this.board[row][col]
+                    )[0];
+                }
+            });
+        });
     }
 
     constructor(socket: GameSocket) {
@@ -61,6 +88,7 @@ export class GameState {
             new Tetromino(TetrominoType.T, null),
             new Tetromino(TetrominoType.T, null),
             new Tetromino(TetrominoType.T, null),
+            new Tetromino(TetrominoType.T, null),
         ];
 
         // initial rotation
@@ -69,9 +97,25 @@ export class GameState {
             tetro.updateFromLookahead(Tetromino.rotate(tetro, i + 1));
         });
 
+        this.socket.emit("syncBoard", (boardState) => {
+            console.log("sync from board state: ", boardState);
+            this.fromBoardState(boardState);
+            console.log("sync from board state result: ", this.board);
+        });
+
+        this.socket.on(
+            "cacheBoard",
+            (callback: (boardState: BoardState) => void) => {
+                callback(this.toBoardState());
+            }
+        );
+
         this.socket.on("initPlayer", (playerId) => {
             this.playerId = playerId;
             this.currentTetromino.setOwnerId(playerId);
+            if (this.otherTetrominoes.length > 3) {
+                this.otherTetrominoes.pop();
+            }
             this.otherTetrominoes.forEach((tetromino, i) =>
                 tetromino.setOwnerId(<0 | 1 | 2 | 3>((playerId + i + 1) % 4))
             );
@@ -79,7 +123,11 @@ export class GameState {
 
         this.socket.on("playerMove", (playerId, state) => {
             const i = this.getPlayerIndex(playerId);
+            console.log("player move: ", playerId, i);
             this.otherTetrominoes[i].updateFromState(state, i + 1);
+            if (this.otherTetrominoes[i].getOwnerId() !== playerId) {
+                this.otherTetrominoes[i].setOwnerId(playerId);
+            }
         });
 
         this.socket.on("playerPlace", (playerId, state) => {
