@@ -129,19 +129,6 @@ export class GameState {
         this.emitPlayerMove();
     }
 
-    private canSpawnTetro(type: TetrominoType) {
-        const simulatedTetromino: TetrominoLookahead = {
-            position: [
-                0,
-                Math.round((BOARD_SIZE - Tetromino.shapes[type].width) / 2),
-            ],
-            tiles: Tetromino.shapes[type].tiles,
-            rotation: 0,
-        };
-
-        return !this.overlapWithBoard(simulatedTetromino);
-    }
-
     public placeTetromino(tetromino: Tetromino) {
         tetromino.monominoes.forEach((monomino) => {
             this.board[monomino.position[0]][monomino.position[1]] = monomino;
