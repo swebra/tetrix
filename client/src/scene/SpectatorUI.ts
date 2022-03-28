@@ -159,6 +159,12 @@ export class SpectatorUI {
         }
 
         SpectatorUI.options[votingOption].forEach(([str, val], i) => {
+            if (votingOption == "tetrominoSelection") {
+                str = `spawn ${TetrominoType[
+                    randTetros[i]
+                ].toLowerCase()} pieces`;
+            }
+
             this.buttons[i]
                 .setVisible(true)
                 .setText("> " + str)
@@ -169,16 +175,6 @@ export class SpectatorUI {
                     this.alreadyVoted.setVisible(true);
                 });
         });
-
-        if (votingOption == "tetrominoSelection") {
-            for (let i = 0; i < randTetros.length; i++) {
-                this.buttons[i].setText(
-                    `> spawn ${TetrominoType[
-                        randTetros[i]
-                    ].toLowerCase()} pieces`
-                );
-            }
-        }
     }
 
     /**
