@@ -60,8 +60,9 @@ export class SceneGameArena extends Phaser.Scene {
         this.scoreboard = new ScoreboardUI(this, this.socket);
         this.spectator = new SpectatorUI(this, this.socket);
 
-        // TODO: need to make sure playerId is valid when this scene is started
-        new ControlsUI(this);
+        if (this.gameState.playerId >= 0) {
+            new ControlsUI(this);
+        }
 
         // keyboard input
         this.keys = this.input.keyboard.addKeys(
@@ -88,6 +89,13 @@ export class SceneGameArena extends Phaser.Scene {
         // Clean out any old listeners to avoid accumulation.
         this.socket.removeListener("toSceneGameOver");
         this.socket.removeListener("updateFallRate");
+        this.socket.removeListener("initPlayer");
+
+        this.socket.on("initPlayer", () => {
+            new ControlsUI(this);
+            this.spectator.removeListeners();
+            this.spectator.removeTimedEvent();
+        });
 
         this.socket.on("updateFallRate", (fallRate) => {
             this.updateFallTimer(fallRate);

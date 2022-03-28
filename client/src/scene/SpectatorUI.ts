@@ -117,6 +117,15 @@ export class SpectatorUI {
     }
 
     /**
+     * Remove all listeners associated to spectator functionality.
+     */
+    public removeListeners() {
+        this.socket.removeListener("showVotingSequence");
+        this.socket.removeListener("hideVotingSequence");
+        this.socket.removeListener("sendVotingCountdown");
+    }
+
+    /**
      * Generate the spectator voting section.
      * @param valFromServer Specifies which buttons to be loading in for this sequence.
      */
@@ -128,7 +137,7 @@ export class SpectatorUI {
     /**
      * Remove the spectator voting section.
      */
-    private removeTimedEvent() {
+    public removeTimedEvent() {
         if (this.countdownTimer) {
             clearInterval(this.countdownTimer);
         }

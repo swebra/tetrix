@@ -3,9 +3,9 @@ import { ColoredScore } from "../shared";
 export interface ToClientEvents {
     toSceneGameOver: (data: Array<ColoredScore>) => void;
     updateFallRate: (fallRate: number) => void;
+    initPlayer: (playerId: 0 | 1 | 2 | 3) => void;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
 export interface ToServerEvents {
     requestFallRate: () => void;
 }
