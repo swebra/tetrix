@@ -93,7 +93,6 @@ export class SpectatorUI {
         this.countdown.destroy();
         this.alreadyVoted.destroy();
         this.buttons.forEach((button) => button.destroy());
-        this.countdownTimer = undefined;
     }
 
     /**
