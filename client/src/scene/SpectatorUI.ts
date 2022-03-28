@@ -87,10 +87,13 @@ export class SpectatorUI {
      * Destroys all GameObjects belonging to this class.
      */
     public destroy() {
+        this.removeListeners();
+        this.removeTimedEvent();
         this.header.destroy();
         this.countdown.destroy();
         this.alreadyVoted.destroy();
         this.buttons.forEach((button) => button.destroy());
+        this.countdownTimer = undefined;
     }
 
     /**

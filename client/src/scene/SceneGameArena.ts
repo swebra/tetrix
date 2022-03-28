@@ -25,8 +25,7 @@ export class SceneGameArena extends Phaser.Scene {
     fallRateTimer!: Phaser.Time.TimerEvent | null;
 
     scoreboard!: ScoreboardUI;
-    spectator!: SpectatorUI;
-    controls!: ControlsUI | null;
+    spectator?: SpectatorUI;
 
     frameTimeElapsed: number = 0; // the ms time since the last frame is drawn
 
@@ -94,8 +93,7 @@ export class SceneGameArena extends Phaser.Scene {
 
         this.socket.on("initPlayer", () => {
             new ControlsUI(this);
-            this.spectator.removeListeners();
-            this.spectator.removeTimedEvent();
+            this.spectator?.destroy();
         });
 
         this.socket.on("updateFallRate", (fallRate) => {
