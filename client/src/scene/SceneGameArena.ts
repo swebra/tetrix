@@ -58,10 +58,11 @@ export class SceneGameArena extends Phaser.Scene {
 
     create() {
         this.scoreboard = new ScoreboardUI(this, this.socket);
-        this.spectator = new SpectatorUI(this, this.socket);
 
         if (this.gameState.playerId >= 0) {
             new ControlsUI(this);
+        } else {
+            this.spectator = new SpectatorUI(this, this.socket);
         }
 
         // keyboard input
