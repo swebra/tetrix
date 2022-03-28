@@ -70,11 +70,7 @@ export class GameState {
         });
 
         this.socket.on("initPlayer", (playerId) => {
-            this.playerId = playerId;
-            this.currentTetromino.setOwnerId(playerId);
-            this.otherTetrominoes.forEach((tetromino, i) =>
-                tetromino.setOwnerId(<0 | 1 | 2 | 3>((playerId + i + 1) % 4))
-            );
+            this.initializePlayer(playerId);
         });
 
         this.socket.on("playerMove", (playerId, state) => {
@@ -99,6 +95,14 @@ export class GameState {
                 this.emitAndPlaceCurrentTetromino();
             }
         });
+    }
+
+    public initializePlayer(playerId: 0 | 1 | 2 | 3) {
+        this.playerId = playerId;
+        this.currentTetromino.setOwnerId(playerId);
+        this.otherTetrominoes.forEach((tetromino, i) =>
+            tetromino.setOwnerId(<0 | 1 | 2 | 3>((playerId + i + 1) % 4))
+        );
     }
 
     public emitPlayerMove() {

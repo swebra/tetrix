@@ -91,9 +91,10 @@ export class SceneGameArena extends Phaser.Scene {
         this.socket.removeListener("updateFallRate");
         this.socket.removeListener("initPlayer");
 
-        this.socket.on("initPlayer", () => {
+        this.socket.on("initPlayer", (playerId) => {
             new ControlsUI(this);
             this.spectator?.destroy();
+            this.gameState.initializePlayer(playerId);
         });
 
         this.socket.on("updateFallRate", (fallRate) => {
