@@ -1,11 +1,13 @@
+import { TetrominoType } from "../TetrominoType";
+
 export interface ToClientEvents {
     showVotingSequence: (
         votingSequence: string,
-        randTetros: Array<number>
+        randTetros: Array<TetrominoType>
     ) => void;
     hideVotingSequence: () => void;
     sendVotingCountdown: (secondsLeft: number) => void;
-    votedTetroToSpawn: (type: number) => void;
+    votedTetroToSpawn: (type: TetrominoType) => void;
 }
 
 export interface ToServerEvents {

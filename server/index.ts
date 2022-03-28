@@ -12,6 +12,7 @@ import path from "path";
 import { ServerToClientEvents, ClientToServerEvents } from "common/message";
 import { ColoredScore } from "common/shared";
 import { SceneTracker } from "./src/SceneTracker";
+import { TetrominoType } from "common/TetrominoType";
 
 // Initialize the express engine
 const app: express.Application = express();
@@ -73,7 +74,7 @@ const toSceneGameOver: broadcast["toSceneGameOver"] = (
 
 const showVotingSequence: broadcast["showVotingSequence"] = (
     votingSequence: string,
-    randTetros: Array<number>
+    randTetros: Array<TetrominoType>
 ) => {
     io.sockets.emit("showVotingSequence", votingSequence, randTetros);
 };
@@ -92,7 +93,9 @@ const fallRate: broadcast["fallRate"] = (fallRate: number) => {
     io.sockets.emit("updateFallRate", fallRate);
 };
 
-const votedTetroToSpawn: broadcast["votedTetroToSpawn"] = (type: number) => {
+const votedTetroToSpawn: broadcast["votedTetroToSpawn"] = (
+    type: TetrominoType
+) => {
     io.sockets.emit("votedTetroToSpawn", type);
 };
 // ==============================================

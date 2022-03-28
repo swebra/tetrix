@@ -4,7 +4,6 @@ export interface ToClientEvents {
     initPlayer: (playerId: 0 | 1 | 2 | 3) => void;
     playerMove: (playerId: PlayerID, tetrominoState: TetrominoState) => void;
     playerPlace: (playerId: PlayerID, tetrominoState: TetrominoState) => void;
-    votedTetroToSpawn: (type: number) => void;
 }
 
 export interface ToServerEvents {

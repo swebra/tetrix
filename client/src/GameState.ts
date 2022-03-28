@@ -21,7 +21,6 @@ export class GameState {
     // i.e. if you are player 1, these are of player 2, then 3, then 0
     otherTetrominoes: Array<Tetromino>;
     playerId!: 0 | 1 | 2 | 3;
-    votedTetro: number | null;
 
     private initBoard() {
         this.board = new Array(BOARD_SIZE);
@@ -50,8 +49,7 @@ export class GameState {
     constructor(socket: GameSocket) {
         this.socket = socket;
         this.initBoard();
-        this.randomBag = new RandomBag();
-        this.votedTetro = null;
+        this.randomBag = new RandomBag(this.socket);
 
         // Owner ID set on initPlayer
         this.currentTetromino = new Tetromino(
@@ -101,13 +99,6 @@ export class GameState {
                 this.emitAndPlaceCurrentTetromino();
             }
         });
-
-        this.socket.on("votedTetroToSpawn", (type) => {
-            this.votedTetro = type;
-            setTimeout(() => {
-                this.votedTetro = null;
-            }, 20000);
-        });
     }
 
     public emitPlayerMove() {
@@ -127,17 +118,10 @@ export class GameState {
         );
         this.placeTetromino(this.currentTetromino);
         // start a new tetromino from the top
-        if (this.votedTetro) {
-            this.currentTetromino = new Tetromino(
-                this.votedTetro,
-                this.playerId
-            );
-        } else {
-            this.currentTetromino = new Tetromino(
-                this.randomBag.getNextType(),
-                this.playerId
-            );
-        }
+        this.currentTetromino = new Tetromino(
+            this.randomBag.getNextType(),
+            this.playerId
+        );
         // broadcast new tetromino position
         this.emitPlayerMove();
     }

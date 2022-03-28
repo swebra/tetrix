@@ -123,7 +123,7 @@ export class SpectatorUI {
      */
     private generateTimedEvent(
         valFromServer: string,
-        randTetros: Array<number>
+        randTetros: Array<TetrominoType>
     ) {
         this.removeTimedEvent();
         this.createOptions(valFromServer, randTetros);
@@ -146,7 +146,10 @@ export class SpectatorUI {
      * Generate options for the user to select.
      * @param votingOption This value is received from the server. Based off the value obtained, display a different set of buttons.
      */
-    private createOptions(votingOption: string, randTetros: Array<number>) {
+    private createOptions(
+        votingOption: string,
+        randTetros: Array<TetrominoType>
+    ) {
         this.header.setVisible(true);
         this.countdown.setTint(COLORS.green).setVisible(true);
         this.updateCountdown(10);

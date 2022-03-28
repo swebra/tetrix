@@ -18,7 +18,7 @@ export class Spectator {
         option2: number;
         option3: number;
     };
-    private _randTetros: Array<number>;
+    private _randTetros: Array<TetrominoType>;
     private _countdownValue: number;
     private _secondVotingRoundSelection: string;
     private _isGameRunning: boolean;
@@ -282,13 +282,9 @@ export class Spectator {
     private getRandTetros() {
         this._randTetros = [];
 
-        let enumIndexs = Object.keys(TetrominoType)
-            .filter((item) => {
-                return !isNaN(Number(item));
-            })
-            .map((str) => {
-                return Number(str);
-            });
+        let enumIndexs = <TetrominoType[]>(
+            Object.values(TetrominoType).filter((x) => typeof x === "number")
+        );
 
         while (this._randTetros.length != 3) {
             const randomIndex =
