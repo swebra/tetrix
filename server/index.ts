@@ -6,6 +6,7 @@ import { Level } from "./src/Level";
 import { Scoreboard } from "./src/Scoreboard";
 import { PlayerQueue } from "./src/PlayerQueue";
 import { Spectator } from "./src/Spectator";
+import { BoardSync } from "./src/BoardSync";
 import { broadcast } from "./src/broadcast";
 import path from "path";
 
@@ -91,53 +92,6 @@ const fallRate: broadcast["fallRate"] = (fallRate: number) => {
     io.sockets.emit("updateFallRate", fallRate);
 };
 // ==============================================
-
-class BoardSync {
-    private socketsWithTruth: Map<string, Socket> = new Map();
-    public initSocketListeners(
-        socket: Socket<ClientToServerEvents, ServerToClientEvents>
-    ) {
-        // is first socket, automatically source of truth
-        if (this.socketsWithTruth.size === 0) {
-            this.socketsWithTruth.set(socket.id, socket);
-        }
-
-        socket.on(
-            "syncBoard",
-            async (callback: (board: BoardState) => void) => {
-                // client requesting the latest board state
-                const socketToAsk = this.pickRandomSourceOfTruth();
-                const boardState = await this.getBoardFromClient(socketToAsk);
-                this.socketsWithTruth.set(socket.id, socket);
-                callback(boardState);
-            }
-        );
-    }
-
-    private pickRandomSourceOfTruth(): Socket {
-        // randomly pick a client socket that we know has at least one update
-        let socketToAsk: Socket = this.socketsWithTruth.values().next().value;
-        const iterSocket = this.socketsWithTruth.values();
-        for (
-            let i = 0;
-            i < Math.floor(Math.random() * this.socketsWithTruth.size);
-            i++
-        ) {
-            socketToAsk = iterSocket.next().value;
-        }
-
-        return socketToAsk;
-    }
-
-    private async getBoardFromClient(socket: Socket): Promise<BoardState> {
-        return new Promise((res, _) => {
-            socket.emit("cacheBoard", (clientBoard: BoardState) => {
-                res(clientBoard);
-            });
-        });
-    }
-}
-
 console.log(`Server started at port ${port}`);
 let playerCounter: 0 | 1 | 2 | 3 = 0; // FIXME: Remove this on final version.
 const scoreboard = new Scoreboard(updateScoreboard);

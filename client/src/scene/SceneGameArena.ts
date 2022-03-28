@@ -8,6 +8,7 @@ import { Socket } from "socket.io-client";
 
 import { ToClientEvents, ToServerEvents } from "common/messages/sceneGameArena";
 import { ControlsUI } from "./ControlsUI";
+import { BoardState } from "common/shared";
 
 type SocketGame = Socket<ToClientEvents, ToServerEvents>;
 
@@ -73,7 +74,6 @@ export class SceneGameArena extends Phaser.Scene {
         this.socket.emit("requestFallRate");
 
         this.initListeners();
-
         // Initial board drawing
         this.gameState.board.forEach((row) =>
             row.forEach((monomino) => {
@@ -98,6 +98,17 @@ export class SceneGameArena extends Phaser.Scene {
                 gameState: this.gameState,
                 playerPoints: playerPoints,
             });
+        });
+
+        this.socket.emit("syncBoard", (boardState: any) => {
+            this.gameState.fromBoardState(boardState);
+            this.gameState.board.forEach((row) =>
+                row.forEach((monomino) => {
+                    if (monomino) {
+                        monomino.draw(this);
+                    }
+                })
+            );
         });
     }
 
@@ -135,6 +146,14 @@ export class SceneGameArena extends Phaser.Scene {
         ) {
             moved = this.gameState.moveIfCan(
                 Tetromino.slide(-1) // left
+            );
+        } else if (
+            (this.keys.s.isDown || this.keys.down.isDown) &&
+            this.gameState.playerId !== null &&
+            !this.gameState.isInOppositeSection()
+        ) {
+            moved = this.gameState.moveIfCan(
+                Tetromino.fall // right
             );
         } else if (
             (this.keys.d.isDown || this.keys.right.isDown) &&

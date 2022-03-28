@@ -1,4 +1,4 @@
-import { ColoredScore } from "../shared";
+import { BoardState, ColoredScore } from "../shared";
 
 export interface ToClientEvents {
     toSceneGameOver: (data: Array<ColoredScore>) => void;
@@ -8,4 +8,5 @@ export interface ToClientEvents {
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
 export interface ToServerEvents {
     requestFallRate: () => void;
+    syncBoard: (callback: (board: BoardState) => void) => void;
 }
