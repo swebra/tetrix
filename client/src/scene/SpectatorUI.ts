@@ -97,10 +97,7 @@ export class SpectatorUI {
      * Initialize the listeners for events received from the server.
      */
     private initListeners() {
-        // Clean out any old listeners to avoid accumulation.
-        this.socket.removeListener("showVotingSequence");
-        this.socket.removeListener("hideVotingSequence");
-        this.socket.removeListener("sendVotingCountdown");
+        this.removeListeners();
 
         this.socket.on("showVotingSequence", (votingSequence) => {
             this.generateTimedEvent(votingSequence);
