@@ -112,19 +112,6 @@ const spectator = new Spectator(
 );
 const scene = new SceneTracker();
 
-/**
- * End the game.
- */
-function gameOver() {
-    // Show scoreboard to all connected users.
-    toSceneGameOver(scoreboard.getFinalScores());
-
-    // Return to starting scene after 30 seconds.
-    setTimeout(() => {
-        toSceneWaitingRoom();
-    }, 30000);
-}
-
 io.on("connection", (socket) => {
     scoreboard.initSocketListeners(socket, level);
     spectator.initSocketListeners(socket);
@@ -144,5 +131,14 @@ io.on("connection", (socket) => {
     socket.on("playerPlace", (...args) => {
         console.log("player ", args[0], " placed.");
         socket.broadcast.emit("playerPlace", ...args);
+    });
+
+    socket.on("endGame", () => {
+        toSceneGameOver(scoreboard.getFinalScores());
+
+        // Return to starting scene after 30 seconds.
+        setTimeout(() => {
+            toSceneWaitingRoom();
+        }, 30000);
     });
 });

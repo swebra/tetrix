@@ -117,11 +117,19 @@ export class GameState {
             this.currentTetromino.reportState()
         );
         this.placeTetromino(this.currentTetromino);
+
         // start a new tetromino from the top
         this.currentTetromino = new Tetromino(
             this.randomBag.getNextType(),
             this.playerId
         );
+
+        if (
+            this.overlapWithBoard(this.currentTetromino.toTetrominoLookahead())
+        ) {
+            this.socket.emit("endGame");
+        }
+
         // broadcast new tetromino position
         this.emitPlayerMove();
     }
