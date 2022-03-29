@@ -11,4 +11,5 @@ export interface broadcast {
     remainingPlayers(playersNeeded: number): void;
     fallRate(fallRate: number): void;
     votedTetroToSpawn(type: TetrominoType): void;
+    decision: (votedDecision: string) => void;
 }
