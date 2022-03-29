@@ -136,7 +136,7 @@ export class SpectatorUI {
     /**
      * Remove the spectator voting section.
      */
-    public removeTimedEvent() {
+    private removeTimedEvent() {
         if (this.countdownTimer) {
             clearInterval(this.countdownTimer);
         }
