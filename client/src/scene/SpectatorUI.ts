@@ -88,6 +88,8 @@ export class SpectatorUI {
      * Destroys all GameObjects belonging to this class.
      */
     public destroy() {
+        this.removeListeners();
+        this.removeTimedEvent();
         this.header.destroy();
         this.countdown.destroy();
         this.alreadyVoted.destroy();
@@ -98,10 +100,7 @@ export class SpectatorUI {
      * Initialize the listeners for events received from the server.
      */
     private initListeners() {
-        // Clean out any old listeners to avoid accumulation.
-        this.socket.removeListener("showVotingSequence");
-        this.socket.removeListener("hideVotingSequence");
-        this.socket.removeListener("sendVotingCountdown");
+        this.removeListeners();
 
         this.socket.on("showVotingSequence", (votingSequence, randTetros) => {
             this.generateTimedEvent(votingSequence, randTetros);
@@ -115,6 +114,15 @@ export class SpectatorUI {
         this.socket.on("sendVotingCountdown", (secondsLeft) => {
             this.syncCountdown(secondsLeft);
         });
+    }
+
+    /**
+     * Remove all listeners associated to spectator functionality.
+     */
+    public removeListeners() {
+        this.socket.removeListener("showVotingSequence");
+        this.socket.removeListener("hideVotingSequence");
+        this.socket.removeListener("sendVotingCountdown");
     }
 
     /**
