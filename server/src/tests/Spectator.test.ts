@@ -10,7 +10,7 @@ describe("Testing 'Spectator'", () => {
     jest.spyOn(global, "setInterval");
 
     beforeEach(() => {
-        spectator = new Spectator(jest.fn(), jest.fn());
+        spectator = new Spectator(jest.fn(), jest.fn(), jest.fn());
     });
 
     test("Test if Voting State is Maintained", () => {
@@ -27,7 +27,7 @@ describe("Testing 'Spectator'", () => {
         expect(spectator.countdownValue).toBe(9);
 
         expect(setTimeout).toHaveBeenCalled();
-        expect(setTimeout).toHaveBeenCalledWith(expect.any(Function), 10000);
+        expect(setTimeout).toHaveBeenCalledWith(expect.any(Function), 12000);
     });
 
     test("Test Second Voting Sequence", () => {
@@ -38,7 +38,7 @@ describe("Testing 'Spectator'", () => {
         expect(spectator.countdownValue).toBe(9);
 
         expect(setTimeout).toHaveBeenCalled();
-        expect(setTimeout).toHaveBeenCalledWith(expect.any(Function), 10000);
+        expect(setTimeout).toHaveBeenCalledWith(expect.any(Function), 12000);
     });
 
     test("Test Voting Loop", () => {

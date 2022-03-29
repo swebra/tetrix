@@ -130,7 +130,7 @@ export class SceneGameArena extends Phaser.Scene {
         let moved = false;
         if (
             (this.keys.a.isDown || this.keys.left.isDown) &&
-            this.gameState.playerId !== null &&
+            this.gameState.playerId != null &&
             !this.gameState.isInOppositeSection()
         ) {
             moved = this.gameState.moveIfCan(
@@ -138,7 +138,7 @@ export class SceneGameArena extends Phaser.Scene {
             );
         } else if (
             (this.keys.d.isDown || this.keys.right.isDown) &&
-            this.gameState.playerId !== null &&
+            this.gameState.playerId != null &&
             !this.gameState.isInOppositeSection()
         ) {
             moved = this.gameState.moveIfCan(
@@ -146,7 +146,7 @@ export class SceneGameArena extends Phaser.Scene {
             );
         } else if (
             (this.keys.q.isDown || this.keys.z.isDown) &&
-            this.gameState.playerId !== null &&
+            this.gameState.playerId != null &&
             !this.gameState.isInOppositeSection()
         ) {
             moved = this.gameState.moveIfCan(
@@ -154,7 +154,7 @@ export class SceneGameArena extends Phaser.Scene {
             );
         } else if (
             (this.keys.e.isDown || this.keys.x.isDown) &&
-            this.gameState.playerId !== null &&
+            this.gameState.playerId != null &&
             !this.gameState.isInOppositeSection()
         ) {
             moved = this.gameState.moveIfCan(

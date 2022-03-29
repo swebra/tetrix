@@ -49,7 +49,7 @@ export class GameState {
     constructor(socket: GameSocket) {
         this.socket = socket;
         this.initBoard();
-        this.randomBag = new RandomBag();
+        this.randomBag = new RandomBag(this.socket);
 
         // Owner ID set on initPlayer
         this.currentTetromino = new Tetromino(

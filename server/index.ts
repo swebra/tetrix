@@ -12,6 +12,7 @@ import path from "path";
 import { ServerToClientEvents, ClientToServerEvents } from "common/message";
 import { ColoredScore } from "common/shared";
 import { SceneTracker } from "./src/SceneTracker";
+import { TetrominoType } from "common/TetrominoType";
 
 // Initialize the express engine
 const app: express.Application = express();
@@ -72,9 +73,10 @@ const toSceneGameOver: broadcast["toSceneGameOver"] = (
 };
 
 const showVotingSequence: broadcast["showVotingSequence"] = (
-    votingSequence: string
+    votingSequence: string,
+    randTetros: Array<TetrominoType>
 ) => {
-    io.sockets.emit("showVotingSequence", votingSequence);
+    io.sockets.emit("showVotingSequence", votingSequence, randTetros);
 };
 
 const hideVotingSequence: broadcast["hideVotingSequence"] = () => {
@@ -90,6 +92,12 @@ const remainingPlayers: broadcast["remainingPlayers"] = (
 const fallRate: broadcast["fallRate"] = (fallRate: number) => {
     io.sockets.emit("updateFallRate", fallRate);
 };
+
+const votedTetroToSpawn: broadcast["votedTetroToSpawn"] = (
+    type: TetrominoType
+) => {
+    io.sockets.emit("votedTetroToSpawn", type);
+};
 // ==============================================
 
 console.log(`Server started at port ${port}`);
@@ -97,7 +105,11 @@ let playerCounter: 0 | 1 | 2 | 3 = 0; // FIXME: Remove this on final version.
 const scoreboard = new Scoreboard(updateScoreboard);
 const level = new Level(fallRate);
 const queue = new PlayerQueue(remainingPlayers, toSceneGameArena);
-const spectator = new Spectator(showVotingSequence, hideVotingSequence);
+const spectator = new Spectator(
+    showVotingSequence,
+    hideVotingSequence,
+    votedTetroToSpawn
+);
 const scene = new SceneTracker();
 
 /**

@@ -1,10 +1,28 @@
 import { TetrominoType } from "common/TetrominoType";
+import {
+    ToClientEvents,
+    ToServerEvents,
+} from "../../common/messages/randomBag";
+
+import { Socket } from "socket.io-client";
+
+type BagSocket = Socket<ToClientEvents, ToServerEvents>;
 
 export class RandomBag {
-    bagStack!: Array<TetrominoType>;
+    private bagStack: Array<TetrominoType>;
+    private votedTetro?: TetrominoType;
 
-    constructor() {
+    constructor(socket: BagSocket) {
+        this.bagStack = [];
         this.createBag();
+
+        socket.removeListener("votedTetroToSpawn");
+        socket.on("votedTetroToSpawn", (type) => {
+            this.votedTetro = type;
+            setTimeout(() => {
+                this.votedTetro = undefined;
+            }, 20000);
+        });
     }
 
     // Using the Fisher Yates algorithm
@@ -27,6 +45,10 @@ export class RandomBag {
     }
 
     public getNextType(): TetrominoType {
+        if (this.votedTetro) {
+            return this.votedTetro;
+        }
+
         if (this.bagStack.length == 0) {
             this.createBag();
         }

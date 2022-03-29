@@ -5,6 +5,7 @@ import { BOARD_PX, TILE_SIZE, COLORS } from "common/shared";
 import { ToServerEvents, ToClientEvents } from "common/messages/spectator";
 
 import { CookieTracker } from "../CookieTracker";
+import { TetrominoType } from "common/TetrominoType";
 
 type SocketSpectator = Socket<ToClientEvents, ToServerEvents>;
 
@@ -25,9 +26,9 @@ export class SpectatorUI {
             ["decrease fall rate", "option2"],
         ],
         tetrominoSelection: [
-            ["fixme piece", "option1"],
-            ["fixme", "option2"],
-            ["fixme", "option3"],
+            ["placeholder", "option1"],
+            ["placeholder", "option2"],
+            ["placeholder", "option3"],
         ],
     };
 
@@ -67,7 +68,7 @@ export class SpectatorUI {
         this.buttons = new Array(4);
         for (let i = 0; i < this.buttons.length; i++) {
             this.buttons[i] = scene.add
-                .bitmapText(startX, startY + i * 35, "brawl", longestOption)
+                .bitmapText(startX, startY + i * 45, "brawl", longestOption)
                 .setVisible(false)
                 .setInteractive({ useHandCursor: true })
                 .on("pointerover", () => {
@@ -102,8 +103,8 @@ export class SpectatorUI {
         this.socket.removeListener("hideVotingSequence");
         this.socket.removeListener("sendVotingCountdown");
 
-        this.socket.on("showVotingSequence", (votingSequence) => {
-            this.generateTimedEvent(votingSequence);
+        this.socket.on("showVotingSequence", (votingSequence, randTetros) => {
+            this.generateTimedEvent(votingSequence, randTetros);
         });
 
         this.socket.on("hideVotingSequence", () => {
@@ -120,9 +121,12 @@ export class SpectatorUI {
      * Generate the spectator voting section.
      * @param valFromServer Specifies which buttons to be loading in for this sequence.
      */
-    private generateTimedEvent(valFromServer: string) {
+    private generateTimedEvent(
+        valFromServer: string,
+        randTetros: Array<TetrominoType>
+    ) {
         this.removeTimedEvent();
-        this.createOptions(valFromServer);
+        this.createOptions(valFromServer, randTetros);
     }
 
     /**
@@ -142,7 +146,10 @@ export class SpectatorUI {
      * Generate options for the user to select.
      * @param votingOption This value is received from the server. Based off the value obtained, display a different set of buttons.
      */
-    private createOptions(votingOption: string) {
+    private createOptions(
+        votingOption: string,
+        randTetros: Array<TetrominoType>
+    ) {
         this.header.setVisible(true);
         this.countdown.setTint(COLORS.green).setVisible(true);
         this.updateCountdown(10);
@@ -155,6 +162,12 @@ export class SpectatorUI {
         }
 
         SpectatorUI.options[votingOption].forEach(([str, val], i) => {
+            if (votingOption == "tetrominoSelection") {
+                str = `spawn ${TetrominoType[
+                    randTetros[i]
+                ].toLowerCase()} pieces`;
+            }
+
             this.buttons[i]
                 .setVisible(true)
                 .setText("> " + str)
