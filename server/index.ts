@@ -100,19 +100,6 @@ const queue = new PlayerQueue(remainingPlayers, toSceneGameArena);
 const spectator = new Spectator(showVotingSequence, hideVotingSequence);
 const scene = new SceneTracker();
 
-/**
- * End the game.
- */
-function gameOver() {
-    // Show scoreboard to all connected users.
-    toSceneGameOver(scoreboard.getFinalScores());
-
-    // Return to starting scene after 30 seconds.
-    setTimeout(() => {
-        toSceneWaitingRoom();
-    }, 30000);
-}
-
 io.on("connection", (socket) => {
     scoreboard.initSocketListeners(socket, level);
     spectator.initSocketListeners(socket);
@@ -135,6 +122,11 @@ io.on("connection", (socket) => {
     });
 
     socket.on("endGame", () => {
-        gameOver();
+        toSceneGameOver(scoreboard.getFinalScores());
+
+        // Return to starting scene after 30 seconds.
+        setTimeout(() => {
+            toSceneWaitingRoom();
+        }, 30000);
     });
 });
