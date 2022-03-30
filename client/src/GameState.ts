@@ -229,37 +229,25 @@ export class GameState {
 
     private removeLines(task: LineCheckTask, linesToClear: Array<number>) {
         if (task.axis === LineCheckAxis.Row) {
-            for (const row of task.range) {
+            for (const row of linesToClear) {
                 // scan through each row
-                if (linesToClear.includes(row)) {
-                    for (
-                        let col = WALL_SIZE;
-                        col < BOARD_SIZE - WALL_SIZE;
-                        col++
-                    ) {
-                        const monominoToRemove = this.board[row][col];
-                        if (monominoToRemove) {
-                            monominoToRemove.destroy();
-                        }
-                        this.board[row][col] = null;
+                for (let col = WALL_SIZE; col < BOARD_SIZE - WALL_SIZE; col++) {
+                    const monominoToRemove = this.board[row][col];
+                    if (monominoToRemove) {
+                        monominoToRemove.destroy();
                     }
+                    this.board[row][col] = null;
                 }
             }
         } else if (task.axis === LineCheckAxis.Column) {
-            for (const col of task.range) {
+            for (const col of linesToClear) {
                 // scan through each col
-                if (linesToClear.includes(col)) {
-                    for (
-                        let row = WALL_SIZE;
-                        row < BOARD_SIZE - WALL_SIZE;
-                        row++
-                    ) {
-                        const monominoToRemove = this.board[row][col];
-                        if (monominoToRemove) {
-                            monominoToRemove.destroy();
-                        }
-                        this.board[row][col] = null;
+                for (let row = WALL_SIZE; row < BOARD_SIZE - WALL_SIZE; row++) {
+                    const monominoToRemove = this.board[row][col];
+                    if (monominoToRemove) {
+                        monominoToRemove.destroy();
                     }
+                    this.board[row][col] = null;
                 }
             }
         }
@@ -322,20 +310,18 @@ export class GameState {
     ): Map<number, number> {
         const linesOffset = new Map<number, number>();
         let offset = 0;
-        if (linesToClear.length > 0) {
-            task.range
-                .slice()
-                .reverse()
-                .forEach((lineIndex) => {
-                    if (lineIndex === linesToClear?.at(0)) {
-                        // this line is an empty, cleared line. all lines above should fall with one more offset
-                        offset += 1;
-                        linesToClear.push(linesToClear.shift()!);
-                    } else {
-                        linesOffset.set(lineIndex, offset);
-                    }
-                });
-        }
+        task.range
+            .slice()
+            .reverse()
+            .forEach((lineIndex) => {
+                if (lineIndex === linesToClear[0]) {
+                    // this line is an empty, cleared line. all lines above should fall with one more offset
+                    offset += 1;
+                    linesToClear.push(linesToClear.shift()!);
+                } else {
+                    linesOffset.set(lineIndex, offset);
+                }
+            });
         return linesOffset;
     }
 
