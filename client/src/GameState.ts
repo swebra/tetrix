@@ -101,17 +101,12 @@ export class GameState {
 
         // generate walls
         // 0..14 and 25..39
-        const [rangeStart, rangeEnd] = [
-            [...Array(WALL_SIZE).keys()],
-            [...Array(WALL_SIZE).keys()].map((x) => x + WALL_SIZE + 10),
-        ];
-        [rangeStart, rangeEnd].forEach((rangeRow) => {
-            [rangeStart, rangeEnd].forEach((rangeCol) => {
-                for (const row of rangeRow) {
-                    for (const col of rangeCol) {
-                        this.board[row][col] = false;
-                    }
-                }
+        const wallInds = [...Array(WALL_SIZE).keys()].concat(
+            [...Array(WALL_SIZE).keys()].map((x) => BOARD_SIZE - 1 - x)
+        );
+        wallInds.forEach((row) => {
+            wallInds.forEach((col) => {
+                this.board[row][col] = false;
             });
         });
     }
