@@ -26,8 +26,7 @@ export class SceneGameArena extends Phaser.Scene {
     fallRateTimer!: Phaser.Time.TimerEvent | null;
 
     scoreboard!: ScoreboardUI;
-    spectator!: SpectatorUI;
-    controls!: ControlsUI | null;
+    spectator?: SpectatorUI;
 
     frameTimeElapsed: number = 0; // the ms time since the last frame is drawn
 
@@ -59,10 +58,12 @@ export class SceneGameArena extends Phaser.Scene {
 
     create() {
         this.scoreboard = new ScoreboardUI(this, this.socket);
-        this.spectator = new SpectatorUI(this, this.socket);
 
-        // TODO: need to make sure playerId is valid when this scene is started
-        new ControlsUI(this);
+        if (this.gameState.playerId >= 0) {
+            new ControlsUI(this);
+        } else {
+            this.spectator = new SpectatorUI(this, this.socket);
+        }
 
         // keyboard input
         this.keys = this.input.keyboard.addKeys(
@@ -89,6 +90,14 @@ export class SceneGameArena extends Phaser.Scene {
         // Clean out any old listeners to avoid accumulation.
         this.socket.removeListener("toSceneGameOver");
         this.socket.removeListener("updateFallRate");
+        this.socket.removeListener("initPlayer");
+
+        this.socket.on("initPlayer", (playerId) => {
+            new ControlsUI(this);
+            this.spectator?.destroy();
+            this.spectator = undefined;
+            this.gameState.initializePlayer(playerId);
+        });
 
         this.socket.on("updateFallRate", (fallRate) => {
             this.updateFallTimer(fallRate);
@@ -147,7 +156,7 @@ export class SceneGameArena extends Phaser.Scene {
         let moved = false;
         if (
             (this.keys.a.isDown || this.keys.left.isDown) &&
-            this.gameState.playerId !== null &&
+            this.gameState.playerId != null &&
             !this.gameState.isInOppositeSection()
         ) {
             moved = this.gameState.moveIfCan(
@@ -155,13 +164,13 @@ export class SceneGameArena extends Phaser.Scene {
             );
         } else if (
             (this.keys.s.isDown || this.keys.down.isDown) &&
-            this.gameState.playerId !== null &&
+            this.gameState.playerId != null &&
             !this.gameState.isInOppositeSection()
         ) {
             moved = this.gameState.moveIfCan(Tetromino.fall); // down
         } else if (
             (this.keys.d.isDown || this.keys.right.isDown) &&
-            this.gameState.playerId !== null &&
+            this.gameState.playerId != null &&
             !this.gameState.isInOppositeSection()
         ) {
             moved = this.gameState.moveIfCan(
@@ -169,7 +178,7 @@ export class SceneGameArena extends Phaser.Scene {
             );
         } else if (
             (this.keys.q.isDown || this.keys.z.isDown) &&
-            this.gameState.playerId !== null &&
+            this.gameState.playerId != null &&
             !this.gameState.isInOppositeSection()
         ) {
             moved = this.gameState.moveIfCan(
@@ -177,7 +186,7 @@ export class SceneGameArena extends Phaser.Scene {
             );
         } else if (
             (this.keys.e.isDown || this.keys.x.isDown) &&
-            this.gameState.playerId !== null &&
+            this.gameState.playerId != null &&
             !this.gameState.isInOppositeSection()
         ) {
             moved = this.gameState.moveIfCan(

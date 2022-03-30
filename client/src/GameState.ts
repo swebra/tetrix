@@ -123,7 +123,7 @@ export class GameState {
     constructor(socket: GameSocket) {
         this.socket = socket;
         this.initBoard();
-        this.randomBag = new RandomBag();
+        this.randomBag = new RandomBag(this.socket);
 
         // Owner ID set on initPlayer
         this.currentTetromino = new Tetromino(
@@ -145,13 +145,7 @@ export class GameState {
         });
 
         this.socket.on("initPlayer", (playerId) => {
-            this.playerId = playerId;
-            this.currentTetromino.setOwnerId(playerId);
-            this.otherTetrominoes.forEach((tetromino, i) =>
-                tetromino.setOwnerId(<0 | 1 | 2 | 3>((playerId + i + 1) % 4))
-            );
-
-            this.lineCheckSequence = this.generateLineCheckSequence(playerId);
+            this.initializePlayer(playerId);
         });
 
         this.socket.on("playerMove", (playerId, state) => {
@@ -180,6 +174,15 @@ export class GameState {
         });
     }
 
+    public initializePlayer(playerId: 0 | 1 | 2 | 3) {
+        this.playerId = playerId;
+        this.currentTetromino.setOwnerId(playerId);
+        this.otherTetrominoes.forEach((tetromino, i) =>
+            tetromino.setOwnerId(<0 | 1 | 2 | 3>((playerId + i + 1) % 4))
+        );
+        this.lineCheckSequence = this.generateLineCheckSequence(playerId);
+    }
+
     public emitPlayerMove() {
         this.socket.emit(
             "playerMove",
@@ -196,11 +199,19 @@ export class GameState {
             this.currentTetromino.reportState()
         );
         this.placeTetromino(this.currentTetromino);
+
         // start a new tetromino from the top
         this.currentTetromino = new Tetromino(
             this.randomBag.getNextType(),
             this.playerId
         );
+
+        if (
+            this.overlapWithBoard(this.currentTetromino.toTetrominoLookahead())
+        ) {
+            this.socket.emit("endGame");
+        }
+
         // broadcast new tetromino position
         this.emitPlayerMove();
     }
