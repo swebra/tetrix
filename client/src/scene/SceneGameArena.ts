@@ -118,25 +118,9 @@ export class SceneGameArena extends Phaser.Scene {
         if (this.frameTimeElapsed > 1000 / this.FRAMERATE) {
             this.updateUserInput();
             this.updateDrawPlayers();
-            this.updateDrawBoard();
-
+            this.drawPendingMonominoes();
             // start next frame
             this.frameTimeElapsed = 0;
-        }
-    }
-
-    private updateDrawBoard() {
-        for (let row = 15; row < 25; row++) {
-            this.gameState.board[row].forEach((monomino) => {
-                if (monomino) monomino.draw(this);
-            });
-        }
-
-        for (let col = 15; col < 25; col++) {
-            for (let row = 0; row < BOARD_SIZE; row++) {
-                const monomino = this.gameState.board[row][col];
-                if (monomino) monomino.draw(this);
-            }
         }
     }
 
@@ -150,6 +134,14 @@ export class SceneGameArena extends Phaser.Scene {
             callback: () => this.updateFalling(),
             loop: true,
         });
+    }
+
+    private drawPendingMonominoes() {
+        if (this.gameState.monominoesToDraw.length === 0) return;
+        this.gameState.monominoesToDraw.forEach((monomino) =>
+            monomino.draw(this)
+        );
+        this.gameState.monominoesToDraw = [];
     }
 
     private updateUserInput() {
