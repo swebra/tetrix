@@ -240,26 +240,25 @@ export class GameState {
     }
 
     private removeLines(task: LineCheckTask, linesToClear: Array<number>) {
+        const removeMonomino = (row: number, col: number) => {
+            const monominoToRemove = this.board[row][col];
+            if (monominoToRemove) {
+                monominoToRemove.destroy();
+            }
+            this.board[row][col] = null;
+        };
         if (task.axis === LineCheckAxis.Row) {
             for (const row of linesToClear) {
                 // scan through each row
                 for (let col = WALL_SIZE; col < BOARD_SIZE - WALL_SIZE; col++) {
-                    const monominoToRemove = this.board[row][col];
-                    if (monominoToRemove) {
-                        monominoToRemove.destroy();
-                    }
-                    this.board[row][col] = null;
+                    removeMonomino(row, col);
                 }
             }
         } else if (task.axis === LineCheckAxis.Column) {
             for (const col of linesToClear) {
                 // scan through each col
                 for (let row = WALL_SIZE; row < BOARD_SIZE - WALL_SIZE; row++) {
-                    const monominoToRemove = this.board[row][col];
-                    if (monominoToRemove) {
-                        monominoToRemove.destroy();
-                    }
-                    this.board[row][col] = null;
+                    removeMonomino(row, col);
                 }
             }
         }
@@ -270,6 +269,19 @@ export class GameState {
         linesToFall: Map<number, number>
     ): Array<Monomino> {
         const needRedraw: Array<Monomino> = [];
+        const swapMonomino = (
+            [oldRow, oldCol]: [number, number],
+            [newRow, newCol]: [number, number]
+        ) => {
+            this.board[newRow][newCol] = this.board[oldRow][oldCol];
+            this.board[oldRow][oldCol] = null;
+            const monomino = this.board[newRow][newCol];
+            if (monomino) {
+                monomino.position = [newRow, newCol];
+                needRedraw.push(monomino);
+            }
+        };
+
         task.range
             .slice()
             .reverse()
@@ -288,13 +300,7 @@ export class GameState {
                         col < BOARD_SIZE - WALL_SIZE;
                         col++
                     ) {
-                        this.board[newRow][col] = this.board[lineIndex][col];
-                        this.board[lineIndex][col] = null;
-                        const newMonomino = this.board[newRow][col];
-                        if (newMonomino) {
-                            newMonomino.position[0] = newRow;
-                            needRedraw.push(newMonomino);
-                        }
+                        swapMonomino([lineIndex, col], [newRow, col]);
                     }
                 } else if (task.axis === LineCheckAxis.Column) {
                     const newCol = lineIndex + offset;
@@ -303,13 +309,7 @@ export class GameState {
                         row < BOARD_SIZE - WALL_SIZE;
                         row++
                     ) {
-                        this.board[row][newCol] = this.board[row][lineIndex];
-                        this.board[row][lineIndex] = null;
-                        const newMonomino = this.board[row][newCol];
-                        if (newMonomino) {
-                            newMonomino.position[1] = newCol;
-                            needRedraw.push(newMonomino);
-                        }
+                        swapMonomino([row, lineIndex], [row, newCol]);
                     }
                 }
             });
