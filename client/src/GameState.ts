@@ -212,11 +212,6 @@ export class GameState {
     }
 
     public updateLineClearing() {
-        // check from all four directions, starting from player 0 clockwise
-        if (this.playerId === null) {
-            return; // NOTE this unlikely to happen
-        }
-
         this.lineCheckSequence.forEach((task) => {
             const linesToClear = this.scanLinesToClear(task);
             if (linesToClear.length === 0) {
