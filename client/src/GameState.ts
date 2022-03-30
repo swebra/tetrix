@@ -327,15 +327,15 @@ export class GameState {
 
     private scanLinesToClear(task: LineCheckTask): Array<number> {
         const linesToClear = [];
-        const WIDTH = BOARD_SIZE - 2 * WALL_SIZE;
+        const scanRange = [...Array(BOARD_SIZE - 2 * WALL_SIZE)].map(
+            (x) => WALL_SIZE + x
+        );
         if (task.axis === LineCheckAxis.Row) {
             for (const row of task.range) {
                 // scan through each row
-                const canClear = [...Array(WIDTH)]
-                    .map((_, i) => WALL_SIZE + i)
-                    .every((col) => {
-                        return this.board && this.board[row][col] != null;
-                    });
+                const canClear = scanRange.every((col) => {
+                    return this.board && this.board[row][col] != null;
+                });
                 if (canClear) {
                     linesToClear.push(row);
                 }
@@ -343,11 +343,9 @@ export class GameState {
         } else if (task.axis === LineCheckAxis.Column) {
             for (const col of task.range) {
                 // scan through each col
-                const canClear = [...Array(WIDTH)]
-                    .map((_, i) => WALL_SIZE + i)
-                    .every((row) => {
-                        return this.board && this.board[row][col] != null;
-                    });
+                const canClear = scanRange.every((row) => {
+                    return this.board && this.board[row][col] != null;
+                });
                 if (canClear) {
                     linesToClear.push(col);
                 }
