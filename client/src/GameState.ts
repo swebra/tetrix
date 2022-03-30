@@ -59,24 +59,25 @@ export class GameState {
         },
     ];
 
-    private generateLineCheckSequence(
-        playerId: number = 0
-    ): Array<LineCheckTask> {
+    private updateLineCheckSequence() {
         const sequence = GameState.LineCheckTemplate;
-        const distanceToPlayer0 = (4 - playerId) % 4;
+        const distanceToPlayer0 = (4 - this.playerId || 0) % 4;
         // rotate the line checking sequence to always start from player 0
-        [...Array(distanceToPlayer0).keys()].forEach((_) => {
+        for (let i = 0; i < distanceToPlayer0; i++) {
             sequence.push(sequence.shift()!);
-        });
+        }
 
         // for each task, generate the range of lines to check with, i.e. rows from top to center (before rotation)
         // e.g. for current player it will be [0..19], for opposite it's [39..20]
-        return sequence.map(({ axis, direction }) => {
-            let range = [...Array(BOARD_SIZE / 2).keys()].map(
-                (i) => BOARD_SIZE - 1 + i * direction
-            );
-            if (direction === 1) range = range.map((x) => (x + 1) % BOARD_SIZE);
-            return { axis, direction, range };
+        const halfBoard = [...Array(BOARD_SIZE / 2).keys()];
+        this.lineCheckSequence = sequence.map(({ axis, direction }) => {
+            if (direction > 0)
+                return { axis, direction, range: halfBoard.slice() };
+            return {
+                axis,
+                direction,
+                range: halfBoard.map((i) => BOARD_SIZE - 1 - i),
+            };
         });
     }
 
@@ -131,7 +132,7 @@ export class GameState {
             new Tetromino(TetrominoType.T, null),
             new Tetromino(TetrominoType.T, null),
         ];
-        this.lineCheckSequence = this.generateLineCheckSequence(0);
+        this.updateLineCheckSequence();
 
         // initial rotation
         this.otherTetrominoes.forEach((tetro, i) => {
@@ -175,7 +176,7 @@ export class GameState {
         this.otherTetrominoes.forEach((tetromino, i) =>
             tetromino.setOwnerId(<0 | 1 | 2 | 3>((playerId + i + 1) % 4))
         );
-        this.lineCheckSequence = this.generateLineCheckSequence(playerId);
+        this.updateLineCheckSequence();
     }
 
     public emitPlayerMove() {
@@ -231,7 +232,11 @@ export class GameState {
             for (const row of task.range) {
                 // scan through each row
                 if (linesToClear.includes(row)) {
-                    for (let col = 15; col < 25; col++) {
+                    for (
+                        let col = WALL_SIZE;
+                        col < BOARD_SIZE - WALL_SIZE;
+                        col++
+                    ) {
                         const monominoToRemove = this.board[row][col];
                         if (monominoToRemove) {
                             monominoToRemove.destroy();
@@ -244,7 +249,11 @@ export class GameState {
             for (const col of task.range) {
                 // scan through each col
                 if (linesToClear.includes(col)) {
-                    for (let row = 15; row < 25; row++) {
+                    for (
+                        let row = WALL_SIZE;
+                        row < BOARD_SIZE - WALL_SIZE;
+                        row++
+                    ) {
                         const monominoToRemove = this.board[row][col];
                         if (monominoToRemove) {
                             monominoToRemove.destroy();
@@ -271,7 +280,11 @@ export class GameState {
 
                     // swap line with the offset destination line
                     // the old line should always be null since it's cleared/propagated
-                    for (let col = 15; col < 25; col++) {
+                    for (
+                        let col = WALL_SIZE;
+                        col < BOARD_SIZE - WALL_SIZE;
+                        col++
+                    ) {
                         this.board[newRow][col] = this.board[lineIndex][col];
                         this.board[lineIndex][col] = null;
                         const newMonomino = this.board[newRow][col];
@@ -287,7 +300,11 @@ export class GameState {
                     }
                     const newCol = lineIndex + offset;
 
-                    for (let row = 15; row < 25; row++) {
+                    for (
+                        let row = WALL_SIZE;
+                        row < BOARD_SIZE - WALL_SIZE;
+                        row++
+                    ) {
                         this.board[row][newCol] = this.board[row][lineIndex];
                         this.board[row][lineIndex] = null;
                         const newMonomino = this.board[row][newCol];
@@ -328,7 +345,7 @@ export class GameState {
             for (const row of task.range) {
                 // scan through each row
                 let canClear = true;
-                for (let col = 15; col < 25; col++) {
+                for (let col = WALL_SIZE; col < BOARD_SIZE - WALL_SIZE; col++) {
                     if (this.board && this.board[row][col] === null) {
                         canClear = false;
                         break;
@@ -342,7 +359,7 @@ export class GameState {
             for (const col of task.range) {
                 // scan through each col
                 let canClear = true;
-                for (let row = 15; row < 25; row++) {
+                for (let row = WALL_SIZE; row < BOARD_SIZE - WALL_SIZE; row++) {
                     if (this.board && this.board[row][col] === null) {
                         canClear = false;
                         break;
