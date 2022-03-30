@@ -6,13 +6,11 @@ import { broadcast } from "./broadcast";
 
 export class BoardSync {
     private socketsWithTruth: Array<Socket> = [];
-    private timer;
     private broadcastUpdateBoard: broadcast["updateBoard"];
 
     constructor(broadcastUpdateBoard: broadcast["updateBoard"]) {
         this.broadcastUpdateBoard = broadcastUpdateBoard;
-        this.timer = setInterval(async () => {
-            console.log("broadcasting board update");
+        setInterval(async () => {
             const socket = this.pickRandomSourceOfTruth();
             if (!socket) return;
             const boardState = await this.getBoardFromClient(socket);

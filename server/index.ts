@@ -132,16 +132,15 @@ io.on("connection", (socket) => {
     }
 
     socket.on("playerMove", (playerId, state) => {
-        if (playerId === null || playerId === undefined) {
+        if (playerId == null) {
             return;
         }
         socket.broadcast.emit("playerMove", playerId, state);
     });
     socket.on("playerPlace", (playerId, state) => {
-        if (playerId === null || playerId === undefined) {
+        if (playerId == null) {
             return;
         }
-        console.log("player ", playerId, " placed.");
         socket.broadcast.emit("playerPlace", playerId, state);
     });
 
