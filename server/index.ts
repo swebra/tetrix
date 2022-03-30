@@ -14,6 +14,7 @@ import { ServerToClientEvents, ClientToServerEvents } from "common/message";
 import { ColoredScore } from "common/shared";
 import { TetrominoType } from "common/TetrominoType";
 import { SceneTracker } from "./src/SceneTracker";
+import { TetrominoType } from "common/TetrominoType";
 
 // Initialize the express engine
 const app: express.Application = express();
@@ -74,9 +75,10 @@ const toSceneGameOver: broadcast["toSceneGameOver"] = (
 };
 
 const showVotingSequence: broadcast["showVotingSequence"] = (
-    votingSequence: string
+    votingSequence: string,
+    randTetros: Array<TetrominoType>
 ) => {
-    io.sockets.emit("showVotingSequence", votingSequence);
+    io.sockets.emit("showVotingSequence", votingSequence, randTetros);
 };
 
 const hideVotingSequence: broadcast["hideVotingSequence"] = () => {
@@ -94,6 +96,12 @@ const trader = new Trade();
 const fallRate: broadcast["fallRate"] = (fallRate: number) => {
     io.sockets.emit("updateFallRate", fallRate);
 };
+
+const votedTetroToSpawn: broadcast["votedTetroToSpawn"] = (
+    type: TetrominoType
+) => {
+    io.sockets.emit("votedTetroToSpawn", type);
+};
 // ==============================================
 
 console.log(`Server started at port ${port}`);
@@ -101,21 +109,12 @@ let playerCounter: 0 | 1 | 2 | 3 = 0; // FIXME: Remove this on final version.
 const scoreboard = new Scoreboard(updateScoreboard);
 const level = new Level(fallRate);
 const queue = new PlayerQueue(remainingPlayers, toSceneGameArena);
-const spectator = new Spectator(showVotingSequence, hideVotingSequence);
+const spectator = new Spectator(
+    showVotingSequence,
+    hideVotingSequence,
+    votedTetroToSpawn
+);
 const scene = new SceneTracker();
-
-/**
- * End the game.
- */
-function gameOver() {
-    // Show scoreboard to all connected users.
-    toSceneGameOver(scoreboard.getFinalScores());
-
-    // Return to starting scene after 30 seconds.
-    setTimeout(() => {
-        toSceneWaitingRoom();
-    }, 30000);
-}
 
 io.on("connection", (socket) => {
     scoreboard.initSocketListeners(socket, level);
@@ -145,5 +144,14 @@ io.on("connection", (socket) => {
     socket.on("playerPlace", (...args) => {
         console.log("player ", args[0], " placed.");
         socket.broadcast.emit("playerPlace", ...args);
+    });
+
+    socket.on("endGame", () => {
+        toSceneGameOver(scoreboard.getFinalScores());
+
+        // Return to starting scene after 30 seconds.
+        setTimeout(() => {
+            toSceneWaitingRoom();
+        }, 30000);
     });
 });

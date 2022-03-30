@@ -1,21 +1,23 @@
 import { Socket } from "socket.io-client";
-import { TetrominoType } from "common/TetrominoType";
-import { Tetromino } from "./Tetromino";
+
 import { BOARD_SIZE } from "common/shared";
+import { TetrominoType } from "common/TetrominoType";
 import { ToServerEvents, ToClientEvents } from "common/messages/game";
 import { TradeState } from "common/TradeState";
 
-import { TetrominoLookahead } from "./Tetromino";
+import { Tetromino, TetrominoLookahead } from "./Tetromino";
+import { Monomino } from "./Monomino";
+import { RandomBag } from "./RandomBag";
 
 type GameSocket = Socket<ToClientEvents, ToServerEvents>;
 
 export class GameState {
-    // used for synchronization. not related to rendering (no sprites, scene, phaser3 stuff)
     socket: GameSocket;
 
-    // board contains all placed monominoes (tiles)
-    board: Array<Array<TetrominoType | null>>;
     tradeState!: TradeState;
+    board!: Array<Array<Monomino | null>>;
+    randomBag: RandomBag;
+
     // synced to server
     currentTetromino: Tetromino;
     // synced from server, ordered by increasing, circular player numbers
@@ -24,18 +26,24 @@ export class GameState {
     playerId!: 0 | 1 | 2 | 3;
     tradingPlayerId: 0 | 1 | 2 | 3 | null;
 
-    private newBoard() {
-        const board = new Array(BOARD_SIZE);
+    private initBoard() {
+        this.board = new Array(BOARD_SIZE);
         for (let r = 0; r < BOARD_SIZE; r++) {
-            board[r] = new Array(BOARD_SIZE).fill(null);
+            this.board[r] = new Array(BOARD_SIZE).fill(null);
         }
 
         const centerTopLeft = BOARD_SIZE / 2 - 1;
-        board[centerTopLeft][centerTopLeft] = TetrominoType.O;
-        board[centerTopLeft + 1][centerTopLeft] = TetrominoType.O;
-        board[centerTopLeft][centerTopLeft + 1] = TetrominoType.O;
-        board[centerTopLeft + 1][centerTopLeft + 1] = TetrominoType.O;
-        return board;
+        [0, 1].forEach((row_off) => {
+            [0, 1].forEach((col_off) => {
+                const row = centerTopLeft + row_off;
+                const col = centerTopLeft + col_off;
+                this.board[row][col] = new Monomino(
+                    TetrominoType.O,
+                    [row, col],
+                    null
+                );
+            });
+        });
     }
 
     private getPlayerIndex(playerId: number) {
@@ -47,15 +55,23 @@ export class GameState {
 
         this.tradeState = TradeState.NoTrade;
         this.tradingPlayerId = null;
-        this.board = this.newBoard();
-        this.currentTetromino = new Tetromino();
         // other player's moving piece, TODO this is synchronized with the server
         // how they are rendered is not concerned.
+        this.initBoard();
+
+        //TODO: check whether passing the socket here is needed
+        this.randomBag = new RandomBag(this.socket);
+
+        // Owner ID set on initPlayer
+        this.currentTetromino = new Tetromino(
+            this.randomBag.getNextType(),
+            null
+        );
         this.otherTetrominoes = [
-            // FIXME not good?
-            new Tetromino(),
-            new Tetromino(),
-            new Tetromino(),
+            // TODO: perhaps avoid initializing until we know peers' types?
+            new Tetromino(TetrominoType.T, null),
+            new Tetromino(TetrominoType.T, null),
+            new Tetromino(TetrominoType.T, null),
         ];
 
         // initial rotation
@@ -65,7 +81,7 @@ export class GameState {
         });
 
         this.socket.on("initPlayer", (playerId) => {
-            this.playerId = playerId;
+            this.initializePlayer(playerId);
         });
 
         this.socket.on("playerMove", (playerId, state) => {
@@ -79,7 +95,7 @@ export class GameState {
             const tetroToPlace = this.otherTetrominoes[i];
             tetroToPlace.updateFromState(state, i + 1);
             this.placeTetromino(tetroToPlace);
-            this.otherTetrominoes[i] = tetroToPlace;
+            tetroToPlace.dropSprites();
 
             // if the other tetromino is bumping into us, freeze ours too.
             if (
@@ -118,6 +134,14 @@ export class GameState {
         this.socket.emit("clearTrade");
     }
 
+    public initializePlayer(playerId: 0 | 1 | 2 | 3) {
+        this.playerId = playerId;
+        this.currentTetromino.setOwnerId(playerId);
+        this.otherTetrominoes.forEach((tetromino, i) =>
+            tetromino.setOwnerId(<0 | 1 | 2 | 3>((playerId + i + 1) % 4))
+        );
+    }
+
     public emitPlayerMove() {
         this.socket.emit(
             "playerMove",
@@ -135,22 +159,33 @@ export class GameState {
         );
         this.placeTetromino(this.currentTetromino);
         this.clearTradeAndEmit();
+
         // start a new tetromino from the top
-        this.currentTetromino.respawn();
+        this.currentTetromino = new Tetromino(
+            this.randomBag.getNextType(),
+            this.playerId
+        );
+
+        if (
+            this.overlapWithBoard(this.currentTetromino.toTetrominoLookahead())
+        ) {
+            this.socket.emit("endGame");
+        }
+
         // broadcast new tetromino position
         this.emitPlayerMove();
     }
 
     public placeTetromino(tetromino: Tetromino) {
-        tetromino.tiles.forEach(([row, col]) => {
-            this.board[row][col] = tetromino.type;
+        tetromino.monominoes.forEach((monomino) => {
+            this.board[monomino.position[0]][monomino.position[1]] = monomino;
         });
     }
     public emitTrade() {
         this.socket.emit(
             "playerTrade",
             this.playerId,
-            this.currentTetromino.type,
+            this.currentTetromino.getType(),
             this.tradeState
         );
     }
@@ -207,7 +242,8 @@ export class GameState {
             }
 
             // if lookahead has overlapping monominoes with those tetro
-            return tetro.tiles.some(([row, col]) => {
+            return tetro.monominoes.some((monomino) => {
+                const [row, col] = monomino.position;
                 return lookahead.tiles.some(
                     ([newRow, newCol]) => newRow === row && newCol === col
                 );
@@ -225,7 +261,9 @@ export class GameState {
         tetrominoes: Array<Tetromino>
     ): boolean {
         const lookahead = tetro.toTetrominoLookahead();
-        lookahead.tiles = tetro.tiles
+
+        // No out of bounds check because overlapWithPlayers doesn't index board
+        lookahead.tiles = lookahead.tiles
             // insert tiles and their expanded positions
             // No out of bounds check because overlapWithPlayers doesn't index board
             .map(([row, col]) => {

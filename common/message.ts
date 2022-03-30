@@ -17,7 +17,7 @@ export type ServerToClientEvents = sceneWaitingRoomMsgs.ToClientEvents &
 
 export type ClientToServerEvents = sceneWaitingRoomMsgs.ToServerEvents &
     sceneGameArenaMsgs.ToServerEvents &
-    gameMsgs.ToClientEvents &
+    gameMsgs.ToServerEvents &
     scoreboardMsgs.ToServerEvents &
     spectatorMsgs.ToServerEvents &
     sceneGameOverMsgs.ToServerEvents &

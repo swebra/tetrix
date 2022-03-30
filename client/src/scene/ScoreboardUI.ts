@@ -1,55 +1,28 @@
-import { SceneGameArena } from "./SceneGameArena";
-import { BOARD_SIZE } from "common/shared";
-import { SceneGameOver } from "./SceneGameOver";
-import { TextConfig } from "../TextConfig";
-
 import { Socket } from "socket.io-client";
+import { Scene } from "phaser";
+
+import { ColoredScore, COLORS, BOARD_PX, TILE_SIZE } from "common/shared";
 import { ToServerEvents, ToClientEvents } from "common/messages/scoreboard";
-import { ColoredScore } from "common/shared";
-import { TILE_SIZE } from "common/shared";
 
 type SocketScoreboard = Socket<ToClientEvents, ToServerEvents>;
 
 export class ScoreboardUI {
-    private scene: SceneGameArena | SceneGameOver;
-    private listOfScores: Array<Phaser.GameObjects.Text>;
-    private headerTextConfig: TextConfig;
-    private regularTextConfig: TextConfig;
     private socket: SocketScoreboard;
-    private isMiniUILoaded: boolean;
+    private numbers!: { [text: string]: Phaser.GameObjects.BitmapText };
 
     constructor(
-        scene: SceneGameArena | SceneGameOver,
+        scene: Scene,
         socket: SocketScoreboard,
-        shouldLoadMiniScoreboard = false
+        playerData?: Array<ColoredScore>
     ) {
-        this.scene = scene;
-        this.listOfScores = [];
         this.socket = socket;
-        this.isMiniUILoaded = shouldLoadMiniScoreboard;
-        this.initListeners();
 
-        // Configs used for the different text's.
-        this.headerTextConfig = {
-            fontSize: `${BOARD_SIZE}px`,
-            fontFamily: "VT323",
-        };
-        this.regularTextConfig = {
-            fontSize: `${BOARD_SIZE / 2}px`,
-            fontFamily: "VT323",
-        };
-
-        if (shouldLoadMiniScoreboard) {
-            this.loadScoreboard();
+        if (playerData) {
+            this.createFullscreenScoreboard(scene, playerData);
+            return;
         }
-
-        this.requestScoreboardData();
-    }
-
-    /**
-     * Request scoreboard data from the server.
-     */
-    private requestScoreboardData() {
+        this.createScoreboard(scene);
+        this.initListeners();
         this.socket.emit("requestScoreboardData");
     }
 
@@ -66,116 +39,91 @@ export class ScoreboardUI {
     }
 
     /**
-     * Load in the scoreboard.
+     * Create the scoreboard.
+     * @param scene The scene to add the scoreboard to
      */
-    public loadScoreboard() {
-        // Add in the 'leaderboard' header.
-        this.scene.add
-            .text(
-                14 * BOARD_SIZE + 25,
-                16,
-                "Leaderboard",
-                this.headerTextConfig
-            )
-            .setTint(0xff0000);
+    private createScoreboard(scene: Scene) {
+        const startX = BOARD_PX - 12 * TILE_SIZE;
+        let startY = 2 * TILE_SIZE;
 
-        // Add in the individual player scores (initially 0).
-        const y: number = BOARD_SIZE * 1.5;
-        this.listOfScores[0] = this.scene.add
-            .text(
-                14 * BOARD_SIZE + 60,
-                y,
-                "Orange".padEnd(10) + "0",
-                this.regularTextConfig
-            )
-            .setTint(0xffa500);
+        scene.add.bitmapText(startX, startY, "brawl", "scoreboard", 31.5);
 
-        this.listOfScores[1] = this.scene.add
-            .text(
-                14 * BOARD_SIZE + 60,
-                y + 30,
-                "Green".padEnd(10) + "0",
-                this.regularTextConfig
-            )
-            .setTint(0x00ff00);
+        this.numbers = Object();
+        Object.entries(COLORS)
+            .slice(0, 4)
+            .forEach(([colorStr, color]) => {
+                startY += 55;
+                scene.add
+                    .bitmapText(startX, startY, "brawl", colorStr, 31.5)
+                    .setTint(color);
+                this.numbers[colorStr] = scene.add
+                    .bitmapText(startX + 360, startY, "brawl", "0", 31.5)
+                    .setOrigin(1, 0)
+                    .setTint(color);
+            });
 
-        this.listOfScores[2] = this.scene.add
-            .text(
-                14 * BOARD_SIZE + 60,
-                y + 60,
-                "Pink".padEnd(10) + "0",
-                this.regularTextConfig
-            )
-            .setTint(0xff00ff);
-
-        this.listOfScores[3] = this.scene.add
-            .text(
-                14 * BOARD_SIZE + 60,
-                y + 90,
-                "Blue".padEnd(10) + "0",
-                this.regularTextConfig
-            )
-            .setTint(0x00bfff);
-
-        this.listOfScores[4] = this.scene.add
-            .text(
-                14 * BOARD_SIZE + 60,
-                y + 120,
-                "Level".padEnd(10) + "1",
-                this.regularTextConfig
-            )
-            .setTint(0xffffff);
+        startY += 110;
+        scene.add.bitmapText(startX, startY, "brawl", "level", 31.5);
+        this.numbers["level"] = scene.add
+            .bitmapText(startX + 360, startY, "brawl", "1", 31.5)
+            .setOrigin(1, 0);
     }
 
     /**
-     * Update the mini scoreboard found on the main game arena.
-     * @param playerPts The array of objects containing player data (name + points + hex-color).
+     * Update the non-fullscreen scoreboard.
+     * @param playerPts The array of objects containing player data (color + points).
      */
-    public updateScoreboard(playerPts: Array<ColoredScore>) {
-        // Ensure this function is only run if the mini-scoreboard is loaded.
-        if (!this.isMiniUILoaded) {
-            return;
-        }
-
-        for (let i = 0; i < playerPts.length; i++) {
-            const text =
-                `${playerPts[i].color}`.padEnd(10) + `${playerPts[i].points}`;
-            this.listOfScores[i].setText(text).setTint(playerPts[i].hex);
-        }
+    private updateScoreboard(playerPts: Array<ColoredScore>) {
+        playerPts.forEach((pts) => {
+            this.numbers[pts.color].setText(pts.points.toString());
+        });
     }
 
     /**
      * Create a fullscreen scoreboard for the game over scene.
-     * @param TILE_SIZE The block size defined in the game arena.
-     * @param playerData The array of objects containing player data (name + points + hex-color).
+     * @param scene The scene to add the fullscreen scoreboard to
+     * @param playerData The array of objects containing player data (color + points).
      */
-    public createFullscreenScoreboard(playerData: Array<ColoredScore>) {
-        this.scene.add
-            .text(
-                (BOARD_SIZE * TILE_SIZE) / 4,
-                (BOARD_SIZE * TILE_SIZE) / 4,
-                "Game Over!",
-                { fontSize: "82px", fontFamily: "VT323" }
+    public createFullscreenScoreboard(
+        scene: Scene,
+        playerData: Array<ColoredScore>
+    ) {
+        const center = BOARD_PX / 2;
+        let startY = BOARD_PX / 3;
+
+        scene.add
+            .bitmapText(center, startY, "brawl", "game over", 84)
+            .setOrigin(0.5);
+
+        playerData.forEach((pts) => {
+            startY += 72;
+            const color =
+                pts.color in COLORS
+                    ? COLORS[<keyof typeof COLORS>pts.color]
+                    : 0xffffff;
+            scene.add
+                .bitmapText(center - 250, startY, "brawl", pts.color, 42)
+                .setTint(color);
+            scene.add
+                .bitmapText(
+                    center + 250,
+                    startY,
+                    "brawl",
+                    pts.points.toString(),
+                    42
+                )
+                .setOrigin(1, 0)
+                .setTint(color);
+        });
+
+        scene.add
+            .bitmapText(
+                center,
+                startY + 200,
+                "brawl",
+                "new game starting soon",
+                42
             )
-            .setTint(0xff0000);
-
-        let y: number = 12 * TILE_SIZE;
-        for (const element of playerData) {
-            y += 50;
-            const text = `${element.color}`.padEnd(20) + `${element.points}`;
-            this.scene.add
-                .text(11 * TILE_SIZE, y, text, {
-                    fontSize: "32px",
-                    fontFamily: "VT323",
-                })
-                .setTint(element.hex);
-        }
-
-        this.scene.add
-            .text(5 * TILE_SIZE, y + 70, "New game starting in 30 seconds", {
-                fontSize: "42px",
-                fontFamily: "VT323",
-            })
-            .setTint(0xff0000);
+            .setOrigin(0.5);
     }
 }

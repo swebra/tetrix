@@ -1,7 +1,10 @@
-import { TetrominoType } from "common/TetrominoType";
+import { Scene } from "phaser";
+
 import { BOARD_SIZE } from "common/shared";
+import { TetrominoType } from "common/TetrominoType";
 import { TetrominoState } from "common/message";
-import { RandomBag } from "./randomBag";
+import { Monomino } from "./Monomino";
+
 type Shape = {
     width: number;
     tiles: Array<[number, number]>;
@@ -105,42 +108,45 @@ export class Tetromino {
         }
     }
 
-    type!: TetrominoType;
-    position: [number, number];
-    rotation: 0 | 1 | 2 | 3;
-    tiles!: Array<[number, number]>;
-    randomBag!: RandomBag;
+    public position: [number, number];
+    public rotation: 0 | 1 | 2 | 3;
+    private type!: TetrominoType;
+    private ownerId: 0 | 1 | 2 | 3 | null;
+    public monominoes!: Array<Monomino>;
     isTraded: boolean = false;
-    constructor() {
-        this.randomBag = new RandomBag();
-        const type = this.randomBag.returnNextPiece();
+
+    constructor(type: TetrominoType, ownerId: 0 | 1 | 2 | 3 | null) {
+        //TODO: check if the type parameter can be removed
+        // const type = this.randomBag.returnNextPiece();
         this.position = [
             0,
             Math.round((BOARD_SIZE - Tetromino.shapes[type].width) / 2),
         ];
+        this.ownerId = ownerId;
         this.setType(type);
         this.rotation = 0; // default (no rotation)
     }
 
-    respawn() {
-        // TODO generate from a sequence iterator (another singleton class?)
-        // use respawn instead of `new Tetromino` because right now rendered tetromino will lose reference if inner is created anew. FIXME this is not true when using extension style rendered tetromino
-        this.position = [
-            0,
-            Math.round((BOARD_SIZE - Tetromino.shapes[this.type].width) / 2),
-        ];
-        this.setType(this.randomBag.returnNextPiece());
-        this.rotation = 0; // default (no rotation)
-        this.isTraded = false;
-    }
-    respawnPiece(tetrominoType: TetrominoType) {
-        this.position = [
-            0,
-            Math.round((BOARD_SIZE - Tetromino.shapes[this.type].width) / 2),
-        ];
-        this.setType(tetrominoType);
-        this.rotation = 0; // default (no rotation)
-    }
+    //TODO Prune
+    // respawn() {
+    //     // TODO generate from a sequence iterator (another singleton class?)
+    //     // use respawn instead of `new Tetromino` because right now rendered tetromino will lose reference if inner is created anew. FIXME this is not true when using extension style rendered tetromino
+    //     this.position = [
+    //         0,
+    //         Math.round((BOARD_SIZE - Tetromino.shapes[this.type].width) / 2),
+    //     ];
+    //     this.setType(this.randomBag.returnNextPiece());
+    //     this.rotation = 0; // default (no rotation)
+    //     this.isTraded = false;
+    // }
+    // respawnPiece(tetrominoType: TetrominoType) {
+    //     this.position = [
+    //         0,
+    //         Math.round((BOARD_SIZE - Tetromino.shapes[this.type].width) / 2),
+    //     ];
+    //     this.setType(tetrominoType);
+    //     this.rotation = 0; // default (no rotation)
+    // }
 
     swapPiece(newType: TetrominoType) {
         this.position = [
@@ -150,7 +156,9 @@ export class Tetromino {
         this.setType(newType);
         this.rotation = 0; // default (no rotation)
     }
-
+    getType() {
+        return this.type;
+    }
     reportState(): TetrominoState {
         return {
             type: this.type,
@@ -167,30 +175,45 @@ export class Tetromino {
         );
     }
 
-    updateFromLookahead(lookahead: TetrominoLookahead) {
-        this.position = lookahead.position;
-        this.tiles = lookahead.tiles;
-        this.rotation = lookahead.rotation;
-    }
-
     toTetrominoLookahead(): TetrominoLookahead {
         return {
             position: [...this.position],
-            tiles: this.tiles,
+            tiles: this.monominoes.map((monomino) => monomino.position),
             rotation: this.rotation,
         };
+    }
+
+    updateFromLookahead(lookahead: TetrominoLookahead) {
+        this.position = lookahead.position;
+        this.rotation = lookahead.rotation;
+        this.monominoes.forEach((monomino, i) => {
+            monomino.position = lookahead.tiles[i];
+        });
     }
 
     setType(type: TetrominoType) {
         if (this.type == type) {
             return;
         }
+        if (this.monominoes) {
+            this.monominoes.forEach((monomino) => monomino.destroy());
+        }
+
         this.type = type;
-        this.tiles = Tetromino.shapes[type].tiles.map(([row, col]) => [
-            this.position[0] + row,
-            this.position[1] + col,
-        ]);
+        this.monominoes = Tetromino.shapes[type].tiles.map(
+            ([row, col]) =>
+                new Monomino(
+                    this.type,
+                    [this.position[0] + row, this.position[1] + col],
+                    this.ownerId
+                )
+        );
         this.rotation = 0;
+    }
+
+    setOwnerId(ownerId: 0 | 1 | 2 | 3) {
+        this.ownerId = ownerId;
+        this.monominoes.forEach((monomino) => monomino.setOwnerId(ownerId));
     }
 
     setRotatedPosition(position: [number, number], ccRotations: number) {
@@ -209,16 +232,23 @@ export class Tetromino {
             newRow -= adjustment;
         }
 
-        this.tiles = this.tiles
-            .map(([row, col]) => [
-                row - this.position[0],
-                col - this.position[1],
-            ])
-            .map(([offsetRow, offsetCol]) => [
-                offsetRow + newRow,
-                offsetCol + newCol,
-            ]);
+        this.monominoes.forEach((monomino) => {
+            monomino.position = [
+                monomino.position[0] - this.position[0] + newRow,
+                monomino.position[1] - this.position[1] + newCol,
+            ];
+        });
         this.position = [newRow, newCol];
+    }
+
+    dropSprites() {
+        this.monominoes.forEach(
+            (monomino, i) => (this.monominoes[i] = monomino.getCopy())
+        );
+    }
+
+    draw(scene: Scene) {
+        this.monominoes.forEach((monomino) => monomino.draw(scene));
     }
 
     static rotate(tetromino: Tetromino, rotation: number): TetrominoLookahead {

@@ -23,4 +23,5 @@ export interface ToServerEvents {
         tradeState: TradeState
     ) => void;
     clearTrade: () => void;
+    endGame: () => void;
 }

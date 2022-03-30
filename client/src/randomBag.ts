@@ -1,46 +1,54 @@
 import { TetrominoType } from "common/TetrominoType";
+import { ToClientEvents, ToServerEvents } from "common/messages/randomBag";
+
+import { Socket } from "socket.io-client";
+
+type BagSocket = Socket<ToClientEvents, ToServerEvents>;
 
 export class RandomBag {
-    bagStack: Array<TetrominoType>;
+    private bagStack: Array<TetrominoType>;
+    private votedTetro?: TetrominoType;
 
-    constructor() {
+    constructor(socket: BagSocket) {
         this.bagStack = [];
+        this.createBag();
+
+        socket.removeListener("votedTetroToSpawn");
+        socket.on("votedTetroToSpawn", (type) => {
+            this.votedTetro = type;
+            setTimeout(() => {
+                this.votedTetro = undefined;
+            }, 20000);
+        });
     }
 
-    //using the Fisher Yates algorithm
+    // Using the Fisher Yates algorithm
     private shuffle() {
-        let currIdx = this.bagStack.length - 1;
-
-        while (currIdx > 0) {
-            const randIdx = Math.floor(Math.random() * currIdx);
-            [this.bagStack[currIdx], this.bagStack[randIdx]] = [
-                this.bagStack[randIdx],
-                this.bagStack[currIdx],
+        for (let i = this.bagStack.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [this.bagStack[i], this.bagStack[j]] = [
+                this.bagStack[j],
+                this.bagStack[i],
             ];
-            currIdx--;
         }
-        return this.bagStack;
     }
 
     private createBag() {
-        this.bagStack = [
-            TetrominoType.I,
-            TetrominoType.J,
-            TetrominoType.L,
-            TetrominoType.O,
-            TetrominoType.S,
-            TetrominoType.T,
-            TetrominoType.Z,
-        ];
+        this.bagStack = <TetrominoType[]>(
+            // Filter to handle TypeScript's enum double mapping
+            Object.values(TetrominoType).filter((x) => typeof x === "number")
+        );
         this.shuffle();
     }
-    public returnNextPiece() {
+
+    public getNextType(): TetrominoType {
+        if (this.votedTetro) {
+            return this.votedTetro;
+        }
+
         if (this.bagStack.length == 0) {
             this.createBag();
         }
-        const nextPiece: TetrominoType =
-            this.bagStack[this.bagStack.length - 1];
-        this.bagStack.pop();
-        return nextPiece;
+        return this.bagStack.pop() as TetrominoType;
     }
 }
