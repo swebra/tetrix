@@ -210,6 +210,8 @@ export class SceneGameArena extends Phaser.Scene {
         }
         if (tradeChanged) {
             this.gameState.emitTrade();
+            //update the trade state immediately on emit
+            this.updateFromTradeState();
         }
     }
     private updateFromTradeState() {
