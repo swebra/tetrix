@@ -14,7 +14,6 @@ import { ServerToClientEvents, ClientToServerEvents } from "common/message";
 import { ColoredScore } from "common/shared";
 import { TetrominoType } from "common/TetrominoType";
 import { SceneTracker } from "./src/SceneTracker";
-import { TetrominoType } from "common/TetrominoType";
 
 // Initialize the express engine
 const app: express.Application = express();
