@@ -109,7 +109,7 @@ export class SceneGameArena extends Phaser.Scene {
             });
         });
 
-        this.socket.emit("syncBoard", (boardState: any) => {
+        this.socket.on("updateBoard", (boardState: any) => {
             this.gameState.fromBoardState(boardState);
             this.gameState.board.forEach((row) =>
                 row.forEach((monomino) => {
@@ -119,6 +119,8 @@ export class SceneGameArena extends Phaser.Scene {
                 })
             );
         });
+        // request to sync with other players
+        this.socket.emit("requestBoard");
     }
 
     update(time: number, delta: number) {

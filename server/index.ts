@@ -99,6 +99,10 @@ const votedTetroToSpawn: broadcast["votedTetroToSpawn"] = (
 ) => {
     io.sockets.emit("votedTetroToSpawn", type);
 };
+
+const updateBoard: broadcast["updateBoard"] = (board: BoardState) => {
+    io.sockets.emit("updateBoard", board);
+};
 // ==============================================
 console.log(`Server started at port ${port}`);
 let playerCounter: 0 | 1 | 2 | 3 = 0; // FIXME: Remove this on final version.
@@ -111,7 +115,7 @@ const spectator = new Spectator(
     votedTetroToSpawn
 );
 const scene = new SceneTracker();
-const boardSync = new BoardSync();
+const boardSync = new BoardSync(updateBoard);
 
 io.on("connection", (socket) => {
     scoreboard.initSocketListeners(socket, level);

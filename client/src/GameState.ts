@@ -76,6 +76,26 @@ export class GameState {
     }
 
     public fromBoardState(boardState: BoardState) {
+        if (this.playerId > 0) {
+            // rotate remote player0 board to local board
+            const ccRotations = 4 - ((this.playerId || 0) % 4);
+            const localBoard = boardState.map((row) => row.slice());
+            for (let row = 0; row < BOARD_SIZE; row++) {
+                for (let col = 0; col < BOARD_SIZE; col++) {
+                    const [newRow, newCol] = Tetromino.rotateCoords(
+                        [row, col],
+                        BOARD_SIZE,
+                        ccRotations
+                    );
+                    localBoard[newRow][newCol] = boardState[row][col];
+                    const monominoState = boardState[row][col];
+                    if (monominoState) {
+                        monominoState.position = [newRow, newCol];
+                    }
+                }
+            }
+            boardState = localBoard;
+        }
         for (let row = 0; row < BOARD_SIZE; row++) {
             for (let col = 0; col < BOARD_SIZE; col++) {
                 const monominoState = boardState[row][col];
@@ -116,7 +136,7 @@ export class GameState {
         });
 
         this.socket.on(
-            "cacheBoard",
+            "reportBoard",
             (callback: (boardState: BoardState) => void) => {
                 callback(this.toBoardState());
             }
