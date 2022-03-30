@@ -1,22 +1,21 @@
 {
-  "name": "tetrix-client",
-  "version": "0.0.0",
-  "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "serve": "vite preview",
-    "test": "vitest"
-  },
-  "dependencies": {
-    "common": "file:../common",
-    "phaser": "^3.53.1",
-    "prettier": "^2.5.1",
-    "socket.io": "^4.4.1",
-    "socket.io-client": "^4.4.1"
-  },
-  "devDependencies": {
-    "typescript": "^4.5.5",
-    "vite": "^2.8.0",
-    "vitest": "^0.3.0"
-  }
+    "name": "tetrix-client",
+    "version": "0.0.0",
+    "scripts": {
+        "dev": "vite",
+        "build": "vite build",
+        "serve": "vite preview",
+        "test": "vitest"
+    },
+    "dependencies": {
+        "common": "file:../common",
+        "phaser": "^3.53.1",
+        "socket.io": "^4.4.1",
+        "socket.io-client": "^4.4.1"
+    },
+    "devDependencies": {
+        "typescript": "^4.5.5",
+        "vite": "^2.8.0",
+        "vitest": "^0.3.0"
+    }
 }
