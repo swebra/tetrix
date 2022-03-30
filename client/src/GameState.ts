@@ -143,9 +143,6 @@ export class GameState {
         );
 
         this.socket.on("initPlayer", (playerId) => {
-            if (this.otherTetrominoes.length > 3) {
-                this.otherTetrominoes.pop();
-            }
             this.initializePlayer(playerId);
         });
 
@@ -177,6 +174,9 @@ export class GameState {
     }
 
     public initializePlayer(playerId: 0 | 1 | 2 | 3) {
+        if (this.otherTetrominoes.length > 3) {
+            this.otherTetrominoes.pop();
+        }
         this.playerId = playerId;
         this.currentTetromino.setOwnerId(playerId);
         this.otherTetrominoes.forEach((tetromino, i) =>

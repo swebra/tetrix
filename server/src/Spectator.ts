@@ -84,7 +84,6 @@ export class Spectator {
      */
     public startVotingLoop(level: Level) {
         this._isGameRunning = true;
-        this.generateFirstVotingSequence(level);
         this.votingInterval = setInterval(() => {
             this.generateFirstVotingSequence(level);
         }, 44000);

@@ -160,7 +160,7 @@ export class SceneGameArena extends Phaser.Scene {
             );
         } else if (
             (this.keys.s.isDown || this.keys.down.isDown) &&
-            this.gameState.playerId !== null &&
+            this.gameState.playerId != null &&
             !this.gameState.isInOppositeSection()
         ) {
             moved = this.gameState.moveIfCan(
@@ -198,10 +198,7 @@ export class SceneGameArena extends Phaser.Scene {
     }
 
     private updateDrawPlayers() {
-        if (
-            this.gameState.playerId !== null &&
-            this.gameState.playerId !== undefined
-        )
+        if (this.gameState.playerId != null)
             this.gameState.currentTetromino.draw(this);
         this.gameState.otherTetrominoes.forEach((tetromino) =>
             tetromino.draw(this)
@@ -209,10 +206,7 @@ export class SceneGameArena extends Phaser.Scene {
     }
 
     private updateFalling() {
-        if (
-            this.gameState.playerId === null ||
-            this.gameState.playerId === undefined
-        ) {
+        if (this.gameState.playerId == null) {
             return;
         }
         if (this.gameState.moveIfCan(Tetromino.fall)) {
