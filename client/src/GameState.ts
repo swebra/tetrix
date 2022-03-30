@@ -13,14 +13,43 @@ type GameSocket = Socket<ToClientEvents, ToServerEvents>;
 export class GameState {
     socket: GameSocket;
     board!: Array<Array<Monomino | null | false>>;
-    randomBag: RandomBag;
+    randomBag!: RandomBag;
 
     // synced to server
-    currentTetromino: Tetromino;
+    currentTetromino!: Tetromino;
     // synced from server, ordered by increasing, circular player numbers
     // i.e. if you are player 1, these are of player 2, then 3, then 0
-    otherTetrominoes: Array<Tetromino>;
-    playerId!: 0 | 1 | 2 | 3;
+    otherTetrominoes!: Array<Tetromino>;
+    playerId!: 0 | 1 | 2 | 3 | undefined;
+
+    /**
+     * reset all states in GameState, as if re-constructed
+     * NOTE: make sure to call this function before receiving "initPlayer"
+     */
+    public initialize() {
+        this.playerId = undefined;
+        this.initBoard();
+        this.randomBag = new RandomBag(this.socket);
+
+        // Owner ID set on initPlayer
+        this.currentTetromino = new Tetromino(
+            this.randomBag.getNextType(),
+            null
+        );
+        this.otherTetrominoes = [
+            // TODO: perhaps avoid initializing until we know peers' types?
+            new Tetromino(TetrominoType.T, null),
+            new Tetromino(TetrominoType.T, null),
+            new Tetromino(TetrominoType.T, null),
+            new Tetromino(TetrominoType.T, null), // this tetromino will be eliminated once current client is assigned a playerId
+        ];
+
+        // initial rotation
+        this.otherTetrominoes.forEach((tetro, i) => {
+            tetro.setRotatedPosition(tetro.position, i + 1);
+            tetro.updateFromLookahead(Tetromino.rotate(tetro, i + 1));
+        });
+    }
 
     private initBoard() {
         this.board = new Array(BOARD_SIZE);
@@ -76,7 +105,7 @@ export class GameState {
     }
 
     public fromBoardState(boardState: BoardState) {
-        if (this.playerId > 0) {
+        if (this.playerId && this.playerId > 0) {
             // rotate remote player0 board to local board
             const ccRotations = 4 - ((this.playerId || 0) % 4);
             const localBoard = boardState.map((row) => row.slice());
@@ -113,27 +142,7 @@ export class GameState {
 
     constructor(socket: GameSocket) {
         this.socket = socket;
-        this.initBoard();
-        this.randomBag = new RandomBag(this.socket);
-
-        // Owner ID set on initPlayer
-        this.currentTetromino = new Tetromino(
-            this.randomBag.getNextType(),
-            null
-        );
-        this.otherTetrominoes = [
-            // TODO: perhaps avoid initializing until we know peers' types?
-            new Tetromino(TetrominoType.T, null),
-            new Tetromino(TetrominoType.T, null),
-            new Tetromino(TetrominoType.T, null),
-            new Tetromino(TetrominoType.T, null), // this tetromino will be eliminated once current client is assigned a playerId
-        ];
-
-        // initial rotation
-        this.otherTetrominoes.forEach((tetro, i) => {
-            tetro.setRotatedPosition(tetro.position, i + 1);
-            tetro.updateFromLookahead(Tetromino.rotate(tetro, i + 1));
-        });
+        this.initialize();
 
         this.socket.on(
             "reportBoard",
@@ -185,6 +194,9 @@ export class GameState {
     }
 
     public emitPlayerMove() {
+        if (this.playerId == null) {
+            return;
+        }
         this.socket.emit(
             "playerMove",
             this.playerId,
@@ -193,6 +205,9 @@ export class GameState {
     }
 
     public emitAndPlaceCurrentTetromino() {
+        if (this.playerId == null) {
+            return;
+        }
         // place on board and emit events to the server
         this.socket.emit(
             "playerPlace",
