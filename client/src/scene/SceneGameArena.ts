@@ -6,9 +6,9 @@ import { SpectatorUI } from "../scene/SpectatorUI";
 
 import { Socket } from "socket.io-client";
 
-import { BOARD_PX, TILE_SIZE } from "common/shared";
 import { ToClientEvents, ToServerEvents } from "common/messages/sceneGameArena";
 import { ControlsUI } from "./ControlsUI";
+import { ActiveEventsUI } from "./ActiveEventsUI";
 
 type SocketGame = Socket<ToClientEvents, ToServerEvents>;
 
@@ -27,8 +27,6 @@ export class SceneGameArena extends Phaser.Scene {
 
     scoreboard!: ScoreboardUI;
     spectator?: SpectatorUI;
-
-    spectatorDecision!: Phaser.GameObjects.BitmapText;
 
     frameTimeElapsed: number = 0; // the ms time since the last frame is drawn
 
@@ -60,6 +58,7 @@ export class SceneGameArena extends Phaser.Scene {
 
     create() {
         this.scoreboard = new ScoreboardUI(this, this.socket);
+        new ActiveEventsUI(this, this.socket);
 
         if (this.gameState.playerId >= 0) {
             new ControlsUI(this);
@@ -86,21 +85,6 @@ export class SceneGameArena extends Phaser.Scene {
                 }
             })
         );
-
-        this.add.bitmapText(
-            BOARD_PX - 13.75 * TILE_SIZE,
-            BOARD_PX - 11 * TILE_SIZE,
-            "brawl",
-            "current event"
-        );
-        this.spectatorDecision = this.add
-            .bitmapText(
-                BOARD_PX - 13.75 * TILE_SIZE,
-                (BOARD_PX - 11 * TILE_SIZE) * 45,
-                "brawl",
-                ""
-            )
-            .setVisible(false);
     }
 
     private initListeners() {
@@ -108,14 +92,6 @@ export class SceneGameArena extends Phaser.Scene {
         this.socket.removeListener("toSceneGameOver");
         this.socket.removeListener("updateFallRate");
         this.socket.removeListener("initPlayer");
-        this.socket.removeListener("decision");
-
-        this.socket.on("decision", (votedDecision) => {
-            this.spectatorDecision.setText(votedDecision);
-            setTimeout(() => {
-                this.spectatorDecision.setText("");
-            }, 20000);
-        });
 
         this.socket.on("initPlayer", (playerId) => {
             new ControlsUI(this);
