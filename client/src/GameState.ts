@@ -122,6 +122,16 @@ export class GameState {
         );
         this.placeTetromino(this.currentTetromino);
 
+        this.spawnNewTetromino();
+    }
+
+    public placeTetromino(tetromino: Tetromino) {
+        tetromino.monominoes.forEach((monomino) => {
+            this.board[monomino.position[0]][monomino.position[1]] = monomino;
+        });
+    }
+
+    private spawnNewTetromino() {
         // start a new tetromino from the top
         this.currentTetromino = new Tetromino(
             this.randomBag.getNextType(),
@@ -138,17 +148,21 @@ export class GameState {
         this.emitPlayerMove();
     }
 
-    public placeTetromino(tetromino: Tetromino) {
-        tetromino.monominoes.forEach((monomino) => {
-            this.board[monomino.position[0]][monomino.position[1]] = monomino;
-        });
-    }
-
     public moveIfCan(
         movement: (tetro: Tetromino) => TetrominoLookahead
     ): boolean {
         // look-ahead for the next tetromino state after movement
         const lookahead = movement(this.currentTetromino);
+
+        if (
+            this.currentTetromino.position[0] >= 38 &&
+            this.playerId &&
+            this.playerId === this.currentTetromino.ownerId
+        ) {
+            this.spawnNewTetromino();
+            this.socket.emit("losePoints", this.playerId);
+            return true;
+        }
 
         if (
             this.overlapWithBoard(lookahead) ||
