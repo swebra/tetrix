@@ -111,7 +111,7 @@ export class Tetromino {
     public position: [number, number];
     public rotation: 0 | 1 | 2 | 3;
     private type!: TetrominoType;
-    private ownerId: 0 | 1 | 2 | 3 | null;
+    private _ownerId: 0 | 1 | 2 | 3 | null;
     public monominoes!: Array<Monomino>;
     isTraded: boolean = false;
 
@@ -122,31 +122,10 @@ export class Tetromino {
             0,
             Math.round((BOARD_SIZE - Tetromino.shapes[type].width) / 2),
         ];
-        this.ownerId = ownerId;
+        this._ownerId = ownerId;
         this.setType(type);
         this.rotation = 0; // default (no rotation)
     }
-
-    //TODO Prune
-    // respawn() {
-    //     // TODO generate from a sequence iterator (another singleton class?)
-    //     // use respawn instead of `new Tetromino` because right now rendered tetromino will lose reference if inner is created anew. FIXME this is not true when using extension style rendered tetromino
-    //     this.position = [
-    //         0,
-    //         Math.round((BOARD_SIZE - Tetromino.shapes[this.type].width) / 2),
-    //     ];
-    //     this.setType(this.randomBag.returnNextPiece());
-    //     this.rotation = 0; // default (no rotation)
-    //     this.isTraded = false;
-    // }
-    // respawnPiece(tetrominoType: TetrominoType) {
-    //     this.position = [
-    //         0,
-    //         Math.round((BOARD_SIZE - Tetromino.shapes[this.type].width) / 2),
-    //     ];
-    //     this.setType(tetrominoType);
-    //     this.rotation = 0; // default (no rotation)
-    // }
 
     swapPiece(newType: TetrominoType) {
         this.position = [
@@ -159,12 +138,22 @@ export class Tetromino {
     getType() {
         return this.type;
     }
+    get ownerId(): 0 | 1 | 2 | 3 | null {
+        return this._ownerId;
+    }
+
     reportState(): TetrominoState {
         return {
             type: this.type,
             position: this.position,
             rotation: this.rotation,
         };
+    }
+
+    destroy() {
+        this.monominoes.forEach((monomino) => {
+            monomino.destroy();
+        });
     }
 
     updateFromState(state: TetrominoState, ccRotations: number) {
@@ -205,14 +194,14 @@ export class Tetromino {
                 new Monomino(
                     this.type,
                     [this.position[0] + row, this.position[1] + col],
-                    this.ownerId
+                    this._ownerId
                 )
         );
         this.rotation = 0;
     }
 
     setOwnerId(ownerId: 0 | 1 | 2 | 3) {
-        this.ownerId = ownerId;
+        this._ownerId = ownerId;
         this.monominoes.forEach((monomino) => monomino.setOwnerId(ownerId));
     }
 

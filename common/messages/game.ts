@@ -24,4 +24,5 @@ export interface ToServerEvents {
     ) => void;
     clearTrade: () => void;
     endGame: () => void;
+    losePoints: (playerId: PlayerID) => void;
 }
