@@ -10,4 +10,5 @@ export interface ToServerEvents {
     playerMove: (playerId: PlayerID, tetrominoState: TetrominoState) => void;
     playerPlace: (playerId: PlayerID, tetrominoState: TetrominoState) => void;
     endGame: () => void;
+    losePoints: (playerId: PlayerID) => void;
 }

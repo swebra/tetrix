@@ -111,7 +111,7 @@ export class Tetromino {
     public position: [number, number];
     public rotation: 0 | 1 | 2 | 3;
     private type!: TetrominoType;
-    private ownerId: 0 | 1 | 2 | 3 | null;
+    private _ownerId: 0 | 1 | 2 | 3 | null;
     public monominoes!: Array<Monomino>;
 
     constructor(type: TetrominoType, ownerId: 0 | 1 | 2 | 3 | null) {
@@ -119,9 +119,13 @@ export class Tetromino {
             0,
             Math.round((BOARD_SIZE - Tetromino.shapes[type].width) / 2),
         ];
-        this.ownerId = ownerId;
+        this._ownerId = ownerId;
         this.setType(type);
         this.rotation = 0; // default (no rotation)
+    }
+
+    get ownerId(): 0 | 1 | 2 | 3 | null {
+        return this._ownerId;
     }
 
     reportState(): TetrominoState {
@@ -130,6 +134,12 @@ export class Tetromino {
             position: this.position,
             rotation: this.rotation,
         };
+    }
+
+    destroy() {
+        this.monominoes.forEach((monomino) => {
+            monomino.destroy();
+        });
     }
 
     updateFromState(state: TetrominoState, ccRotations: number) {
@@ -170,14 +180,14 @@ export class Tetromino {
                 new Monomino(
                     this.type,
                     [this.position[0] + row, this.position[1] + col],
-                    this.ownerId
+                    this._ownerId
                 )
         );
         this.rotation = 0;
     }
 
     setOwnerId(ownerId: 0 | 1 | 2 | 3) {
-        this.ownerId = ownerId;
+        this._ownerId = ownerId;
         this.monominoes.forEach((monomino) => monomino.setOwnerId(ownerId));
     }
 

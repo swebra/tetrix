@@ -141,4 +141,8 @@ io.on("connection", (socket) => {
             toSceneWaitingRoom();
         }, 30000);
     });
+
+    socket.on("losePoints", (playerId) => {
+        scoreboard.decrementScore(playerId, 3, level.currentLevel);
+    });
 });
