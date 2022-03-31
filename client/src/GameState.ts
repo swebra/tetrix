@@ -384,11 +384,13 @@ export class GameState {
         const lookahead = movement(this.currentTetromino);
 
         if (
-            this.currentTetromino.position[0] >= 38 &&
+            lookahead.tiles.some(([row, _]) => {
+                return row >= BOARD_SIZE;
+            }) &&
             this.playerId &&
             this.playerId === this.currentTetromino.ownerId
         ) {
-            this.currentTetromino.destroyTetromino();
+            this.currentTetromino.destroy();
             this.spawnNewTetromino();
             this.socket.emit("losePoints", this.playerId);
             return true;

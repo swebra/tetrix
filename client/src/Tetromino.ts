@@ -136,7 +136,7 @@ export class Tetromino {
         };
     }
 
-    destroyTetromino() {
+    destroy() {
         this.monominoes.forEach((monomino) => {
             monomino.destroy();
         });
