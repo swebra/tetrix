@@ -10,7 +10,7 @@ describe("Testing 'Spectator'", () => {
     jest.spyOn(global, "setInterval");
 
     beforeEach(() => {
-        spectator = new Spectator(jest.fn(), jest.fn(), jest.fn());
+        spectator = new Spectator(jest.fn(), jest.fn(), jest.fn(), jest.fn());
     });
 
     test("Test if Voting State is Maintained", () => {

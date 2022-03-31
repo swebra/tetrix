@@ -1,10 +1,20 @@
 import { Scene } from "phaser";
-import { TILE_SIZE, TILE_SCALE, BOARD_PX } from "common/shared";
+import { BOARD_PX, TILE_SCALE } from "common/shared";
 
 export class ControlsUI {
     constructor(scene: Scene) {
-        const startX = 2 * TILE_SIZE + 7 * TILE_SCALE;
-        const startY = BOARD_PX - 11 * TILE_SIZE;
+        scene.add
+            .image(
+                8 * TILE_SCALE,
+                BOARD_PX - 100 * TILE_SCALE,
+                "container-controls"
+            )
+            .setOrigin(0, 0)
+            .setScale(TILE_SCALE);
+
+        // .5 needed to account for image centering
+        const startX = 21.5 * TILE_SCALE;
+        const startY = BOARD_PX - 86.5 * TILE_SCALE;
 
         const controlInfo = [
             "move left",
