@@ -141,4 +141,8 @@ io.on("connection", (socket) => {
             toSceneWaitingRoom();
         }, 30000);
     });
+
+    socket.on("gainPoints", (playerId, score) => {
+        scoreboard.incrementScore(playerId, score, level);
+    });
 });
