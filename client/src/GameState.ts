@@ -232,8 +232,8 @@ export class GameState {
                     const monominoesToDraw = this.fallLines(task, linesToFall);
 
                     if (
-                        tetrominoOwner &&
-                        this.playerId &&
+                        tetrominoOwner != null &&
+                        this.playerId != null &&
                         this.playerId === tetrominoOwner
                     ) {
                         let score: 1 | 3 | 5 | 8 = 1;
