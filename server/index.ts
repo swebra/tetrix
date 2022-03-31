@@ -1,7 +1,7 @@
 // Import the express in typescript file
 import express from "express";
 import http from "http";
-import { Server, Socket } from "socket.io";
+import { Server } from "socket.io";
 import { Level } from "./src/Level";
 import { Scoreboard } from "./src/Scoreboard";
 import { PlayerQueue } from "./src/PlayerQueue";
@@ -11,7 +11,7 @@ import { broadcast } from "./src/broadcast";
 import path from "path";
 
 import { ServerToClientEvents, ClientToServerEvents } from "common/message";
-import { ColoredScore, BOARD_SIZE, BoardState } from "common/shared";
+import { ColoredScore, BoardState } from "common/shared";
 import { SceneTracker } from "./src/SceneTracker";
 import { TetrominoType } from "common/TetrominoType";
 
