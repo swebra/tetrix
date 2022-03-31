@@ -4,13 +4,13 @@ import { TradeState } from "common/TradeState";
 
 export class TradeUI {
     tradeState: TradeState;
-    tradeText: Phaser.GameObjects.Text;
+    tradeText: Phaser.GameObjects.BitmapText;
     tradingUser: number | null;
     //Eventually should include who was offering the trade
     tradeMap: { [key in TradeState]: string } = {
-        [TradeState.NoTrade]: "SHIFT to Trade",
-        [TradeState.Offered]: "Trade Requested",
-        [TradeState.Pending]: "SHIFT to Trade with",
+        [TradeState.NoTrade]: "shift to trade",
+        [TradeState.Offered]: "trade requested",
+        [TradeState.Pending]: "shift to trade with",
         //likely empty text when accepted
         [TradeState.Accepted]: "",
     };
@@ -18,10 +18,12 @@ export class TradeUI {
         const y = 50;
         this.tradeState = TradeState.NoTrade;
         this.tradingUser = null;
-        this.tradeText = scene.add.text(20, y, this.tradeMap[this.tradeState], {
-            fontSize: `20px`,
-            fontFamily: "VT323",
-        });
+        this.tradeText = scene.add.bitmapText(
+            20,
+            y,
+            "brawl",
+            this.tradeMap[this.tradeState]
+        );
     }
     public updateNewTradeState(
         newTradeState: TradeState,
@@ -30,7 +32,9 @@ export class TradeUI {
         this.tradeState = newTradeState;
         if (this.tradeState == TradeState.Pending && userNum != null) {
             this.tradeText.setText(
-                `${this.tradeMap[newTradeState]} ${PlayerColor[userNum]}`
+                `${this.tradeMap[newTradeState]} ${PlayerColor[
+                    userNum
+                ].toLowerCase()}`
             );
             this.tradingUser = userNum;
         } else {
@@ -41,7 +45,7 @@ export class TradeUI {
     public existingText() {
         if (this.tradeState == TradeState.Pending && this.tradingUser != null) {
             this.tradeText.setText(
-                `${PlayerColor[this.tradingUser]} wants to trade`
+                `${PlayerColor[this.tradingUser].toLowerCase()} wants to trade`
             );
         } else {
             this.tradeText.setText("");
