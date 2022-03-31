@@ -202,8 +202,9 @@ export class SceneGameArena extends Phaser.Scene {
         if (this.gameState.moveIfCan(Tetromino.fall)) {
             this.gameState.emitPlayerMove();
         } else {
+            const currentOwner = this.gameState.currentTetromino.ownerId;
             this.gameState.emitAndPlaceCurrentTetromino();
-            this.gameState.updateLineClearing();
+            this.gameState.updateLineClearing(currentOwner);
         }
     }
 }
