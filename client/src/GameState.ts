@@ -387,7 +387,7 @@ export class GameState {
             lookahead.tiles.some(([row, _]) => {
                 return row >= BOARD_SIZE;
             }) &&
-            this.playerId &&
+            this.playerId != null &&
             this.playerId === this.currentTetromino.ownerId
         ) {
             this.currentTetromino.destroy();
