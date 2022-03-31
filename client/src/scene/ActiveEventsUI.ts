@@ -1,5 +1,5 @@
 import { Scene } from "phaser";
-import { TILE_SIZE, TILE_SCALE, BOARD_PX } from "common/shared";
+import { BOARD_PX, TILE_SCALE } from "common/shared";
 
 import { Socket } from "socket.io-client";
 import { ToClientEvents, ToServerEvents } from "common/messages/activeEvents";
@@ -12,20 +12,18 @@ export class ActiveEventsUI {
     private resetText?: NodeJS.Timeout;
 
     constructor(scene: Scene, socket: SocketActiveEvents) {
-        const startX = 2 * TILE_SIZE + 7 * TILE_SCALE;
-        const startY = BOARD_PX - 11 * TILE_SIZE;
+        const startX = BOARD_PX - 101 * TILE_SCALE;
+        const startY = BOARD_PX - 93 * TILE_SCALE;
 
         this.socket = socket;
 
         this.initListeners();
 
-        scene.add.bitmapText(startX, startY, "brawl", "current event:");
-
         this.spectatorDecision = scene.add.bitmapText(
             startX,
-            startY * 45,
+            startY,
             "brawl",
-            "no active events"
+            "no active event"
         );
     }
 
@@ -39,7 +37,7 @@ export class ActiveEventsUI {
 
             this.spectatorDecision.setText(votedDecision);
             this.resetText = setTimeout(() => {
-                this.spectatorDecision.setText("no active events");
+                this.spectatorDecision.setText("no active event");
             }, 20000);
         });
     }

@@ -1,7 +1,7 @@
 import { Socket } from "socket.io-client";
 import { Scene } from "phaser";
 
-import { ColoredScore, COLORS, BOARD_PX, TILE_SIZE } from "common/shared";
+import { ColoredScore, COLORS, BOARD_PX, TILE_SCALE } from "common/shared";
 import { ToServerEvents, ToClientEvents } from "common/messages/scoreboard";
 
 type SocketScoreboard = Socket<ToClientEvents, ToServerEvents>;
@@ -43,8 +43,8 @@ export class ScoreboardUI {
      * @param scene The scene to add the scoreboard to
      */
     private createScoreboard(scene: Scene) {
-        const startX = BOARD_PX - 12 * TILE_SIZE;
-        let startY = 2 * TILE_SIZE;
+        const startX = BOARD_PX - 92 * TILE_SCALE;
+        let startY = 19 * TILE_SCALE;
 
         scene.add.bitmapText(startX, startY, "brawl", "scoreboard", 31.5);
 

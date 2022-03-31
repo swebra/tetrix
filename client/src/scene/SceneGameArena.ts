@@ -6,10 +6,10 @@ import { SpectatorUI } from "../scene/SpectatorUI";
 
 import { Socket } from "socket.io-client";
 
+import { TILE_SCALE } from "common/shared";
 import { ToClientEvents, ToServerEvents } from "common/messages/sceneGameArena";
 import { ControlsUI } from "./ControlsUI";
 import { ActiveEventsUI } from "./ActiveEventsUI";
-import { BOARD_SIZE } from "common/shared";
 
 type SocketGame = Socket<ToClientEvents, ToServerEvents>;
 
@@ -36,6 +36,10 @@ export class SceneGameArena extends Phaser.Scene {
     }
 
     preload() {
+        this.load.image("arena-border", "assets/arena-border.png");
+        this.load.image("container-controls", "assets/container-controls.png");
+        this.load.image("container-voting", "assets/container-voting.png");
+
         this.load.bitmapFont(
             "brawl",
             "assets/barcade-brawl.png",
@@ -58,6 +62,11 @@ export class SceneGameArena extends Phaser.Scene {
     }
 
     create() {
+        this.add
+            .image(0, 0, "arena-border")
+            .setOrigin(0, 0)
+            .setScale(TILE_SCALE);
+
         this.scoreboard = new ScoreboardUI(this, this.socket);
         new ActiveEventsUI(this, this.socket);
 
