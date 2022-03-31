@@ -183,7 +183,6 @@ export class GameState {
             this.updateLineClearing();
         });
         this.socket.on("playerTrade", (playerId, _, otherTradeState) => {
-            console.log("Request received");
             if (otherTradeState == TradeState.Offered) {
                 this.tradeState = TradeState.Pending;
                 this.tradingPlayerId = playerId;
@@ -193,9 +192,11 @@ export class GameState {
             }
         });
         this.socket.on("sendTradePiece", (tetrominoType) => {
-            this.currentTetromino.swapPiece(tetrominoType);
+            this.currentTetromino.destroy();
+            this.currentTetromino = new Tetromino(tetrominoType, this.playerId);
             this.currentTetromino.isTraded = true;
             this.clearTradeAndEmit();
+            this.emitPlayerMove();
         });
         this.socket.on("clearTrade", () => {
             this.clearLocalTrade();
@@ -235,8 +236,11 @@ export class GameState {
             this.currentTetromino.reportState()
         );
         this.placeTetromino(this.currentTetromino);
-        this.clearTradeAndEmit();
 
+        if (this.tradeState === TradeState.Offered) {
+            //clear the trade if this user was offering a trade
+            this.clearTradeAndEmit();
+        }
         this.spawnNewTetromino();
     }
 
