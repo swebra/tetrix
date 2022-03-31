@@ -127,11 +127,8 @@ export class GameState {
 
         this.tradeState = TradeState.NoTrade;
         this.tradingPlayerId = null;
-        // other player's moving piece, TODO this is synchronized with the server
-        // how they are rendered is not concerned.
         this.initBoard();
 
-        //TODO: check whether passing the socket here is needed
         this.randomBag = new RandomBag(this.socket);
 
         // Owner ID set on initPlayer
