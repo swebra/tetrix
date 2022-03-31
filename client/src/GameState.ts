@@ -1,6 +1,6 @@
 import { Socket } from "socket.io-client";
 
-import { BOARD_SIZE } from "common/shared";
+import { BOARD_SIZE, WALL_SIZE } from "common/shared";
 import { TetrominoType } from "common/TetrominoType";
 import { ToServerEvents, ToClientEvents } from "common/messages/game";
 
@@ -10,9 +10,21 @@ import { RandomBag } from "./RandomBag";
 
 type GameSocket = Socket<ToClientEvents, ToServerEvents>;
 
+enum LineCheckAxis {
+    Row,
+    Column,
+}
+
+type LineCheckTask = {
+    axis: LineCheckAxis;
+    direction: -1 | 1;
+    range: Array<number>;
+};
+
 export class GameState {
     socket: GameSocket;
-    board!: Array<Array<Monomino | null>>;
+    // false indicates the corner area that pieces cannot enter
+    board!: Array<Array<Monomino | false | null>>;
     randomBag: RandomBag;
 
     // synced to server
@@ -21,6 +33,55 @@ export class GameState {
     // i.e. if you are player 1, these are of player 2, then 3, then 0
     otherTetrominoes: Array<Tetromino>;
     playerId!: 0 | 1 | 2 | 3;
+
+    public monominoesToDraw: Array<Monomino> = [];
+
+    lineCheckSequence!: Array<LineCheckTask>;
+    // template used to generate lineCheckSequence once playerId is received
+    static LineCheckTemplate: Array<LineCheckTask> = [
+        {
+            axis: LineCheckAxis.Row,
+            direction: 1,
+            range: [],
+        },
+        {
+            axis: LineCheckAxis.Column,
+            direction: -1,
+            range: [],
+        },
+        {
+            axis: LineCheckAxis.Row,
+            direction: -1,
+            range: [],
+        },
+        {
+            axis: LineCheckAxis.Column,
+            direction: 1,
+            range: [],
+        },
+    ];
+
+    private updateLineCheckSequence() {
+        const sequence = GameState.LineCheckTemplate;
+        const distanceToPlayer0 = (4 - this.playerId || 0) % 4;
+        // rotate the line checking sequence to always start from player 0
+        for (let i = 0; i < distanceToPlayer0; i++) {
+            sequence.push(sequence.shift()!);
+        }
+
+        // for each task, generate the range of lines to check with, i.e. rows from top to center (before rotation)
+        // e.g. for current player it will be [0..19], for opposite it's [39..20]
+        const halfBoard = [...Array(BOARD_SIZE / 2).keys()];
+        this.lineCheckSequence = sequence.map(({ axis, direction }) => {
+            if (direction > 0)
+                return { axis, direction, range: halfBoard.slice() };
+            return {
+                axis,
+                direction,
+                range: halfBoard.map((i) => BOARD_SIZE - 1 - i),
+            };
+        });
+    }
 
     private initBoard() {
         this.board = new Array(BOARD_SIZE);
@@ -38,6 +99,17 @@ export class GameState {
                     [row, col],
                     null
                 );
+            });
+        });
+
+        // generate walls
+        // 0..14 and 25..39
+        const wallInds = [...Array(WALL_SIZE).keys()].concat(
+            [...Array(WALL_SIZE).keys()].map((x) => BOARD_SIZE - 1 - x)
+        );
+        wallInds.forEach((row) => {
+            wallInds.forEach((col) => {
+                this.board[row][col] = false;
             });
         });
     }
@@ -62,6 +134,7 @@ export class GameState {
             new Tetromino(TetrominoType.T, null),
             new Tetromino(TetrominoType.T, null),
         ];
+        this.updateLineCheckSequence();
 
         // initial rotation
         this.otherTetrominoes.forEach((tetro, i) => {
@@ -94,6 +167,9 @@ export class GameState {
             ) {
                 this.emitAndPlaceCurrentTetromino();
             }
+
+            // push to monomino array waiting to draw
+            this.updateLineClearing();
         });
     }
 
@@ -103,6 +179,7 @@ export class GameState {
         this.otherTetrominoes.forEach((tetromino, i) =>
             tetromino.setOwnerId(<0 | 1 | 2 | 3>((playerId + i + 1) % 4))
         );
+        this.updateLineCheckSequence();
     }
 
     public emitPlayerMove() {
@@ -125,12 +202,6 @@ export class GameState {
         this.spawnNewTetromino();
     }
 
-    public placeTetromino(tetromino: Tetromino) {
-        tetromino.monominoes.forEach((monomino) => {
-            this.board[monomino.position[0]][monomino.position[1]] = monomino;
-        });
-    }
-
     private spawnNewTetromino() {
         // start a new tetromino from the top
         this.currentTetromino = new Tetromino(
@@ -146,6 +217,164 @@ export class GameState {
 
         // broadcast new tetromino position
         this.emitPlayerMove();
+    }
+
+    public updateLineClearing() {
+        this.monominoesToDraw = this.monominoesToDraw.concat(
+            this.lineCheckSequence
+                .map((task) => {
+                    const linesToClear = this.scanLinesToClear(task);
+                    if (linesToClear.length === 0) {
+                        return [];
+                    }
+                    // create a map to record by how much we should fall/offset each lines after removing
+                    const linesToFall = this.prepareLinesToFall(
+                        task,
+                        linesToClear
+                    );
+                    this.removeLines(task, linesToClear);
+                    const monominoesToDraw = this.fallLines(task, linesToFall);
+
+                    // TODO scoring
+
+                    return monominoesToDraw;
+                })
+                .reduce((total, curr) => [...total, ...curr])
+        );
+    }
+
+    private removeLines(task: LineCheckTask, linesToClear: Array<number>) {
+        const removeMonomino = (row: number, col: number) => {
+            const monominoToRemove = this.board[row][col];
+            if (monominoToRemove) {
+                monominoToRemove.destroy();
+            }
+            this.board[row][col] = null;
+        };
+        if (task.axis === LineCheckAxis.Row) {
+            for (const row of linesToClear) {
+                // scan through each row
+                for (let col = WALL_SIZE; col < BOARD_SIZE - WALL_SIZE; col++) {
+                    removeMonomino(row, col);
+                }
+            }
+        } else if (task.axis === LineCheckAxis.Column) {
+            for (const col of linesToClear) {
+                // scan through each col
+                for (let row = WALL_SIZE; row < BOARD_SIZE - WALL_SIZE; row++) {
+                    removeMonomino(row, col);
+                }
+            }
+        }
+    }
+
+    private fallLines(
+        task: LineCheckTask,
+        linesToFall: Map<number, number>
+    ): Array<Monomino> {
+        const needRedraw: Array<Monomino> = [];
+        const swapMonomino = (
+            [oldRow, oldCol]: [number, number],
+            [newRow, newCol]: [number, number]
+        ) => {
+            this.board[newRow][newCol] = this.board[oldRow][oldCol];
+            this.board[oldRow][oldCol] = null;
+            const monomino = this.board[newRow][newCol];
+            if (monomino) {
+                monomino.position = [newRow, newCol];
+                needRedraw.push(monomino);
+            }
+        };
+
+        task.range
+            .slice()
+            .reverse()
+            .forEach((lineIndex) => {
+                const offset =
+                    task.direction * (linesToFall.get(lineIndex) || 0);
+                if (offset === 0) {
+                    return;
+                }
+                if (task.axis === LineCheckAxis.Row) {
+                    const newRow = lineIndex + offset;
+                    // swap line with the offset destination line
+                    // the old line should always be null since it's cleared/propagated
+                    for (
+                        let col = WALL_SIZE;
+                        col < BOARD_SIZE - WALL_SIZE;
+                        col++
+                    ) {
+                        swapMonomino([lineIndex, col], [newRow, col]);
+                    }
+                } else if (task.axis === LineCheckAxis.Column) {
+                    const newCol = lineIndex + offset;
+                    for (
+                        let row = WALL_SIZE;
+                        row < BOARD_SIZE - WALL_SIZE;
+                        row++
+                    ) {
+                        swapMonomino([row, lineIndex], [row, newCol]);
+                    }
+                }
+            });
+        return needRedraw;
+    }
+
+    private prepareLinesToFall(
+        task: LineCheckTask,
+        linesToClear: Array<number>
+    ): Map<number, number> {
+        const linesOffset = new Map<number, number>();
+        let offset = 0;
+        task.range
+            .slice()
+            .reverse()
+            .forEach((lineIndex) => {
+                if (lineIndex === linesToClear[0]) {
+                    // this line is an empty, cleared line. all lines above should fall with one more offset
+                    offset += 1;
+                    linesToClear.push(linesToClear.shift()!);
+                } else {
+                    linesOffset.set(lineIndex, offset);
+                }
+            });
+        return linesOffset;
+    }
+
+    private scanLinesToClear(task: LineCheckTask): Array<number> {
+        const linesToClear = [];
+        const scanRange = [...Array(BOARD_SIZE - 2 * WALL_SIZE).keys()].map(
+            (x) => WALL_SIZE + x
+        );
+        if (task.axis === LineCheckAxis.Row) {
+            for (const row of task.range) {
+                // scan through each row
+                const canClear = scanRange.every((col) => {
+                    return this.board && this.board[row][col] != null;
+                });
+                if (canClear) {
+                    linesToClear.push(row);
+                }
+            }
+        } else if (task.axis === LineCheckAxis.Column) {
+            for (const col of task.range) {
+                // scan through each col
+                const canClear = scanRange.every((row) => {
+                    return this.board && this.board[row][col] != null;
+                });
+                if (canClear) {
+                    linesToClear.push(col);
+                }
+            }
+        }
+
+        return linesToClear.reverse();
+    }
+
+    public placeTetromino(tetromino: Tetromino) {
+        tetromino.monominoes.forEach((monomino) => {
+            this.board[monomino.position[0]][monomino.position[1]] = monomino;
+        });
     }
 
     public moveIfCan(

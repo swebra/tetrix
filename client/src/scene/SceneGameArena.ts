@@ -8,6 +8,7 @@ import { Socket } from "socket.io-client";
 
 import { ToClientEvents, ToServerEvents } from "common/messages/sceneGameArena";
 import { ControlsUI } from "./ControlsUI";
+import { BOARD_SIZE } from "common/shared";
 
 type SocketGame = Socket<ToClientEvents, ToServerEvents>;
 
@@ -117,7 +118,7 @@ export class SceneGameArena extends Phaser.Scene {
         if (this.frameTimeElapsed > 1000 / this.FRAMERATE) {
             this.updateUserInput();
             this.updateDrawPlayers();
-
+            this.drawPendingMonominoes();
             // start next frame
             this.frameTimeElapsed = 0;
         }
@@ -135,6 +136,14 @@ export class SceneGameArena extends Phaser.Scene {
         });
     }
 
+    private drawPendingMonominoes() {
+        if (this.gameState.monominoesToDraw.length === 0) return;
+        this.gameState.monominoesToDraw.forEach((monomino) =>
+            monomino.draw(this)
+        );
+        this.gameState.monominoesToDraw = [];
+    }
+
     private updateUserInput() {
         let moved = false;
         if (
@@ -145,6 +154,12 @@ export class SceneGameArena extends Phaser.Scene {
             moved = this.gameState.moveIfCan(
                 Tetromino.slide(-1) // left
             );
+        } else if (
+            (this.keys.s.isDown || this.keys.down.isDown) &&
+            this.gameState.playerId != null &&
+            !this.gameState.isInOppositeSection()
+        ) {
+            moved = this.gameState.moveIfCan(Tetromino.fall); // down
         } else if (
             (this.keys.d.isDown || this.keys.right.isDown) &&
             this.gameState.playerId != null &&
@@ -188,6 +203,7 @@ export class SceneGameArena extends Phaser.Scene {
             this.gameState.emitPlayerMove();
         } else {
             this.gameState.emitAndPlaceCurrentTetromino();
+            this.gameState.updateLineClearing();
         }
     }
 }
