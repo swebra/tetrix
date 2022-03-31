@@ -116,8 +116,6 @@ export class Tetromino {
     isTraded: boolean = false;
 
     constructor(type: TetrominoType, ownerId: 0 | 1 | 2 | 3 | null) {
-        //TODO: check if the type parameter can be removed
-        // const type = this.randomBag.returnNextPiece();
         this.position = [
             0,
             Math.round((BOARD_SIZE - Tetromino.shapes[type].width) / 2),
@@ -127,17 +125,6 @@ export class Tetromino {
         this.rotation = 0; // default (no rotation)
     }
 
-    swapPiece(newType: TetrominoType) {
-        this.position = [
-            0,
-            Math.round((BOARD_SIZE - Tetromino.shapes[this.type].width) / 2),
-        ];
-        this.setType(newType);
-        this.rotation = 0; // default (no rotation)
-    }
-    getType() {
-        return this.type;
-    }
     get ownerId(): 0 | 1 | 2 | 3 | null {
         return this._ownerId;
     }
@@ -179,7 +166,9 @@ export class Tetromino {
             monomino.position = lookahead.tiles[i];
         });
     }
-
+    getType() {
+        return this.type;
+    }
     setType(type: TetrominoType) {
         if (this.type == type) {
             return;
@@ -295,7 +284,4 @@ export class Tetromino {
             return lookahead;
         };
     }
-}
-function cloneDeep(tiles: [number, number][]): [number, number][] {
-    throw new Error("Function not implemented.");
 }
