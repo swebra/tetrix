@@ -388,6 +388,7 @@ export class GameState {
             this.playerId &&
             this.playerId === this.currentTetromino.ownerId
         ) {
+            this.currentTetromino.destroyTetromino();
             this.spawnNewTetromino();
             this.socket.emit("losePoints", this.playerId);
             return true;
