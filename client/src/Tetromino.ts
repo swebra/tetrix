@@ -136,6 +136,12 @@ export class Tetromino {
         };
     }
 
+    destroy() {
+        this.monominoes.forEach((monomino) => {
+            monomino.destroy();
+        });
+    }
+
     updateFromState(state: TetrominoState, ccRotations: number) {
         this.setType(state.type);
         this.setRotatedPosition(state.position, ccRotations);

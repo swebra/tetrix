@@ -199,6 +199,10 @@ export class GameState {
         );
         this.placeTetromino(this.currentTetromino);
 
+        this.spawnNewTetromino();
+    }
+
+    private spawnNewTetromino() {
         // start a new tetromino from the top
         this.currentTetromino = new Tetromino(
             this.randomBag.getNextType(),
@@ -401,6 +405,19 @@ export class GameState {
         const lookahead = movement(this.currentTetromino);
 
         if (
+            lookahead.tiles.some(([row, _]) => {
+                return row >= BOARD_SIZE;
+            }) &&
+            this.playerId != null &&
+            this.playerId === this.currentTetromino.ownerId
+        ) {
+            this.currentTetromino.destroy();
+            this.spawnNewTetromino();
+            this.socket.emit("losePoints", this.playerId);
+            return true;
+        }
+
+        if (
             this.overlapWithBoard(lookahead) ||
             this.overlapWithPlayers(lookahead, this.otherTetrominoes)
         ) {
@@ -425,7 +442,9 @@ export class GameState {
      * @returns True if the current Tetromino is in the opposite players section.
      */
     public isInOppositeSection() {
-        return this.currentTetromino.position[0] >= 25;
+        return this.currentTetromino.monominoes.every(
+            (monomino) => monomino.position[0] >= 25
+        );
     }
 
     /**

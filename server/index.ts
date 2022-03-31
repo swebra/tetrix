@@ -145,4 +145,8 @@ io.on("connection", (socket) => {
     socket.on("gainPoints", (playerId, score) => {
         scoreboard.incrementScore(playerId, score, level);
     });
+
+    socket.on("losePoints", (playerId) => {
+        scoreboard.decrementScore(playerId, 3, level.currentLevel);
+    });
 });
