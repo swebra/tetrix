@@ -109,14 +109,10 @@ export class SceneGameArena extends Phaser.Scene {
         });
 
         this.socket.on("updateBoard", (boardState: any) => {
-            this.gameState.fromBoardState(boardState);
-            this.gameState.board.forEach((row) =>
-                row.forEach((monomino) => {
-                    if (monomino) {
-                        monomino.draw(this);
-                    }
-                })
-            );
+            const monominoesToDraw = this.gameState.fromBoardState(boardState);
+            monominoesToDraw.forEach((monomino) => {
+                monomino.draw(this);
+            });
         });
         // request to sync with other players
         this.socket.emit("requestBoard");
@@ -212,9 +208,9 @@ export class SceneGameArena extends Phaser.Scene {
 
     private updateFalling() {
         if (this.gameState.playerId == null) {
-            return;
-        }
-        if (this.gameState.moveIfCan(Tetromino.fall)) {
+            // is spectator
+            this.gameState.updateLineClearing();
+        } else if (this.gameState.moveIfCan(Tetromino.fall)) {
             this.gameState.emitPlayerMove();
         } else {
             this.gameState.emitAndPlaceCurrentTetromino();

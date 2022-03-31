@@ -47,7 +47,9 @@ export class Monomino {
             monomino.type = state.type;
             shouldRedraw = true;
         }
-        if (monomino.position != state.position) {
+        const [stateRow, stateCol] = state.position;
+        const [row, col] = monomino.position;
+        if (stateRow !== row || stateCol !== col) {
             monomino.position = state.position; // NOTE: shallow clone
             shouldRedraw = true;
         }
