@@ -213,7 +213,8 @@ export class SceneGameArena extends Phaser.Scene {
             moved = this.gameState.moveIfCan(
                 Tetromino.rotateCW // clock wise
             );
-        } else if (this.keys.shift.isDown && this.gameState.playerId != null) {
+        } else if (this.keys.shift.isDown && this.gameState.playerId != null &&
+            !this.gameState.isInOppositeSection()) {
             if (
                 this.gameState.currentTetromino.isTraded ||
                 this.trade.tradeState == TradeState.Offered ||
