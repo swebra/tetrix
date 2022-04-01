@@ -3,7 +3,7 @@ import Phaser from "phaser";
 import { Tetromino, TetrominoLookahead } from "../Tetromino";
 import { ScoreboardUI } from "../scene/ScoreboardUI";
 import { SpectatorUI } from "../scene/SpectatorUI";
-import { KeyThrottleManager } from "../KeyManager";
+import { KeyThrottleManager } from "../KeyThrottleManager";
 
 import { Socket } from "socket.io-client";
 
