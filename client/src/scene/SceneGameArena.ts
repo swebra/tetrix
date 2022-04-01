@@ -70,7 +70,7 @@ export class SceneGameArena extends Phaser.Scene {
         this.scoreboard = new ScoreboardUI(this, this.socket);
         new ActiveEventsUI(this, this.socket);
 
-        if (this.gameState.playerId >= 0) {
+        if (this.gameState.playerId && this.gameState.playerId >= 0) {
             new ControlsUI(this);
         } else {
             this.spectator = new SpectatorUI(this, this.socket);
@@ -86,7 +86,6 @@ export class SceneGameArena extends Phaser.Scene {
         this.socket.emit("requestFallRate");
 
         this.initListeners();
-
         // Initial board drawing
         this.gameState.board.forEach((row) =>
             row.forEach((monomino) => {
@@ -120,6 +119,15 @@ export class SceneGameArena extends Phaser.Scene {
                 playerPoints: playerPoints,
             });
         });
+
+        this.socket.on("updateBoard", (boardState: any) => {
+            const monominoesToDraw = this.gameState.fromBoardState(boardState);
+            monominoesToDraw.forEach((monomino) => {
+                monomino.draw(this);
+            });
+        });
+        // request to sync with other players
+        this.socket.emit("requestBoard");
     }
 
     update(time: number, delta: number) {
@@ -203,13 +211,17 @@ export class SceneGameArena extends Phaser.Scene {
     }
 
     private updateDrawPlayers() {
-        this.gameState.currentTetromino.draw(this);
+        if (this.gameState.playerId != null)
+            this.gameState.currentTetromino.draw(this);
         this.gameState.otherTetrominoes.forEach((tetromino) =>
             tetromino.draw(this)
         );
     }
 
     private updateFalling() {
+        if (this.gameState.playerId == null) {
+            return;
+        }
         if (this.gameState.moveIfCan(Tetromino.fall)) {
             this.gameState.emitPlayerMove();
         } else {

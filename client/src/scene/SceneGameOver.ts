@@ -37,6 +37,8 @@ export class SceneGameOver extends Phaser.Scene {
     }
 
     create() {
+        // reset the game since it's over
+        this.gameState.initialize();
         new ScoreboardUI(this, this.socket, this.playerData);
 
         // Clean out any old listeners to avoid accumulation.

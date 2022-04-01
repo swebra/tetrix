@@ -1,4 +1,4 @@
-import { ColoredScore } from "common/shared";
+import { BoardState, ColoredScore } from "common/shared";
 import { TetrominoType } from "common/TetrominoType";
 
 export interface broadcast {
@@ -11,5 +11,6 @@ export interface broadcast {
     remainingPlayers(playersNeeded: number): void;
     fallRate(fallRate: number): void;
     votedTetroToSpawn(type: TetrominoType): void;
+    updateBoard(msg: BoardState): void;
     decision: (votedDecision: string) => void;
 }
