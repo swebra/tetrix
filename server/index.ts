@@ -8,6 +8,7 @@ import { PlayerQueue } from "./src/PlayerQueue";
 import { Spectator } from "./src/Spectator";
 import { broadcast } from "./src/broadcast";
 import path from "path";
+import { Watchdog } from "watchdog";
 
 import { ServerToClientEvents, ClientToServerEvents } from "common/message";
 import { ColoredScore } from "common/shared";
@@ -62,6 +63,11 @@ const toSceneGameArena: broadcast["toSceneGameArena"] = () => {
     scene.setScene("SceneGameArena");
     spectator.startVotingLoop(level);
     io.sockets.emit("toSceneGameArena");
+
+    watchdogTimer = new Watchdog(2000);
+    watchdogTimer.on("reset", () =>
+        toSceneGameOver(scoreboard.getFinalScores())
+    );
 };
 
 const toSceneGameOver: broadcast["toSceneGameOver"] = (
@@ -70,6 +76,8 @@ const toSceneGameOver: broadcast["toSceneGameOver"] = (
     scene.setScene("SceneGameOver");
     spectator.stopVotingLoop();
     io.sockets.emit("toSceneGameOver", msg);
+
+    watchdogTimer.sleep();
 };
 
 const showVotingSequence: broadcast["showVotingSequence"] = (
@@ -105,7 +113,7 @@ const votedDecision: broadcast["decision"] = (votedDecision: string) => {
 // ==============================================
 
 console.log(`Server started at port ${port}`);
-let playerCounter: 0 | 1 | 2 | 3 = 0; // FIXME: Remove this on final version.
+let playerCounter: 0 | 1 | 2 | 3 = 0;
 const scoreboard = new Scoreboard(updateScoreboard);
 const level = new Level(fallRate);
 const queue = new PlayerQueue(remainingPlayers, toSceneGameArena);
@@ -116,6 +124,12 @@ const spectator = new Spectator(
     votedDecision
 );
 const scene = new SceneTracker();
+
+let watchdogTimer: Watchdog; // 2 second timer.
+const watchdogFood = {
+    data: "yummy",
+    timeout: 2000,
+};
 
 io.on("connection", (socket) => {
     scoreboard.initSocketListeners(socket, level);
@@ -132,7 +146,9 @@ io.on("connection", (socket) => {
 
     socket.on("playerMove", (...args) => {
         socket.broadcast.emit("playerMove", ...args);
+        watchdogTimer.feed(watchdogFood);
     });
+
     socket.on("playerPlace", (...args) => {
         console.log("player ", args[0], " placed.");
         socket.broadcast.emit("playerPlace", ...args);
