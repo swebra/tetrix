@@ -184,14 +184,7 @@ export class GameState {
                     ccRotations
                 );
                 // the future state of the monomino at [row, col]
-                let monominoState = boardState[row][col];
-                if (this.playerId && this.playerId > 0) {
-                    // rotate from player0 view
-                    monominoState = boardState[row][col];
-                    if (monominoState) {
-                        monominoState.position = [newRow, newCol];
-                    }
-                }
+                const monominoState = boardState[row][col];
                 if (!monominoState) {
                     // erase existing monomino if it should now be null
                     const existingMonomino = this.board[newRow][newCol];
@@ -200,6 +193,7 @@ export class GameState {
                     }
                     this.board[newRow][newCol] = monominoState;
                 } else {
+                    monominoState.position = [newRow, newCol];
                     const [monomino, shouldRedraw] =
                         Monomino.updateFromMonominoState(
                             monominoState,
