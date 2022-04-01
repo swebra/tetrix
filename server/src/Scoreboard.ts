@@ -110,6 +110,7 @@ export class Scoreboard {
         this._blueScore = 0;
         this._accumulatedScore = 0;
         this._finalScores = [];
+        this.updateScoreMap();
     }
 
     /**
@@ -186,7 +187,7 @@ export class Scoreboard {
     }
 
     /**
-     * Update the values of the score map. This is handled separately since it is a sorted array of objects.
+     * Update the values of the score map.
      */
     private updateScoreMap() {
         for (let i = 0; i < this._scoreMap.length; i++) {
@@ -205,11 +206,6 @@ export class Scoreboard {
                     break;
             }
         }
-
-        // Sort in descending order.
-        this._scoreMap.sort((a, b) => {
-            return b.points - a.points;
-        });
     }
 
     /**
@@ -235,6 +231,11 @@ export class Scoreboard {
      */
     public getFinalScores() {
         this.updateScoreMap();
+
+        // Sort in descending order.
+        this._scoreMap.sort((a, b) => {
+            return b.points - a.points;
+        });
 
         this._finalScores = Object.assign([], this._scoreMap);
         this._finalScores.push({
