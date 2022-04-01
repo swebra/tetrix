@@ -76,8 +76,6 @@ export class SceneGameArena extends Phaser.Scene {
         new ActiveEventsUI(this, this.socket);
         if (this.gameState.playerId != null) {
             this.trade = new TradeUI(this);
-        }
-        if (this.gameState.playerId && this.gameState.playerId >= 0) {
             new ControlsUI(this);
         } else {
             this.spectator = new SpectatorUI(this, this.socket);
