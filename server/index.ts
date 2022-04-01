@@ -6,11 +6,12 @@ import { Level } from "./src/Level";
 import { Scoreboard } from "./src/Scoreboard";
 import { PlayerQueue } from "./src/PlayerQueue";
 import { Spectator } from "./src/Spectator";
+import { BoardSync } from "./src/BoardSync";
 import { broadcast } from "./src/broadcast";
 import path from "path";
 
 import { ServerToClientEvents, ClientToServerEvents } from "common/message";
-import { ColoredScore } from "common/shared";
+import { ColoredScore, BoardState } from "common/shared";
 import { SceneTracker } from "./src/SceneTracker";
 import { TetrominoType } from "common/TetrominoType";
 
@@ -104,6 +105,10 @@ const votedDecision: broadcast["decision"] = (votedDecision: string) => {
 };
 // ==============================================
 
+const updateBoard: broadcast["updateBoard"] = (board: BoardState) => {
+    io.sockets.emit("updateBoard", board);
+};
+// ==============================================
 console.log(`Server started at port ${port}`);
 let playerCounter: 0 | 1 | 2 | 3 = 0; // FIXME: Remove this on final version.
 const scoreboard = new Scoreboard(updateScoreboard);
@@ -116,6 +121,7 @@ const spectator = new Spectator(
     votedDecision
 );
 const scene = new SceneTracker();
+const boardSync = new BoardSync(updateBoard);
 
 io.on("connection", (socket) => {
     scoreboard.initSocketListeners(socket, level);
@@ -123,6 +129,7 @@ io.on("connection", (socket) => {
     queue.initSocketListeners(socket);
     scene.initSocketListeners(socket, scoreboard.finalScores);
     level.initSocketListeners(socket);
+    boardSync.initSocketListeners(socket);
 
     if (process.env.VITE_DISABLE_WAITING_ROOM) {
         socket.emit("initPlayer", playerCounter);
@@ -130,12 +137,17 @@ io.on("connection", (socket) => {
         playerCounter %= 4;
     }
 
-    socket.on("playerMove", (...args) => {
-        socket.broadcast.emit("playerMove", ...args);
+    socket.on("playerMove", (playerId, state) => {
+        if (playerId == null) {
+            return;
+        }
+        socket.broadcast.emit("playerMove", playerId, state);
     });
-    socket.on("playerPlace", (...args) => {
-        console.log("player ", args[0], " placed.");
-        socket.broadcast.emit("playerPlace", ...args);
+    socket.on("playerPlace", (playerId, state) => {
+        if (playerId == null) {
+            return;
+        }
+        socket.broadcast.emit("playerPlace", playerId, state);
     });
 
     socket.on("endGame", () => {
