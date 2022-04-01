@@ -220,9 +220,9 @@ export class SceneGameArena extends Phaser.Scene {
 
     private updateFalling() {
         if (this.gameState.playerId == null) {
-            // is spectator
-            this.gameState.updateLineClearing();
-        } else if (this.gameState.moveIfCan(Tetromino.fall)) {
+            return;
+        }
+        if (this.gameState.moveIfCan(Tetromino.fall)) {
             this.gameState.emitPlayerMove();
         } else {
             const currentOwner = this.gameState.currentTetromino.ownerId;

@@ -253,6 +253,7 @@ export class GameState {
 
             // if the other tetromino is bumping into us, freeze ours too.
             if (
+                this.playerId != null &&
                 this.adjacentWithPlayers(this.currentTetromino, [
                     this.otherTetrominoes[i],
                 ])
