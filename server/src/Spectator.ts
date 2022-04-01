@@ -26,11 +26,13 @@ export class Spectator {
     private broadcastShowVotingSequence: broadcast["showVotingSequence"];
     private broadcastHideVotingSequence: broadcast["hideVotingSequence"];
     private broadcastVotedTetroToSpawn: broadcast["votedTetroToSpawn"];
+    private broadcastFinalDecision: broadcast["decision"];
 
     constructor(
         showVotingSequenceEvent: broadcast["showVotingSequence"],
         hideVotingSequenceEvent: broadcast["hideVotingSequence"],
-        votedTetroToSpawn: broadcast["votedTetroToSpawn"]
+        votedTetroToSpawn: broadcast["votedTetroToSpawn"],
+        finalDecision: broadcast["decision"]
     ) {
         this._isFirstRoundVoting = true;
         this._isAcceptingVotes = false;
@@ -49,6 +51,7 @@ export class Spectator {
         this.broadcastShowVotingSequence = showVotingSequenceEvent;
         this.broadcastHideVotingSequence = hideVotingSequenceEvent;
         this.broadcastVotedTetroToSpawn = votedTetroToSpawn;
+        this.broadcastFinalDecision = finalDecision;
     }
 
     get countdownValue(): number {
@@ -248,8 +251,12 @@ export class Spectator {
                     this.generateSecondVotingSequence("fallRate", level);
                 } else if (this._previouslyVotedOption == "option1") {
                     level.spectatorIncreaseFallRate();
+                    this.broadcastFinalDecision("increased fall rate");
                 } else if (this._previouslyVotedOption == "option2") {
                     this.broadcastVotedTetroToSpawn(this._randTetros[0]);
+                    this.broadcastFinalDecision(
+                        `spawning ${this._randTetros[0]} pieces`
+                    );
                 }
                 break;
             case "option2":
@@ -261,15 +268,23 @@ export class Spectator {
                     );
                 } else if (this._previouslyVotedOption == "option1") {
                     level.spectatorDecreaseFallRate();
+                    this.broadcastFinalDecision("decreased fall rate");
                 } else if (this._previouslyVotedOption == "option2") {
                     this.broadcastVotedTetroToSpawn(this._randTetros[1]);
+                    this.broadcastFinalDecision(
+                        `spawning ${this._randTetros[1]} pieces`
+                    );
                 }
                 break;
             case "option3":
                 if (this._isFirstRoundVoting) {
                     console.log("Randomizing player blocks"); // FIXME: Randomize player blocks.
+                    this.broadcastFinalDecision("random block swap");
                 } else if (this._previouslyVotedOption == "option2") {
                     this.broadcastVotedTetroToSpawn(this._randTetros[2]);
+                    this.broadcastFinalDecision(
+                        `spawning ${this._randTetros[2]} pieces`
+                    );
                 }
                 break;
         }

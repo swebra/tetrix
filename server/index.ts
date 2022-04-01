@@ -101,6 +101,10 @@ const votedTetroToSpawn: broadcast["votedTetroToSpawn"] = (
 ) => {
     io.sockets.emit("votedTetroToSpawn", type);
 };
+
+const votedDecision: broadcast["decision"] = (votedDecision: string) => {
+    io.sockets.emit("decision", votedDecision);
+};
 // ==============================================
 
 console.log(`Server started at port ${port}`);
@@ -111,7 +115,8 @@ const queue = new PlayerQueue(remainingPlayers, toSceneGameArena);
 const spectator = new Spectator(
     showVotingSequence,
     hideVotingSequence,
-    votedTetroToSpawn
+    votedTetroToSpawn,
+    votedDecision
 );
 const scene = new SceneTracker();
 
@@ -152,6 +157,10 @@ io.on("connection", (socket) => {
         setTimeout(() => {
             toSceneWaitingRoom();
         }, 30000);
+    });
+
+    socket.on("gainPoints", (playerId, score) => {
+        scoreboard.incrementScore(playerId, score, level);
     });
 
     socket.on("losePoints", (playerId) => {

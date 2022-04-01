@@ -6,9 +6,10 @@ import { SpectatorUI } from "../scene/SpectatorUI";
 
 import { Socket } from "socket.io-client";
 
+import { TILE_SCALE } from "common/shared";
 import { ToClientEvents, ToServerEvents } from "common/messages/sceneGameArena";
 import { ControlsUI } from "./ControlsUI";
-import { BOARD_SIZE } from "common/shared";
+import { ActiveEventsUI } from "./ActiveEventsUI";
 
 import { TradeUI } from "./TradeUI";
 import { TradeState } from "common/TradeState";
@@ -40,6 +41,10 @@ export class SceneGameArena extends Phaser.Scene {
     }
 
     preload() {
+        this.load.image("arena-border", "assets/arena-border.png");
+        this.load.image("container-controls", "assets/container-controls.png");
+        this.load.image("container-voting", "assets/container-voting.png");
+
         this.load.bitmapFont(
             "brawl",
             "assets/barcade-brawl.png",
@@ -62,7 +67,13 @@ export class SceneGameArena extends Phaser.Scene {
     }
 
     create() {
+        this.add
+            .image(0, 0, "arena-border")
+            .setOrigin(0, 0)
+            .setScale(TILE_SCALE);
+
         this.scoreboard = new ScoreboardUI(this, this.socket);
+        new ActiveEventsUI(this, this.socket);
 
         if (this.gameState.playerId >= 0) {
             new ControlsUI(this);
@@ -251,8 +262,9 @@ export class SceneGameArena extends Phaser.Scene {
         if (this.gameState.moveIfCan(Tetromino.fall)) {
             this.gameState.emitPlayerMove();
         } else {
+            const currentOwner = this.gameState.currentTetromino.ownerId;
             this.gameState.emitAndPlaceCurrentTetromino();
-            this.gameState.updateLineClearing();
+            this.gameState.updateLineClearing(currentOwner);
         }
     }
 }
