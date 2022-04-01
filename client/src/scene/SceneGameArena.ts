@@ -1,8 +1,9 @@
 import { GameState } from "../GameState";
 import Phaser from "phaser";
-import { Tetromino } from "../Tetromino";
+import { Tetromino, TetrominoLookahead } from "../Tetromino";
 import { ScoreboardUI } from "../scene/ScoreboardUI";
 import { SpectatorUI } from "../scene/SpectatorUI";
+import { KeyThrottleManager } from "../KeyManager";
 
 import { Socket } from "socket.io-client";
 
@@ -33,6 +34,7 @@ export class SceneGameArena extends Phaser.Scene {
 
     trade!: TradeUI;
     spectator?: SpectatorUI;
+    keyThrottleManager?: KeyThrottleManager;
 
     frameTimeElapsed: number = 0; // the ms time since the last frame is drawn
 
@@ -77,14 +79,10 @@ export class SceneGameArena extends Phaser.Scene {
         if (this.gameState.playerId != null) {
             this.trade = new TradeUI(this);
             new ControlsUI(this);
+            this.initControls();
         } else {
             this.spectator = new SpectatorUI(this, this.socket);
         }
-
-        // keyboard input
-        this.keys = this.input.keyboard.addKeys(
-            "w,up,a,left,s,down,d,right,q,z,e,x,shift"
-        );
 
         // Initialize the fall rate to 1000 until we get confirmation from the server.
         this.updateFallTimer(1000);
@@ -101,6 +99,80 @@ export class SceneGameArena extends Phaser.Scene {
         );
     }
 
+    private initControls() {
+        this.keyThrottleManager = new KeyThrottleManager(this);
+        const { w, up, a, left, s, down, d, right, q, z, e, x }: any =
+            this.input.keyboard.addKeys(
+                "w,up,a,left,s,down,d,right,q,z,e,x",
+                undefined,
+                true
+            );
+        const { shift }: any = this.input.keyboard.addKeys("shift");
+
+        const executeMove = (
+            movement: (tetro: Tetromino) => TetrominoLookahead
+        ) => {
+            if (this.gameState.isInOppositeSection()) {
+                return;
+            }
+            const moved = this.gameState.moveIfCan(movement);
+            if (moved) {
+                this.gameState.emitPlayerMove();
+            }
+        };
+
+        this.keyThrottleManager.register([a, left], "left", () => {
+            executeMove(Tetromino.slide(-1)); // left
+        });
+
+        this.keyThrottleManager.register([d, right], "right", () => {
+            executeMove(Tetromino.slide(1)); // left
+        });
+
+        this.keyThrottleManager.register([s, down], "down", () => {
+            executeMove(Tetromino.fall);
+        });
+
+        this.keyThrottleManager.register([q, z], "rotateCCW", () => {
+            executeMove(Tetromino.rotateCCW);
+        });
+
+        this.keyThrottleManager.register([e, x], "rotateCW", () => {
+            executeMove(Tetromino.rotateCW);
+        });
+
+        this.keyThrottleManager.register([shift], "trade", () => {
+            let tradeChanged = false;
+            if (
+                this.gameState.currentTetromino.isTraded ||
+                this.trade.tradeState == TradeState.Offered ||
+                this.trade.tradeState == TradeState.Accepted
+            ) {
+                //ignore
+            } else if (this.trade.tradeState == TradeState.NoTrade) {
+                this.gameState.tradeState = TradeState.Offered;
+                this.trade.updateNewTradeState(
+                    this.gameState.tradeState,
+                    this.gameState.tradingPlayerId
+                );
+                tradeChanged = true;
+            } else if (this.trade.tradeState == TradeState.Pending) {
+                this.gameState.tradeState = TradeState.Accepted;
+                this.trade.updateNewTradeState(
+                    this.gameState.tradeState,
+                    this.gameState.tradingPlayerId
+                );
+                tradeChanged = true;
+            }
+
+            if (tradeChanged) {
+                this.gameState.emitTrade();
+                //update the trade state immediately on emit
+                this.updateFromTradeState();
+            }
+        });
+    }
+
     private initListeners() {
         // Clean out any old listeners to avoid accumulation.
         this.socket.removeListener("toSceneGameOver");
@@ -112,6 +184,7 @@ export class SceneGameArena extends Phaser.Scene {
             this.spectator?.destroy();
             this.spectator = undefined;
             this.gameState.initializePlayer(playerId);
+            this.initControls();
         });
 
         this.socket.on("updateFallRate", (fallRate) => {
@@ -139,7 +212,6 @@ export class SceneGameArena extends Phaser.Scene {
         this.frameTimeElapsed += delta;
         // 12 fps
         if (this.frameTimeElapsed > 1000 / this.FRAMERATE) {
-            this.updateUserInput();
             this.updateDrawPlayers();
             this.updateFromTradeState();
 
@@ -169,82 +241,6 @@ export class SceneGameArena extends Phaser.Scene {
         this.gameState.monominoesToDraw = [];
     }
 
-    private updateUserInput() {
-        let moved = false;
-        let tradeChanged = false;
-
-        if (
-            (this.keys.a.isDown || this.keys.left.isDown) &&
-            this.gameState.playerId != null &&
-            !this.gameState.isInOppositeSection()
-        ) {
-            moved = this.gameState.moveIfCan(
-                Tetromino.slide(-1) // left
-            );
-        } else if (
-            (this.keys.s.isDown || this.keys.down.isDown) &&
-            this.gameState.playerId != null &&
-            !this.gameState.isInOppositeSection()
-        ) {
-            moved = this.gameState.moveIfCan(Tetromino.fall); // down
-        } else if (
-            (this.keys.d.isDown || this.keys.right.isDown) &&
-            this.gameState.playerId != null &&
-            !this.gameState.isInOppositeSection()
-        ) {
-            moved = this.gameState.moveIfCan(
-                Tetromino.slide(1) // right
-            );
-        } else if (
-            (this.keys.q.isDown || this.keys.z.isDown) &&
-            this.gameState.playerId != null &&
-            !this.gameState.isInOppositeSection()
-        ) {
-            moved = this.gameState.moveIfCan(
-                Tetromino.rotateCCW // counter clock wise
-            );
-        } else if (
-            (this.keys.e.isDown || this.keys.x.isDown) &&
-            this.gameState.playerId != null &&
-            !this.gameState.isInOppositeSection()
-        ) {
-            moved = this.gameState.moveIfCan(
-                Tetromino.rotateCW // clock wise
-            );
-        } else if (this.keys.shift.isDown && this.gameState.playerId != null &&
-            !this.gameState.isInOppositeSection()) {
-            if (
-                this.gameState.currentTetromino.isTraded ||
-                this.trade.tradeState == TradeState.Offered ||
-                this.trade.tradeState == TradeState.Accepted
-            ) {
-                //ignore
-            } else if (this.trade.tradeState == TradeState.NoTrade) {
-                this.gameState.tradeState = TradeState.Offered;
-                this.trade.updateNewTradeState(
-                    this.gameState.tradeState,
-                    this.gameState.tradingPlayerId
-                );
-                tradeChanged = true;
-            } else if (this.trade.tradeState == TradeState.Pending) {
-                this.gameState.tradeState = TradeState.Accepted;
-                this.trade.updateNewTradeState(
-                    this.gameState.tradeState,
-                    this.gameState.tradingPlayerId
-                );
-                tradeChanged = true;
-            }
-        }
-
-        if (moved) {
-            this.gameState.emitPlayerMove();
-        }
-        if (tradeChanged) {
-            this.gameState.emitTrade();
-            //update the trade state immediately on emit
-            this.updateFromTradeState();
-        }
-    }
     private updateFromTradeState() {
         this.trade.updateNewTradeState(
             this.gameState.tradeState,
