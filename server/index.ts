@@ -64,7 +64,7 @@ const toSceneGameArena: broadcast["toSceneGameArena"] = () => {
     spectator.startVotingLoop(level);
     io.sockets.emit("toSceneGameArena");
 
-    watchdogTimer = new Watchdog(2000);
+    watchdogTimer = new Watchdog(TIMEOUT);
     watchdogTimer.on("reset", () =>
         toSceneGameOver(scoreboard.getFinalScores())
     );
@@ -114,6 +114,7 @@ const votedDecision: broadcast["decision"] = (votedDecision: string) => {
 
 console.log(`Server started at port ${port}`);
 let playerCounter: 0 | 1 | 2 | 3 = 0;
+const TIMEOUT = 5000;
 const scoreboard = new Scoreboard(updateScoreboard);
 const level = new Level(fallRate);
 const queue = new PlayerQueue(remainingPlayers, toSceneGameArena);
@@ -128,7 +129,7 @@ const scene = new SceneTracker();
 let watchdogTimer: Watchdog; // 2 second timer.
 const watchdogFood = {
     data: "yummy",
-    timeout: 2000,
+    timeout: TIMEOUT,
 };
 
 io.on("connection", (socket) => {
