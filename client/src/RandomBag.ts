@@ -1,8 +1,5 @@
 import { TetrominoType } from "common/TetrominoType";
-import {
-    ToClientEvents,
-    ToServerEvents,
-} from "../../common/messages/randomBag";
+import { ToClientEvents, ToServerEvents } from "common/messages/randomBag";
 
 import { Socket } from "socket.io-client";
 

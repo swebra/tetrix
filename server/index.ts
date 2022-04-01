@@ -9,6 +9,7 @@ import { Spectator } from "./src/Spectator";
 import { BoardSync } from "./src/BoardSync";
 import { broadcast } from "./src/broadcast";
 import path from "path";
+import { Trade } from "./src/Trade";
 
 import { ServerToClientEvents, ClientToServerEvents } from "common/message";
 import { ColoredScore, BoardState } from "common/shared";
@@ -90,6 +91,8 @@ const remainingPlayers: broadcast["remainingPlayers"] = (
     io.sockets.emit("updateRemainingPlayers", playersNeeded);
 };
 
+const trader = new Trade();
+
 const fallRate: broadcast["fallRate"] = (fallRate: number) => {
     io.sockets.emit("updateFallRate", fallRate);
 };
@@ -142,6 +145,15 @@ io.on("connection", (socket) => {
             return;
         }
         socket.broadcast.emit("playerMove", playerId, state);
+    });
+    socket.on("playerTrade", (...args) => {
+        socket.broadcast.emit("playerTrade", ...args);
+        const tetrominoType = args[1];
+        trader.addTrade(socket, tetrominoType);
+    });
+    socket.on("clearTrade", () => {
+        trader.clearTrade();
+        socket.broadcast.emit("clearTrade");
     });
     socket.on("playerPlace", (playerId, state) => {
         if (playerId == null) {

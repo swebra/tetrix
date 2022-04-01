@@ -113,12 +113,14 @@ export class Tetromino {
     private type!: TetrominoType;
     private _ownerId: 0 | 1 | 2 | 3 | null;
     public monominoes!: Array<Monomino>;
+    isTraded: boolean;
 
     constructor(type: TetrominoType, ownerId: 0 | 1 | 2 | 3 | null) {
         this.position = [
             0,
             Math.round((BOARD_SIZE - Tetromino.shapes[type].width) / 2),
         ];
+        this.isTraded = false;
         this._ownerId = ownerId;
         this.setType(type);
         this.rotation = 0; // default (no rotation)
@@ -165,7 +167,9 @@ export class Tetromino {
             monomino.position = lookahead.tiles[i];
         });
     }
-
+    getType() {
+        return this.type;
+    }
     setType(type: TetrominoType) {
         if (this.type == type) {
             return;
