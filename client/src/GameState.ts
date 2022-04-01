@@ -206,7 +206,7 @@ export class GameState {
                     this.board[row][col] = monominoState;
                 } else {
                     const [monomino, shouldRedraw] =
-                        Monomino.upcreateFromMonominoState(
+                        Monomino.updateFromMonominoState(
                             monominoState,
                             this.board[row][col]
                         );

@@ -28,7 +28,7 @@ export class Monomino {
         };
     }
 
-    static upcreateFromMonominoState(
+    static updateFromMonominoState(
         state: MonominoState,
         monomino: Monomino | null | false
     ): [Monomino, boolean] {
