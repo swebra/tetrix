@@ -174,43 +174,38 @@ export class GameState {
 
     public fromBoardState(boardState: BoardState): Array<Monomino> {
         const needRedraw = [];
-        if (this.playerId && this.playerId > 0) {
-            // rotate remote player0 board to local board
-            const ccRotations = 4 - ((this.playerId || 0) % 4);
-            const localBoard = boardState.map((row) => row.slice());
-            for (let row = 0; row < BOARD_SIZE; row++) {
-                for (let col = 0; col < BOARD_SIZE; col++) {
-                    const [newRow, newCol] = Tetromino.rotateCoords(
-                        [row, col],
-                        BOARD_SIZE,
-                        ccRotations
-                    );
-                    localBoard[newRow][newCol] = boardState[row][col];
-                    const monominoState = boardState[row][col];
+        const ccRotations = 4 - ((this.playerId || 0) % 4);
+
+        for (let row = 0; row < BOARD_SIZE; row++) {
+            for (let col = 0; col < BOARD_SIZE; col++) {
+                const [newRow, newCol] = Tetromino.rotateCoords(
+                    [row, col],
+                    BOARD_SIZE,
+                    ccRotations
+                );
+                // the future state of the monomino at [row, col]
+                let monominoState = boardState[row][col];
+                if (this.playerId && this.playerId > 0) {
+                    // rotate from player0 view
+                    monominoState = boardState[row][col];
                     if (monominoState) {
                         monominoState.position = [newRow, newCol];
                     }
                 }
-            }
-            boardState = localBoard;
-        }
-        for (let row = 0; row < BOARD_SIZE; row++) {
-            for (let col = 0; col < BOARD_SIZE; col++) {
-                const monominoState = boardState[row][col];
                 if (!monominoState) {
                     // erase existing monomino if it should now be null
-                    const existingMonomino = this.board[row][col];
+                    const existingMonomino = this.board[newRow][newCol];
                     if (existingMonomino) {
                         existingMonomino.destroy();
                     }
-                    this.board[row][col] = monominoState;
+                    this.board[newRow][newCol] = monominoState;
                 } else {
                     const [monomino, shouldRedraw] =
                         Monomino.updateFromMonominoState(
                             monominoState,
-                            this.board[row][col]
+                            this.board[newRow][newCol]
                         );
-                    this.board[row][col] = monomino;
+                    this.board[newRow][newCol] = monomino;
                     if (shouldRedraw) {
                         needRedraw.push(monomino);
                     }
