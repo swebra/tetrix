@@ -1,6 +1,6 @@
 import { Socket } from "socket.io-client";
 
-import { BOARD_SIZE, WALL_SIZE } from "common/shared";
+import { BoardState, BOARD_SIZE, WALL_SIZE } from "common/shared";
 import { TetrominoType } from "common/TetrominoType";
 import { ToServerEvents, ToClientEvents } from "common/messages/game";
 import { TradeState } from "common/TradeState";
@@ -28,15 +28,16 @@ export class GameState {
     tradeState!: TradeState;
     // false indicates the corner area that pieces cannot enter
     board!: Array<Array<Monomino | false | null>>;
-    randomBag: RandomBag;
+    randomBag!: RandomBag;
 
     // synced to server
-    currentTetromino: Tetromino;
+    currentTetromino!: Tetromino;
     // synced from server, ordered by increasing, circular player numbers
     // i.e. if you are player 1, these are of player 2, then 3, then 0
-    otherTetrominoes: Array<Tetromino>;
-    playerId!: 0 | 1 | 2 | 3;
-    tradingPlayerId: 0 | 1 | 2 | 3 | null;
+
+    tradingPlayerId!: 0 | 1 | 2 | 3 | null;
+    otherTetrominoes!: Array<Tetromino>;
+    playerId!: 0 | 1 | 2 | 3 | null;
 
     public monominoesToDraw: Array<Monomino> = [];
 
@@ -65,9 +66,36 @@ export class GameState {
         },
     ];
 
+    /**
+     * reset all states in GameState, as if re-constructed
+     * NOTE: make sure to call this function before receiving "initPlayer"
+     */
+    public initialize() {
+        this.tradeState = TradeState.NoTrade;
+        this.tradingPlayerId = null;
+        this.playerId = null;
+        this.initBoard();
+        this.randomBag = new RandomBag(this.socket);
+
+        this.otherTetrominoes = [
+            // TODO: perhaps avoid initializing until we know peers' types?
+            new Tetromino(TetrominoType.T, null),
+            new Tetromino(TetrominoType.T, null),
+            new Tetromino(TetrominoType.T, null),
+            new Tetromino(TetrominoType.T, null), // this tetromino will be eliminated once current client is assigned a playerId
+        ];
+
+        this.updateLineCheckSequence();
+        // initial rotation
+        this.otherTetrominoes.forEach((tetro, i) => {
+            tetro.setRotatedPosition(tetro.position, i + 1);
+            tetro.updateFromLookahead(Tetromino.rotate(tetro, i + 1));
+        });
+    }
+
     private updateLineCheckSequence() {
         const sequence = GameState.LineCheckTemplate;
-        const distanceToPlayer0 = (4 - this.playerId || 0) % 4;
+        const distanceToPlayer0 = (4 - (this.playerId || 0)) % 4;
         // rotate the line checking sequence to always start from player 0
         for (let i = 0; i < distanceToPlayer0; i++) {
             sequence.push(sequence.shift()!);
@@ -119,36 +147,85 @@ export class GameState {
     }
 
     private getPlayerIndex(playerId: number) {
-        return (3 - this.playerId + playerId) % 4;
+        return (3 - (this.playerId || 0) + playerId) % 4;
+    }
+
+    public toBoardState(): BoardState {
+        const board = this.board.map((row) => {
+            return row.map((el) => {
+                if (!el) {
+                    return el;
+                }
+                return el.toMonominoState();
+            });
+        });
+
+        const reverseRotations = (this.playerId || 0) % 4;
+        const boardFromPlayer0 = board.map((row) => row.slice());
+        for (let row = 0; row < BOARD_SIZE; row++) {
+            for (let col = 0; col < BOARD_SIZE; col++) {
+                const [newRow, newCol] = Tetromino.rotateCoords(
+                    [row, col],
+                    BOARD_SIZE,
+                    reverseRotations
+                );
+                boardFromPlayer0[newRow][newCol] = board[row][col];
+                const newBlock = boardFromPlayer0[newRow][newCol];
+                if (newBlock) {
+                    newBlock.position = [newRow, newCol];
+                }
+            }
+        }
+        return boardFromPlayer0;
+    }
+
+    public fromBoardState(boardState: BoardState): Array<Monomino> {
+        const needRedraw = [];
+        const ccRotations = 4 - ((this.playerId || 0) % 4);
+
+        for (let row = 0; row < BOARD_SIZE; row++) {
+            for (let col = 0; col < BOARD_SIZE; col++) {
+                const [newRow, newCol] = Tetromino.rotateCoords(
+                    [row, col],
+                    BOARD_SIZE,
+                    ccRotations
+                );
+                // the future state of the monomino at [row, col]
+                const monominoState = boardState[row][col];
+                if (!monominoState) {
+                    // erase existing monomino if it should now be null
+                    const existingMonomino = this.board[newRow][newCol];
+                    if (existingMonomino) {
+                        existingMonomino.destroy();
+                    }
+                    this.board[newRow][newCol] = monominoState;
+                } else {
+                    monominoState.position = [newRow, newCol];
+                    const [monomino, shouldRedraw] =
+                        Monomino.updateFromMonominoState(
+                            monominoState,
+                            this.board[newRow][newCol]
+                        );
+                    this.board[newRow][newCol] = monomino;
+                    if (shouldRedraw) {
+                        needRedraw.push(monomino);
+                    }
+                }
+            }
+        }
+        return needRedraw;
     }
 
     constructor(socket: GameSocket) {
         this.socket = socket;
+        this.initialize();
 
-        this.tradeState = TradeState.NoTrade;
-        this.tradingPlayerId = null;
-        this.initBoard();
-
-        this.randomBag = new RandomBag(this.socket);
-
-        // Owner ID set on initPlayer
-        this.currentTetromino = new Tetromino(
-            this.randomBag.getNextType(),
-            null
+        this.socket.on(
+            "reportBoard",
+            (callback: (boardState: BoardState) => void) => {
+                callback(this.toBoardState());
+            }
         );
-        this.otherTetrominoes = [
-            // TODO: perhaps avoid initializing until we know peers' types?
-            new Tetromino(TetrominoType.T, null),
-            new Tetromino(TetrominoType.T, null),
-            new Tetromino(TetrominoType.T, null),
-        ];
-        this.updateLineCheckSequence();
-
-        // initial rotation
-        this.otherTetrominoes.forEach((tetro, i) => {
-            tetro.setRotatedPosition(tetro.position, i + 1);
-            tetro.updateFromLookahead(Tetromino.rotate(tetro, i + 1));
-        });
 
         this.socket.on("initPlayer", (playerId) => {
             this.initializePlayer(playerId);
@@ -157,6 +234,9 @@ export class GameState {
         this.socket.on("playerMove", (playerId, state) => {
             const i = this.getPlayerIndex(playerId);
             this.otherTetrominoes[i].updateFromState(state, i + 1);
+            if (this.otherTetrominoes[i].getOwnerId() !== playerId) {
+                this.otherTetrominoes[i].setOwnerId(playerId);
+            }
         });
 
         this.socket.on("playerPlace", (playerId, state) => {
@@ -169,6 +249,7 @@ export class GameState {
 
             // if the other tetromino is bumping into us, freeze ours too.
             if (
+                this.playerId != null &&
                 this.adjacentWithPlayers(this.currentTetromino, [
                     this.otherTetrominoes[i],
                 ])
@@ -209,7 +290,15 @@ export class GameState {
     }
 
     public initializePlayer(playerId: 0 | 1 | 2 | 3) {
+        if (this.otherTetrominoes.length > 3) {
+            this.otherTetrominoes.pop();
+        }
         this.playerId = playerId;
+        // Owner ID set on initPlayer
+        this.currentTetromino = new Tetromino(
+            this.randomBag.getNextType(),
+            null
+        );
         this.currentTetromino.setOwnerId(playerId);
         this.otherTetrominoes.forEach((tetromino, i) =>
             tetromino.setOwnerId(<0 | 1 | 2 | 3>((playerId + i + 1) % 4))
@@ -218,6 +307,9 @@ export class GameState {
     }
 
     public emitPlayerMove() {
+        if (this.playerId == null) {
+            return;
+        }
         this.socket.emit(
             "playerMove",
             this.playerId,
@@ -226,6 +318,9 @@ export class GameState {
     }
 
     public emitAndPlaceCurrentTetromino() {
+        if (this.playerId == null) {
+            return;
+        }
         // place on board and emit events to the server
         this.socket.emit(
             "playerPlace",
@@ -437,12 +532,14 @@ export class GameState {
         });
     }
     public emitTrade() {
-        this.socket.emit(
-            "playerTrade",
-            this.playerId,
-            this.currentTetromino.getType(),
-            this.tradeState
-        );
+        if (this.playerId != null) {
+            this.socket.emit(
+                "playerTrade",
+                this.playerId,
+                this.currentTetromino.getType(),
+                this.tradeState
+            );
+        }
     }
 
     public moveIfCan(

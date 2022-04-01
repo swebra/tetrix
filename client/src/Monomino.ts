@@ -1,6 +1,6 @@
 import Phaser, { Scene } from "phaser";
 
-import { TILE_SIZE, TILE_SCALE } from "common/shared";
+import { TILE_SIZE, TILE_SCALE, MonominoState } from "common/shared";
 import { TetrominoType } from "common/TetrominoType";
 
 export class Monomino {
@@ -20,9 +20,46 @@ export class Monomino {
         this.setOwnerId(ownerId);
     }
 
+    public toMonominoState(): MonominoState {
+        return {
+            type: this.type,
+            position: this.position,
+            ownerId: this.ownerId,
+        };
+    }
+
+    static updateFromMonominoState(
+        state: MonominoState,
+        monomino: Monomino | null | false
+    ): [Monomino, boolean] {
+        if (!monomino) {
+            return [
+                new Monomino(state.type, state.position, state.ownerId),
+                true,
+            ];
+        }
+        let shouldRedraw = false;
+        if (monomino.ownerId != state.ownerId) {
+            monomino.setOwnerId(state.ownerId);
+            shouldRedraw = true;
+        }
+        if (monomino.type != state.type) {
+            monomino.type = state.type;
+            shouldRedraw = true;
+        }
+        const [stateRow, stateCol] = state.position;
+        const [row, col] = monomino.position;
+        if (stateRow !== row || stateCol !== col) {
+            monomino.position = state.position; // NOTE: shallow clone
+            shouldRedraw = true;
+        }
+        return [monomino, shouldRedraw];
+    }
+
     public destroy() {
         if (this.sprite) {
             this.sprite.destroy();
+            this.sprite = undefined;
         }
     }
 

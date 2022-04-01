@@ -1,6 +1,8 @@
 import { TetrominoState, PlayerID } from "../message";
 import { TradeState } from "../TradeState";
 import { TetrominoType } from "../TetrominoType";
+import { BoardState } from "../shared";
+
 export interface ToClientEvents {
     initPlayer: (playerId: 0 | 1 | 2 | 3) => void;
     playerMove: (playerId: PlayerID, tetrominoState: TetrominoState) => void;
@@ -12,6 +14,7 @@ export interface ToClientEvents {
     ) => void;
     sendTradePiece: (tetrominoType: TetrominoType) => void;
     clearTrade: () => void;
+    reportBoard: (callback: (board: BoardState) => void) => void;
 }
 
 export interface ToServerEvents {
