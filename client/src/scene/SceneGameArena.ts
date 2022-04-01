@@ -74,7 +74,9 @@ export class SceneGameArena extends Phaser.Scene {
 
         this.scoreboard = new ScoreboardUI(this, this.socket);
         new ActiveEventsUI(this, this.socket);
-
+        if (this.gameState.playerId != null) {
+            this.trade = new TradeUI(this);
+        }
         if (this.gameState.playerId && this.gameState.playerId >= 0) {
             new ControlsUI(this);
         } else {
@@ -137,11 +139,6 @@ export class SceneGameArena extends Phaser.Scene {
 
     update(time: number, delta: number) {
         this.frameTimeElapsed += delta;
-
-        if (this.trade == null && this.gameState.playerId != null) {
-            this.trade = new TradeUI(this);
-        }
-
         // 12 fps
         if (this.frameTimeElapsed > 1000 / this.FRAMERATE) {
             this.updateUserInput();
