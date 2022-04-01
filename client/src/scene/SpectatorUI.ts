@@ -1,7 +1,7 @@
 import { Socket } from "socket.io-client";
 import { Scene } from "phaser";
 
-import { BOARD_PX, TILE_SIZE, COLORS } from "common/shared";
+import { BOARD_PX, TILE_SCALE, COLORS } from "common/shared";
 import { ToServerEvents, ToClientEvents } from "common/messages/spectator";
 
 import { CookieTracker } from "../CookieTracker";
@@ -44,8 +44,17 @@ export class SpectatorUI {
         this.socket = socket;
         this.cookieTracker = new CookieTracker();
 
-        const startX = BOARD_PX - 13.75 * TILE_SIZE;
-        let startY = BOARD_PX - 11 * TILE_SIZE;
+        scene.add
+            .image(
+                BOARD_PX - 108 * TILE_SCALE,
+                BOARD_PX - 79 * TILE_SCALE,
+                "container-voting"
+            )
+            .setOrigin(0, 0)
+            .setScale(TILE_SCALE);
+
+        const startX = BOARD_PX - 101 * TILE_SCALE;
+        let startY = BOARD_PX - 72 * TILE_SCALE;
 
         this.header = scene.add
             .bitmapText(startX, startY, "brawl", "vote on next event")

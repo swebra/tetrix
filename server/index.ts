@@ -100,6 +100,11 @@ const votedTetroToSpawn: broadcast["votedTetroToSpawn"] = (
     io.sockets.emit("votedTetroToSpawn", type);
 };
 
+const votedDecision: broadcast["decision"] = (votedDecision: string) => {
+    io.sockets.emit("decision", votedDecision);
+};
+// ==============================================
+
 const updateBoard: broadcast["updateBoard"] = (board: BoardState) => {
     io.sockets.emit("updateBoard", board);
 };
@@ -112,7 +117,8 @@ const queue = new PlayerQueue(remainingPlayers, toSceneGameArena);
 const spectator = new Spectator(
     showVotingSequence,
     hideVotingSequence,
-    votedTetroToSpawn
+    votedTetroToSpawn,
+    votedDecision
 );
 const scene = new SceneTracker();
 const boardSync = new BoardSync(updateBoard);
@@ -151,5 +157,13 @@ io.on("connection", (socket) => {
         setTimeout(() => {
             toSceneWaitingRoom();
         }, 30000);
+    });
+
+    socket.on("gainPoints", (playerId, score) => {
+        scoreboard.incrementScore(playerId, score, level);
+    });
+
+    socket.on("losePoints", (playerId) => {
+        scoreboard.decrementScore(playerId, 3, level.currentLevel);
     });
 });
