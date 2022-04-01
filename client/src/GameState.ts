@@ -3,6 +3,7 @@ import { Socket } from "socket.io-client";
 import { BoardState, BOARD_SIZE, WALL_SIZE } from "common/shared";
 import { TetrominoType } from "common/TetrominoType";
 import { ToServerEvents, ToClientEvents } from "common/messages/game";
+import { TradeState } from "common/TradeState";
 
 import { Tetromino, TetrominoLookahead } from "./Tetromino";
 import { Monomino } from "./Monomino";
@@ -23,6 +24,8 @@ type LineCheckTask = {
 
 export class GameState {
     socket: GameSocket;
+
+    tradeState!: TradeState;
     // false indicates the corner area that pieces cannot enter
     board!: Array<Array<Monomino | false | null>>;
     randomBag!: RandomBag;
@@ -31,8 +34,10 @@ export class GameState {
     currentTetromino!: Tetromino;
     // synced from server, ordered by increasing, circular player numbers
     // i.e. if you are player 1, these are of player 2, then 3, then 0
+
+    tradingPlayerId!: 0 | 1 | 2 | 3 | null;
     otherTetrominoes!: Array<Tetromino>;
-    playerId!: 0 | 1 | 2 | 3 | undefined;
+    playerId!: 0 | 1 | 2 | 3 | null;
 
     public monominoesToDraw: Array<Monomino> = [];
 
@@ -66,7 +71,9 @@ export class GameState {
      * NOTE: make sure to call this function before receiving "initPlayer"
      */
     public initialize() {
-        this.playerId = undefined;
+        this.tradeState = TradeState.NoTrade;
+        this.tradingPlayerId = null;
+        this.playerId = null;
         this.initBoard();
         this.randomBag = new RandomBag(this.socket);
 
@@ -253,6 +260,33 @@ export class GameState {
             // push to monomino array waiting to draw
             this.updateLineClearing();
         });
+        this.socket.on("playerTrade", (playerId, _, otherTradeState) => {
+            if (otherTradeState == TradeState.Offered) {
+                this.tradeState = TradeState.Pending;
+                this.tradingPlayerId = playerId;
+            } else if (otherTradeState == TradeState.Accepted) {
+                this.tradeState = TradeState.NoTrade;
+                this.tradingPlayerId = null;
+            }
+        });
+        this.socket.on("sendTradePiece", (tetrominoType) => {
+            this.currentTetromino.destroy();
+            this.currentTetromino = new Tetromino(tetrominoType, this.playerId);
+            this.currentTetromino.isTraded = true;
+            this.clearTradeAndEmit();
+            this.emitPlayerMove();
+        });
+        this.socket.on("clearTrade", () => {
+            this.clearLocalTrade();
+        });
+    }
+    public clearLocalTrade() {
+        this.tradeState = TradeState.NoTrade;
+        this.tradingPlayerId = null;
+    }
+    public clearTradeAndEmit() {
+        this.clearLocalTrade();
+        this.socket.emit("clearTrade");
     }
 
     public initializePlayer(playerId: 0 | 1 | 2 | 3) {
@@ -295,6 +329,10 @@ export class GameState {
         );
         this.placeTetromino(this.currentTetromino);
 
+        if (this.tradeState === TradeState.Offered) {
+            //clear the trade if this user was offering a trade
+            this.clearTradeAndEmit();
+        }
         this.spawnNewTetromino();
     }
 
@@ -492,6 +530,16 @@ export class GameState {
         tetromino.monominoes.forEach((monomino) => {
             this.board[monomino.position[0]][monomino.position[1]] = monomino;
         });
+    }
+    public emitTrade() {
+        if (this.playerId != null) {
+            this.socket.emit(
+                "playerTrade",
+                this.playerId,
+                this.currentTetromino.getType(),
+                this.tradeState
+            );
+        }
     }
 
     public moveIfCan(

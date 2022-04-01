@@ -6,6 +6,7 @@ import * as spectatorMsgs from "./messages/spectator";
 import * as activeEventsMsgs from "./messages/activeEvents";
 import * as randomBagMsgs from "./messages/randomBag";
 import * as sceneGameOverMsgs from "./messages/sceneGameOver";
+import * as tradeMsgs from "./messages/trade";
 import { TetrominoType } from "./TetrominoType";
 
 export type ServerToClientEvents = sceneWaitingRoomMsgs.ToClientEvents &
@@ -14,6 +15,7 @@ export type ServerToClientEvents = sceneWaitingRoomMsgs.ToClientEvents &
     scoreboardMsgs.ToClientEvents &
     spectatorMsgs.ToClientEvents &
     activeEventsMsgs.ToClientEvents &
+    tradeMsgs.ToClientEvents &
     randomBagMsgs.ToClientEvents &
     sceneGameOverMsgs.ToClientEvents;
 
@@ -22,6 +24,7 @@ export type ClientToServerEvents = sceneWaitingRoomMsgs.ToServerEvents &
     gameMsgs.ToServerEvents &
     scoreboardMsgs.ToServerEvents &
     spectatorMsgs.ToServerEvents &
+    tradeMsgs.ToServerEvents &
     activeEventsMsgs.ToServerEvents &
     randomBagMsgs.ToServerEvents &
     sceneGameOverMsgs.ToServerEvents;

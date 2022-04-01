@@ -11,6 +11,9 @@ import { ToClientEvents, ToServerEvents } from "common/messages/sceneGameArena";
 import { ControlsUI } from "./ControlsUI";
 import { ActiveEventsUI } from "./ActiveEventsUI";
 
+import { TradeUI } from "./TradeUI";
+import { TradeState } from "common/TradeState";
+
 type SocketGame = Socket<ToClientEvents, ToServerEvents>;
 
 interface SceneDataGameArena {
@@ -27,6 +30,8 @@ export class SceneGameArena extends Phaser.Scene {
     fallRateTimer!: Phaser.Time.TimerEvent | null;
 
     scoreboard!: ScoreboardUI;
+
+    trade!: TradeUI;
     spectator?: SpectatorUI;
 
     frameTimeElapsed: number = 0; // the ms time since the last frame is drawn
@@ -69,8 +74,8 @@ export class SceneGameArena extends Phaser.Scene {
 
         this.scoreboard = new ScoreboardUI(this, this.socket);
         new ActiveEventsUI(this, this.socket);
-
-        if (this.gameState.playerId && this.gameState.playerId >= 0) {
+        if (this.gameState.playerId != null) {
+            this.trade = new TradeUI(this);
             new ControlsUI(this);
         } else {
             this.spectator = new SpectatorUI(this, this.socket);
@@ -78,7 +83,7 @@ export class SceneGameArena extends Phaser.Scene {
 
         // keyboard input
         this.keys = this.input.keyboard.addKeys(
-            "w,up,a,left,s,down,d,right,q,z,e,x"
+            "w,up,a,left,s,down,d,right,q,z,e,x,shift"
         );
 
         // Initialize the fall rate to 1000 until we get confirmation from the server.
@@ -132,11 +137,12 @@ export class SceneGameArena extends Phaser.Scene {
 
     update(time: number, delta: number) {
         this.frameTimeElapsed += delta;
-
         // 12 fps
         if (this.frameTimeElapsed > 1000 / this.FRAMERATE) {
             this.updateUserInput();
             this.updateDrawPlayers();
+            this.updateFromTradeState();
+
             this.drawPendingMonominoes();
             // start next frame
             this.frameTimeElapsed = 0;
@@ -165,6 +171,8 @@ export class SceneGameArena extends Phaser.Scene {
 
     private updateUserInput() {
         let moved = false;
+        let tradeChanged = false;
+
         if (
             (this.keys.a.isDown || this.keys.left.isDown) &&
             this.gameState.playerId != null &&
@@ -203,10 +211,50 @@ export class SceneGameArena extends Phaser.Scene {
             moved = this.gameState.moveIfCan(
                 Tetromino.rotateCW // clock wise
             );
+        } else if (
+            this.keys.shift.isDown &&
+            this.gameState.playerId != null &&
+            !this.gameState.isInOppositeSection()
+        ) {
+            if (
+                this.gameState.currentTetromino.isTraded ||
+                this.trade.tradeState == TradeState.Offered ||
+                this.trade.tradeState == TradeState.Accepted
+            ) {
+                //ignore
+            } else if (this.trade.tradeState == TradeState.NoTrade) {
+                this.gameState.tradeState = TradeState.Offered;
+                this.trade.updateNewTradeState(
+                    this.gameState.tradeState,
+                    this.gameState.tradingPlayerId
+                );
+                tradeChanged = true;
+            } else if (this.trade.tradeState == TradeState.Pending) {
+                this.gameState.tradeState = TradeState.Accepted;
+                this.trade.updateNewTradeState(
+                    this.gameState.tradeState,
+                    this.gameState.tradingPlayerId
+                );
+                tradeChanged = true;
+            }
         }
 
         if (moved) {
             this.gameState.emitPlayerMove();
+        }
+        if (tradeChanged) {
+            this.gameState.emitTrade();
+            //update the trade state immediately on emit
+            this.updateFromTradeState();
+        }
+    }
+    private updateFromTradeState() {
+        this.trade.updateNewTradeState(
+            this.gameState.tradeState,
+            this.gameState.tradingPlayerId
+        );
+        if (this.gameState.currentTetromino.isTraded) {
+            this.trade.existingText();
         }
     }
 

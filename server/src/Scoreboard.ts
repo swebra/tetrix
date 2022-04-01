@@ -1,4 +1,4 @@
-import { PlayerColor } from "./PlayerAttributes";
+import { PlayerColor } from "common/PlayerAttributes";
 import { Level } from "./Level";
 import { broadcast } from "./broadcast";
 
