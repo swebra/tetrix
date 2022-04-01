@@ -65,9 +65,7 @@ const toSceneGameArena: broadcast["toSceneGameArena"] = () => {
     io.sockets.emit("toSceneGameArena");
 
     watchdogTimer = new Watchdog(TIMEOUT);
-    watchdogTimer.on("reset", () =>
-        toSceneGameOver(scoreboard.getFinalScores())
-    );
+    watchdogTimer.on("reset", () => gameOver());
 };
 
 const toSceneGameOver: broadcast["toSceneGameOver"] = (
@@ -132,6 +130,15 @@ const watchdogFood = {
     timeout: TIMEOUT,
 };
 
+function gameOver() {
+    toSceneGameOver(scoreboard.getFinalScores());
+
+    // Return to starting scene after 30 seconds.
+    setTimeout(() => {
+        toSceneWaitingRoom();
+    }, 30000);
+}
+
 io.on("connection", (socket) => {
     scoreboard.initSocketListeners(socket, level);
     spectator.initSocketListeners(socket);
@@ -156,12 +163,7 @@ io.on("connection", (socket) => {
     });
 
     socket.on("endGame", () => {
-        toSceneGameOver(scoreboard.getFinalScores());
-
-        // Return to starting scene after 30 seconds.
-        setTimeout(() => {
-            toSceneWaitingRoom();
-        }, 30000);
+        gameOver();
     });
 
     socket.on("gainPoints", (playerId, score) => {
