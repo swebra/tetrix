@@ -9,6 +9,7 @@ import { Spectator } from "./src/Spectator";
 import { BoardSync } from "./src/BoardSync";
 import { broadcast } from "./src/broadcast";
 import path from "path";
+import { Watchdog } from "watchdog";
 import { Trade } from "./src/Trade";
 
 import { ServerToClientEvents, ClientToServerEvents } from "common/message";
@@ -64,6 +65,9 @@ const toSceneGameArena: broadcast["toSceneGameArena"] = () => {
     scene.setScene("SceneGameArena");
     spectator.startVotingLoop(level);
     io.sockets.emit("toSceneGameArena");
+
+    watchdogTimer = new Watchdog(TIMEOUT);
+    watchdogTimer.on("reset", () => gameOver());
 };
 
 const toSceneGameOver: broadcast["toSceneGameOver"] = (
@@ -72,6 +76,8 @@ const toSceneGameOver: broadcast["toSceneGameOver"] = (
     scene.setScene("SceneGameOver");
     spectator.stopVotingLoop();
     io.sockets.emit("toSceneGameOver", msg);
+
+    watchdogTimer.sleep();
 };
 
 const showVotingSequence: broadcast["showVotingSequence"] = (
@@ -113,7 +119,8 @@ const updateBoard: broadcast["updateBoard"] = (board: BoardState) => {
 };
 // ==============================================
 console.log(`Server started at port ${port}`);
-let playerCounter: 0 | 1 | 2 | 3 = 0; // FIXME: Remove this on final version.
+let playerCounter: 0 | 1 | 2 | 3 = 0;
+const TIMEOUT = 5000;
 const scoreboard = new Scoreboard(updateScoreboard);
 const level = new Level(fallRate);
 const queue = new PlayerQueue(remainingPlayers, toSceneGameArena);
@@ -125,6 +132,21 @@ const spectator = new Spectator(
 );
 const scene = new SceneTracker();
 const boardSync = new BoardSync(updateBoard);
+
+let watchdogTimer: Watchdog;
+const watchdogFood = {
+    data: "yummy",
+    timeout: TIMEOUT,
+};
+
+function gameOver() {
+    toSceneGameOver(scoreboard.getFinalScores());
+
+    // Return to starting scene after 30 seconds.
+    setTimeout(() => {
+        toSceneWaitingRoom();
+    }, 30000);
+}
 
 io.on("connection", (socket) => {
     scoreboard.initSocketListeners(socket, level);
@@ -144,6 +166,8 @@ io.on("connection", (socket) => {
         if (playerId == null) {
             return;
         }
+
+        watchdogTimer.feed(watchdogFood);
         socket.broadcast.emit("playerMove", playerId, state);
     });
     socket.on("playerTrade", (...args) => {
@@ -151,10 +175,12 @@ io.on("connection", (socket) => {
         const tetrominoType = args[1];
         trader.addTrade(socket, tetrominoType);
     });
+
     socket.on("clearTrade", () => {
         trader.clearTrade();
         socket.broadcast.emit("clearTrade");
     });
+
     socket.on("playerPlace", (playerId, state) => {
         if (playerId == null) {
             return;
@@ -163,12 +189,7 @@ io.on("connection", (socket) => {
     });
 
     socket.on("endGame", () => {
-        toSceneGameOver(scoreboard.getFinalScores());
-
-        // Return to starting scene after 30 seconds.
-        setTimeout(() => {
-            toSceneWaitingRoom();
-        }, 30000);
+        gameOver();
     });
 
     socket.on("gainPoints", (playerId, score) => {
