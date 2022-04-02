@@ -7,7 +7,7 @@ import { KeyThrottleManager } from "../KeyThrottleManager";
 
 import { Socket } from "socket.io-client";
 
-import { TILE_SCALE } from "common/shared";
+import { BOARD_SIZE, TILE_SCALE } from "common/shared";
 import { ToClientEvents, ToServerEvents } from "common/messages/sceneGameArena";
 import { ControlsUI } from "./ControlsUI";
 import { ActiveEventsUI } from "./ActiveEventsUI";
@@ -100,37 +100,48 @@ export class SceneGameArena extends Phaser.Scene {
     }
 
     private initControls() {
+        this.input.keyboard.removeAllKeys();
         this.keyThrottleManager = new KeyThrottleManager(this);
-        const { w, up, a, left, s, down, d, right, q, z, e, x }: any =
-            this.input.keyboard.addKeys(
-                "w,up,a,left,s,down,d,right,q,z,e,x",
-                undefined,
-                true
-            );
-        const { shift }: any = this.input.keyboard.addKeys("shift");
+        this.keys = this.input.keyboard.addKeys(
+            "w,up,a,left,s,down,d,right,q,z,e,x,shift",
+            undefined,
+            true
+        );
+        const { a, left, d, right, s, down, q, z, x, shift, e } = this.keys;
 
         const executeMove = (
             movement: (tetro: Tetromino) => TetrominoLookahead
         ) => {
             if (this.gameState.isInOppositeSection()) {
-                return;
+                return null;
             }
             const moved = this.gameState.moveIfCan(movement);
             if (moved) {
                 this.gameState.emitPlayerMove();
             }
+
+            return moved;
         };
 
         this.keyThrottleManager.register([a, left], "left", () => {
-            executeMove(Tetromino.slide(-1)); // left
+            executeMove(Tetromino.slide(-1));
         });
 
         this.keyThrottleManager.register([d, right], "right", () => {
-            executeMove(Tetromino.slide(1)); // left
+            executeMove(Tetromino.slide(1));
         });
 
         this.keyThrottleManager.register([s, down], "down", () => {
-            executeMove(Tetromino.fall);
+            const result = executeMove(Tetromino.fall);
+            if (result === false) {
+                // cannot move down
+                const currentOwner = this.gameState.currentTetromino.ownerId;
+                this.gameState.emitAndPlaceCurrentTetromino();
+                this.gameState.updateLineClearing(currentOwner);
+                this.drawPendingMonominoes();
+            } else if (result != null) {
+                this.gameState.currentTetromino.draw(this);
+            }
         });
 
         this.keyThrottleManager.register([q, z], "rotateCCW", () => {
@@ -214,7 +225,6 @@ export class SceneGameArena extends Phaser.Scene {
         if (this.frameTimeElapsed > 1000 / this.FRAMERATE) {
             this.updateDrawPlayers();
             this.updateFromTradeState();
-
             this.drawPendingMonominoes();
             // start next frame
             this.frameTimeElapsed = 0;

@@ -260,6 +260,7 @@ export class GameState {
             // push to monomino array waiting to draw
             this.updateLineClearing();
         });
+
         this.socket.on("playerTrade", (playerId, _, otherTradeState) => {
             if (otherTradeState == TradeState.Offered) {
                 this.tradeState = TradeState.Pending;
@@ -269,6 +270,7 @@ export class GameState {
                 this.tradingPlayerId = null;
             }
         });
+
         this.socket.on("sendTradePiece", (tetrominoType) => {
             this.currentTetromino.destroy();
             this.currentTetromino = new Tetromino(tetrominoType, this.playerId);
@@ -276,6 +278,7 @@ export class GameState {
             this.clearTradeAndEmit();
             this.emitPlayerMove();
         });
+
         this.socket.on("clearTrade", () => {
             this.clearLocalTrade();
         });
@@ -527,10 +530,15 @@ export class GameState {
     }
 
     public placeTetromino(tetromino: Tetromino) {
-        tetromino.monominoes.forEach((monomino) => {
-            this.board[monomino.position[0]][monomino.position[1]] = monomino;
-        });
+        this.monominoesToDraw = this.monominoesToDraw.concat(
+            tetromino.monominoes.map((monomino) => {
+                this.board[monomino.position[0]][monomino.position[1]] =
+                    monomino;
+                return monomino;
+            })
+        );
     }
+
     public emitTrade() {
         if (this.playerId != null) {
             this.socket.emit(
