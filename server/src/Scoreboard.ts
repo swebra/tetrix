@@ -1,4 +1,5 @@
 import { PlayerColor } from "common/PlayerAttributes";
+import { PlayerID } from "common/message";
 import { Level } from "./Level";
 import { broadcast } from "./broadcast";
 
@@ -104,23 +105,10 @@ export class Scoreboard {
      * @param value The amount to award the player.
      * @param level The level object. Used to *possibly* increase the level of the game.
      */
-    public incrementScore(playerIndex: number, value: number, level: Level) {
+    public incrementScore(playerIndex: PlayerID, value: number, level: Level) {
         this._accumulatedScore += value;
 
-        switch (playerIndex) {
-            case PlayerColor.Orange:
-                this.scoreMap[PlayerColor.Orange].points += value;
-                break;
-            case PlayerColor.Green:
-                this.scoreMap[PlayerColor.Green].points += value;
-                break;
-            case PlayerColor.Pink:
-                this.scoreMap[PlayerColor.Pink].points += value;
-                break;
-            case PlayerColor.Blue:
-                this.scoreMap[PlayerColor.Blue].points += value;
-                break;
-        }
+        this.scoreMap[playerIndex].points += value;
 
         // Reset the score if the level was incremented.
         if (level.checkUpdateLevel(this._accumulatedScore)) {
@@ -137,35 +125,13 @@ export class Scoreboard {
      * @param currentLevel The current level of the game.
      */
     public decrementScore(
-        playerIndex: number,
+        playerIndex: PlayerID,
         value: number,
         currentLevel: number
     ) {
-        switch (playerIndex) {
-            case PlayerColor.Orange:
-                this.scoreMap[PlayerColor.Orange].points -= value;
-                if (this.scoreMap[PlayerColor.Orange].points <= 0) {
-                    this.scoreMap[PlayerColor.Orange].points = 0;
-                }
-                break;
-            case PlayerColor.Green:
-                this.scoreMap[PlayerColor.Green].points -= value;
-                if (this.scoreMap[PlayerColor.Green].points <= 0) {
-                    this.scoreMap[PlayerColor.Green].points = 0;
-                }
-                break;
-            case PlayerColor.Pink:
-                this.scoreMap[PlayerColor.Pink].points -= value;
-                if (this.scoreMap[PlayerColor.Pink].points <= 0) {
-                    this.scoreMap[PlayerColor.Pink].points = 0;
-                }
-                break;
-            case PlayerColor.Blue:
-                this.scoreMap[PlayerColor.Blue].points -= value;
-                if (this.scoreMap[PlayerColor.Blue].points <= 0) {
-                    this.scoreMap[PlayerColor.Blue].points = 0;
-                }
-                break;
+        this.scoreMap[playerIndex].points -= value;
+        if (this.scoreMap[playerIndex].points <= 0) {
+            this.scoreMap[playerIndex].points = 0;
         }
 
         this.updateScoreboardUI(currentLevel);
