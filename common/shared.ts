@@ -1,6 +1,7 @@
 import { TetrominoType } from "./TetrominoType";
 export const BOARD_SIZE = 40;
 export const WALL_SIZE = 15;
+export const PRIVATE_AREA_LENGTH = 8;
 export const TILE_SIZE = 40;
 export const TILE_SCALE = TILE_SIZE / 8;
 export const BOARD_PX = BOARD_SIZE * TILE_SIZE;
