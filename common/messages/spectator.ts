@@ -8,6 +8,7 @@ export interface ToClientEvents {
     hideVotingSequence: () => void;
     sendVotingCountdown: (secondsLeft: number) => void;
     votedTetroToSpawn: (type: TetrominoType) => void;
+    randomTrade: (playerIds: [number, number]) => void;
 }
 
 export interface ToServerEvents {

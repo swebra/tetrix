@@ -270,21 +270,39 @@ export class GameState {
             }
         });
         this.socket.on("sendTradePiece", (tetrominoType) => {
-            this.currentTetromino.destroy();
-            this.currentTetromino = new Tetromino(tetrominoType, this.playerId);
-            this.currentTetromino.isTraded = true;
+            this.swapTetromino(tetrominoType);
             this.clearTradeAndEmit();
             this.emitPlayerMove();
         });
         this.socket.on("clearTrade", () => {
             this.clearLocalTrade();
         });
+        this.socket.on("randomTrade", (playerIds: [number, number]) => {
+            if (this.playerId && this.playerId in playerIds) {
+                this.socket.emit(
+                    "sendRandomPiece",
+                    this.currentTetromino.getType()
+                );
+            }
+        });
+        this.socket.on("sendRandomPiece", (tetrominoType: TetrominoType) => {
+            this.swapTetromino(tetrominoType);
+            if (this.tradeState === TradeState.Offered) {
+                this.clearTradeAndEmit();
+            }
+            this.emitPlayerMove();
+        });
     }
-    public clearLocalTrade() {
+    private swapTetromino(tetrominoType: TetrominoType) {
+        this.currentTetromino.destroy();
+        this.currentTetromino = new Tetromino(tetrominoType, this.playerId);
+        this.currentTetromino.isTraded = true;
+    }
+    private clearLocalTrade() {
         this.tradeState = TradeState.NoTrade;
         this.tradingPlayerId = null;
     }
-    public clearTradeAndEmit() {
+    private clearTradeAndEmit() {
         this.clearLocalTrade();
         this.socket.emit("clearTrade");
     }

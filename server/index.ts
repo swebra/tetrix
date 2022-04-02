@@ -97,8 +97,8 @@ const remainingPlayers: broadcast["remainingPlayers"] = (
     io.sockets.emit("updateRemainingPlayers", playersNeeded);
 };
 
-const trader = new Trade();
-
+const trader = new Trade(false);
+const randTrader = new Trade(true);
 const fallRate: broadcast["fallRate"] = (fallRate: number) => {
     io.sockets.emit("updateFallRate", fallRate);
 };
@@ -117,6 +117,10 @@ const votedDecision: broadcast["decision"] = (votedDecision: string) => {
 const updateBoard: broadcast["updateBoard"] = (board: BoardState) => {
     io.sockets.emit("updateBoard", board);
 };
+const randomTrade: broadcast["randomTrade"] = (playerIds: [number, number]) => {
+    io.sockets.emit("randomTrade", playerIds);
+};
+
 // ==============================================
 console.log(`Server started at port ${port}`);
 let playerCounter: 0 | 1 | 2 | 3 = 0;
@@ -128,7 +132,8 @@ const spectator = new Spectator(
     showVotingSequence,
     hideVotingSequence,
     votedTetroToSpawn,
-    votedDecision
+    votedDecision,
+    randomTrade
 );
 const scene = new SceneTracker();
 const boardSync = new BoardSync(updateBoard);
@@ -175,7 +180,9 @@ io.on("connection", (socket) => {
         const tetrominoType = args[1];
         trader.addTrade(socket, tetrominoType);
     });
-
+    socket.on("sendRandomPiece", (tetrominoType: TetrominoType) => {
+        randTrader.addTrade(socket, tetrominoType);
+    });
     socket.on("clearTrade", () => {
         trader.clearTrade();
         socket.broadcast.emit("clearTrade");

@@ -27,12 +27,13 @@ export class Spectator {
     private broadcastHideVotingSequence: broadcast["hideVotingSequence"];
     private broadcastVotedTetroToSpawn: broadcast["votedTetroToSpawn"];
     private broadcastFinalDecision: broadcast["decision"];
-
+    private broadcastRandomTrade: broadcast["randomTrade"];
     constructor(
         showVotingSequenceEvent: broadcast["showVotingSequence"],
         hideVotingSequenceEvent: broadcast["hideVotingSequence"],
         votedTetroToSpawn: broadcast["votedTetroToSpawn"],
-        finalDecision: broadcast["decision"]
+        finalDecision: broadcast["decision"],
+        randomTrade: broadcast["randomTrade"]
     ) {
         this._isFirstRoundVoting = true;
         this._isAcceptingVotes = false;
@@ -45,6 +46,7 @@ export class Spectator {
             option3: 0,
         };
         this._randTetros = [];
+
         this._countdownValue = 10;
         this._secondVotingRoundSelection = "null";
         this._isGameRunning = false;
@@ -52,6 +54,7 @@ export class Spectator {
         this.broadcastHideVotingSequence = hideVotingSequenceEvent;
         this.broadcastVotedTetroToSpawn = votedTetroToSpawn;
         this.broadcastFinalDecision = finalDecision;
+        this.broadcastRandomTrade = randomTrade;
     }
 
     get countdownValue(): number {
@@ -278,7 +281,9 @@ export class Spectator {
                 break;
             case "option3":
                 if (this._isFirstRoundVoting) {
-                    console.log("Randomizing player blocks"); // FIXME: Randomize player blocks.
+                    console.log("Randomizing player blocks");
+                    this.broadcastRandomTrade(this.getRandomPlayers());
+                    // FIXME: Randomize player blocks.
                     this.broadcastFinalDecision("random block swap");
                 } else if (this._previouslyVotedOption == "option2") {
                     this.broadcastVotedTetroToSpawn(this._randTetros[2]);
@@ -307,5 +312,17 @@ export class Spectator {
             enumIndexs = enumIndexs.filter((index) => index !== randomIndex);
             this._randTetros.push(randomIndex);
         }
+    }
+    private getRandomPlayers(): [number, number] {
+        const remainingPlayers = [0, 1, 2, 3];
+        const randomPlayerArr = [];
+        for (let i = 0; i < 2; i++) {
+            const playerIndex = Math.floor(
+                Math.random() * remainingPlayers.length
+            );
+            randomPlayerArr.push(remainingPlayers[playerIndex]);
+            randomPlayerArr.splice(playerIndex, 1);
+        }
+        return [randomPlayerArr[0], randomPlayerArr[1]];
     }
 }

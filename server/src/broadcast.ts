@@ -13,4 +13,5 @@ export interface broadcast {
     votedTetroToSpawn(type: TetrominoType): void;
     updateBoard(msg: BoardState): void;
     decision: (votedDecision: string) => void;
+    randomTrade(playerIds: [number, number]): void;
 }
