@@ -9,45 +9,37 @@ import { Socket } from "socket.io";
 type SocketScoreboard = Socket<ToServerEvents, ToClientEvents>;
 
 export class Scoreboard {
-    private _orangeScore: number;
-    private _greenScore: number;
-    private _pinkScore: number;
-    private _blueScore: number;
     private _accumulatedScore: number;
-    private _scoreMap: Array<ColoredScore>;
+    private scoreMap: Array<ColoredScore>;
     private _finalScores: Array<ColoredScore>;
     private broadcastUpdateScoreboard: broadcast["updateScoreboard"];
 
     constructor(updateScoreboardEvent: broadcast["updateScoreboard"]) {
-        this._orangeScore = 0;
-        this._greenScore = 0;
-        this._pinkScore = 0;
-        this._blueScore = 0;
         this._accumulatedScore = 0;
 
         this.broadcastUpdateScoreboard = updateScoreboardEvent;
 
         this._finalScores = [];
 
-        this._scoreMap = [];
-        this._scoreMap.push({
+        this.scoreMap = [];
+        this.scoreMap.push({
             color: "orange",
-            points: this.orangeScore,
+            points: 0,
         });
 
-        this._scoreMap.push({
+        this.scoreMap.push({
             color: "green",
-            points: this.greenScore,
+            points: 0,
         });
 
-        this._scoreMap.push({
+        this.scoreMap.push({
             color: "pink",
-            points: this.pinkScore,
+            points: 0,
         });
 
-        this._scoreMap.push({
+        this.scoreMap.push({
             color: "blue",
-            points: this.blueScore,
+            points: 0,
         });
     }
 
@@ -64,32 +56,25 @@ export class Scoreboard {
     }
 
     get orangeScore(): number {
-        return this._orangeScore;
+        return this.scoreMap[PlayerColor.Orange].points;
     }
 
     get greenScore(): number {
-        return this._greenScore;
+        return this.scoreMap[PlayerColor.Green].points;
     }
 
     get pinkScore(): number {
-        return this._pinkScore;
+        return this.scoreMap[PlayerColor.Pink].points;
     }
 
     get blueScore(): number {
-        return this._blueScore;
+        return this.scoreMap[PlayerColor.Blue].points;
     }
 
     get currentTeamScore(): number {
         return (
-            this._orangeScore +
-            this._greenScore +
-            this._pinkScore +
-            this._blueScore
+            this.orangeScore + this.greenScore + this.pinkScore + this.blueScore
         );
-    }
-
-    get scoreMap(): Array<ColoredScore> {
-        return this._scoreMap;
     }
 
     get finalScores(): Array<ColoredScore> {
@@ -104,13 +89,11 @@ export class Scoreboard {
      * Reset all scores.
      */
     public resetScores() {
-        this._orangeScore = 0;
-        this._greenScore = 0;
-        this._pinkScore = 0;
-        this._blueScore = 0;
+        this.scoreMap.forEach((player) => {
+            player.points = 0;
+        });
         this._accumulatedScore = 0;
         this._finalScores = [];
-        this.updateScoreMap();
     }
 
     /**
@@ -124,16 +107,16 @@ export class Scoreboard {
 
         switch (playerIndex) {
             case PlayerColor.Orange:
-                this._orangeScore += value;
+                this.scoreMap[PlayerColor.Orange].points += value;
                 break;
             case PlayerColor.Green:
-                this._greenScore += value;
+                this.scoreMap[PlayerColor.Green].points += value;
                 break;
             case PlayerColor.Pink:
-                this._pinkScore += value;
+                this.scoreMap[PlayerColor.Pink].points += value;
                 break;
             case PlayerColor.Blue:
-                this._blueScore += value;
+                this.scoreMap[PlayerColor.Blue].points += value;
                 break;
         }
 
@@ -158,27 +141,27 @@ export class Scoreboard {
     ) {
         switch (playerIndex) {
             case PlayerColor.Orange:
-                this._orangeScore -= value;
-                if (this._orangeScore <= 0) {
-                    this._orangeScore = 0;
+                this.scoreMap[PlayerColor.Orange].points -= value;
+                if (this.scoreMap[PlayerColor.Orange].points <= 0) {
+                    this.scoreMap[PlayerColor.Orange].points = 0;
                 }
                 break;
             case PlayerColor.Green:
-                this._greenScore -= value;
-                if (this._greenScore <= 0) {
-                    this._greenScore = 0;
+                this.scoreMap[PlayerColor.Green].points -= value;
+                if (this.scoreMap[PlayerColor.Green].points <= 0) {
+                    this.scoreMap[PlayerColor.Green].points = 0;
                 }
                 break;
             case PlayerColor.Pink:
-                this._pinkScore -= value;
-                if (this._pinkScore <= 0) {
-                    this._pinkScore = 0;
+                this.scoreMap[PlayerColor.Pink].points -= value;
+                if (this.scoreMap[PlayerColor.Pink].points <= 0) {
+                    this.scoreMap[PlayerColor.Pink].points = 0;
                 }
                 break;
             case PlayerColor.Blue:
-                this._blueScore -= value;
-                if (this._blueScore <= 0) {
-                    this._blueScore = 0;
+                this.scoreMap[PlayerColor.Blue].points -= value;
+                if (this.scoreMap[PlayerColor.Blue].points <= 0) {
+                    this.scoreMap[PlayerColor.Blue].points = 0;
                 }
                 break;
         }
@@ -187,38 +170,14 @@ export class Scoreboard {
     }
 
     /**
-     * Update the values of the score map.
-     */
-    private updateScoreMap() {
-        for (let i = 0; i < this._scoreMap.length; i++) {
-            switch (this._scoreMap[i].color) {
-                case "orange":
-                    this._scoreMap[i].points = this.orangeScore;
-                    break;
-                case "green":
-                    this._scoreMap[i].points = this.greenScore;
-                    break;
-                case "pink":
-                    this._scoreMap[i].points = this.pinkScore;
-                    break;
-                case "blue":
-                    this._scoreMap[i].points = this.blueScore;
-                    break;
-            }
-        }
-    }
-
-    /**
      * Notifies the client of the updated scoreboard.
      */
-    public updateScoreboardUI(level: number) {
-        this.updateScoreMap();
-
+    public updateScoreboardUI(currentLevel: number) {
         // Temporary clone of the data so that we can append the level of the game.
-        const clonedData = Object.assign([], this._scoreMap);
+        const clonedData = Object.assign([], this.scoreMap);
         clonedData.push({
             color: "level",
-            points: level,
+            points: currentLevel,
         });
 
         // Notify all connected users.
@@ -230,14 +189,12 @@ export class Scoreboard {
      * @returns The final scores of the players.
      */
     public getFinalScores() {
-        this.updateScoreMap();
-
         // Sort in descending order.
-        this._scoreMap.sort((a, b) => {
+        this.scoreMap.sort((a, b) => {
             return b.points - a.points;
         });
 
-        this._finalScores = Object.assign([], this._scoreMap);
+        this._finalScores = Object.assign([], this.scoreMap);
         this._finalScores.push({
             color: "total",
             points: this.currentTeamScore,
