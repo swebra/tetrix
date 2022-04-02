@@ -249,6 +249,9 @@ export class SceneGameArena extends Phaser.Scene {
         }
     }
     private updateFromTradeState() {
+        if (this.gameState.playerId == null) {
+            return;
+        }
         this.trade.updateNewTradeState(
             this.gameState.tradeState,
             this.gameState.tradingPlayerId
