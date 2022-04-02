@@ -10,37 +10,15 @@ type SocketScoreboard = Socket<ToServerEvents, ToClientEvents>;
 
 export class Scoreboard {
     private _accumulatedScore: number;
-    private scoreMap: Array<ColoredScore>;
+    private scoreMap!: Array<ColoredScore>;
     private _finalScores: Array<ColoredScore>;
     private broadcastUpdateScoreboard: broadcast["updateScoreboard"];
 
     constructor(updateScoreboardEvent: broadcast["updateScoreboard"]) {
         this._accumulatedScore = 0;
-
         this.broadcastUpdateScoreboard = updateScoreboardEvent;
-
         this._finalScores = [];
-
-        this.scoreMap = [];
-        this.scoreMap.push({
-            color: "orange",
-            points: 0,
-        });
-
-        this.scoreMap.push({
-            color: "green",
-            points: 0,
-        });
-
-        this.scoreMap.push({
-            color: "pink",
-            points: 0,
-        });
-
-        this.scoreMap.push({
-            color: "blue",
-            points: 0,
-        });
+        this.newScoreMap();
     }
 
     public initSocketListeners(socket: SocketScoreboard, level: Level) {
@@ -86,12 +64,36 @@ export class Scoreboard {
     }
 
     /**
+     * Reset the scoremap & ensure proper ordering of the player->sore. i.e., scoremap[0].points belongs to player orange.
+     */
+    private newScoreMap() {
+        this.scoreMap = [];
+        this.scoreMap.push({
+            color: "orange",
+            points: 0,
+        });
+
+        this.scoreMap.push({
+            color: "green",
+            points: 0,
+        });
+
+        this.scoreMap.push({
+            color: "pink",
+            points: 0,
+        });
+
+        this.scoreMap.push({
+            color: "blue",
+            points: 0,
+        });
+    }
+
+    /**
      * Reset all scores.
      */
     public resetScores() {
-        this.scoreMap.forEach((player) => {
-            player.points = 0;
-        });
+        this.newScoreMap();
         this._accumulatedScore = 0;
         this._finalScores = [];
     }
