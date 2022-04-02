@@ -1,4 +1,5 @@
 import { PlayerColor } from "common/PlayerAttributes";
+import { PlayerID } from "common/message";
 import { Level } from "./Level";
 import { broadcast } from "./broadcast";
 
@@ -9,46 +10,16 @@ import { Socket } from "socket.io";
 type SocketScoreboard = Socket<ToServerEvents, ToClientEvents>;
 
 export class Scoreboard {
-    private _orangeScore: number;
-    private _greenScore: number;
-    private _pinkScore: number;
-    private _blueScore: number;
     private _accumulatedScore: number;
-    private _scoreMap: Array<ColoredScore>;
+    private scoreMap!: Array<ColoredScore>;
     private _finalScores: Array<ColoredScore>;
     private broadcastUpdateScoreboard: broadcast["updateScoreboard"];
 
     constructor(updateScoreboardEvent: broadcast["updateScoreboard"]) {
-        this._orangeScore = 0;
-        this._greenScore = 0;
-        this._pinkScore = 0;
-        this._blueScore = 0;
         this._accumulatedScore = 0;
-
         this.broadcastUpdateScoreboard = updateScoreboardEvent;
-
         this._finalScores = [];
-
-        this._scoreMap = [];
-        this._scoreMap.push({
-            color: "orange",
-            points: this.orangeScore,
-        });
-
-        this._scoreMap.push({
-            color: "green",
-            points: this.greenScore,
-        });
-
-        this._scoreMap.push({
-            color: "pink",
-            points: this.pinkScore,
-        });
-
-        this._scoreMap.push({
-            color: "blue",
-            points: this.blueScore,
-        });
+        this.newScoreMap();
     }
 
     public initSocketListeners(socket: SocketScoreboard, level: Level) {
@@ -64,32 +35,25 @@ export class Scoreboard {
     }
 
     get orangeScore(): number {
-        return this._orangeScore;
+        return this.scoreMap[PlayerColor.Orange].points;
     }
 
     get greenScore(): number {
-        return this._greenScore;
+        return this.scoreMap[PlayerColor.Green].points;
     }
 
     get pinkScore(): number {
-        return this._pinkScore;
+        return this.scoreMap[PlayerColor.Pink].points;
     }
 
     get blueScore(): number {
-        return this._blueScore;
+        return this.scoreMap[PlayerColor.Blue].points;
     }
 
     get currentTeamScore(): number {
         return (
-            this._orangeScore +
-            this._greenScore +
-            this._pinkScore +
-            this._blueScore
+            this.orangeScore + this.greenScore + this.pinkScore + this.blueScore
         );
-    }
-
-    get scoreMap(): Array<ColoredScore> {
-        return this._scoreMap;
     }
 
     get finalScores(): Array<ColoredScore> {
@@ -101,13 +65,36 @@ export class Scoreboard {
     }
 
     /**
+     * Reset the scoremap & ensure proper ordering of the player->sore. i.e., scoremap[0].points belongs to player orange.
+     */
+    private newScoreMap() {
+        this.scoreMap = [];
+        this.scoreMap.push({
+            color: "orange",
+            points: 0,
+        });
+
+        this.scoreMap.push({
+            color: "green",
+            points: 0,
+        });
+
+        this.scoreMap.push({
+            color: "pink",
+            points: 0,
+        });
+
+        this.scoreMap.push({
+            color: "blue",
+            points: 0,
+        });
+    }
+
+    /**
      * Reset all scores.
      */
     public resetScores() {
-        this._orangeScore = 0;
-        this._greenScore = 0;
-        this._pinkScore = 0;
-        this._blueScore = 0;
+        this.newScoreMap();
         this._accumulatedScore = 0;
         this._finalScores = [];
     }
@@ -118,23 +105,10 @@ export class Scoreboard {
      * @param value The amount to award the player.
      * @param level The level object. Used to *possibly* increase the level of the game.
      */
-    public incrementScore(playerIndex: number, value: number, level: Level) {
+    public incrementScore(playerIndex: PlayerID, value: number, level: Level) {
         this._accumulatedScore += value;
 
-        switch (playerIndex) {
-            case PlayerColor.Orange:
-                this._orangeScore += value;
-                break;
-            case PlayerColor.Green:
-                this._greenScore += value;
-                break;
-            case PlayerColor.Pink:
-                this._pinkScore += value;
-                break;
-            case PlayerColor.Blue:
-                this._blueScore += value;
-                break;
-        }
+        this.scoreMap[playerIndex].points += value;
 
         // Reset the score if the level was incremented.
         if (level.checkUpdateLevel(this._accumulatedScore)) {
@@ -151,78 +125,27 @@ export class Scoreboard {
      * @param currentLevel The current level of the game.
      */
     public decrementScore(
-        playerIndex: number,
+        playerIndex: PlayerID,
         value: number,
         currentLevel: number
     ) {
-        switch (playerIndex) {
-            case PlayerColor.Orange:
-                this._orangeScore -= value;
-                if (this._orangeScore <= 0) {
-                    this._orangeScore = 0;
-                }
-                break;
-            case PlayerColor.Green:
-                this._greenScore -= value;
-                if (this._greenScore <= 0) {
-                    this._greenScore = 0;
-                }
-                break;
-            case PlayerColor.Pink:
-                this._pinkScore -= value;
-                if (this._pinkScore <= 0) {
-                    this._pinkScore = 0;
-                }
-                break;
-            case PlayerColor.Blue:
-                this._blueScore -= value;
-                if (this._blueScore <= 0) {
-                    this._blueScore = 0;
-                }
-                break;
+        this.scoreMap[playerIndex].points -= value;
+        if (this.scoreMap[playerIndex].points <= 0) {
+            this.scoreMap[playerIndex].points = 0;
         }
 
         this.updateScoreboardUI(currentLevel);
     }
 
     /**
-     * Update the values of the score map. This is handled separately since it is a sorted array of objects.
-     */
-    private updateScoreMap() {
-        for (let i = 0; i < this._scoreMap.length; i++) {
-            switch (this._scoreMap[i].color) {
-                case "orange":
-                    this._scoreMap[i].points = this.orangeScore;
-                    break;
-                case "green":
-                    this._scoreMap[i].points = this.greenScore;
-                    break;
-                case "pink":
-                    this._scoreMap[i].points = this.pinkScore;
-                    break;
-                case "blue":
-                    this._scoreMap[i].points = this.blueScore;
-                    break;
-            }
-        }
-
-        // Sort in descending order.
-        this._scoreMap.sort((a, b) => {
-            return b.points - a.points;
-        });
-    }
-
-    /**
      * Notifies the client of the updated scoreboard.
      */
-    public updateScoreboardUI(level: number) {
-        this.updateScoreMap();
-
+    public updateScoreboardUI(currentLevel: number) {
         // Temporary clone of the data so that we can append the level of the game.
-        const clonedData = Object.assign([], this._scoreMap);
+        const clonedData = Object.assign([], this.scoreMap);
         clonedData.push({
             color: "level",
-            points: level,
+            points: currentLevel,
         });
 
         // Notify all connected users.
@@ -234,9 +157,12 @@ export class Scoreboard {
      * @returns The final scores of the players.
      */
     public getFinalScores() {
-        this.updateScoreMap();
+        // Sort in descending order.
+        this.scoreMap.sort((a, b) => {
+            return b.points - a.points;
+        });
 
-        this._finalScores = Object.assign([], this._scoreMap);
+        this._finalScores = Object.assign([], this.scoreMap);
         this._finalScores.push({
             color: "total",
             points: this.currentTeamScore,
