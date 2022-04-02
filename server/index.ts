@@ -132,6 +132,7 @@ const spectator = new Spectator(
 );
 const scene = new SceneTracker();
 const boardSync = new BoardSync(updateBoard);
+let isGameOver: boolean = false;
 
 let watchdogTimer: Watchdog;
 const watchdogFood = {
@@ -140,11 +141,17 @@ const watchdogFood = {
 };
 
 function gameOver() {
+    if (isGameOver) {
+        return;
+    }
+    isGameOver = true;
+
     toSceneGameOver(scoreboard.getFinalScores());
 
     // Return to starting scene after 30 seconds.
     setTimeout(() => {
         toSceneWaitingRoom();
+        isGameOver = false;
     }, 30000);
 }
 
