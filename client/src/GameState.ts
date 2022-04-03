@@ -277,14 +277,18 @@ export class GameState {
         this.socket.on("clearTrade", () => {
             this.clearLocalTrade();
         });
-        this.socket.on("randomTrade", (playerIds: [number, number]) => {
-            if (this.playerId && this.playerId in playerIds) {
-                this.socket.emit(
-                    "sendRandomPiece",
-                    this.currentTetromino.getType()
-                );
+        this.socket.on(
+            "randomTrade",
+            (playerIds: [number, number], pairNum: 1 | 2) => {
+                if (this.playerId && this.playerId in playerIds) {
+                    this.socket.emit(
+                        "sendRandomPiece",
+                        this.currentTetromino.getType(),
+                        pairNum
+                    );
+                }
             }
-        });
+        );
         this.socket.on("sendRandomPiece", (tetrominoType: TetrominoType) => {
             this.swapTetromino(tetrominoType);
             if (this.tradeState === TradeState.Offered) {

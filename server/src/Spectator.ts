@@ -4,6 +4,7 @@ import { broadcast } from "./broadcast";
 import { TetrominoType } from "common/TetrominoType";
 import { ToServerEvents, ToClientEvents } from "common/messages/spectator";
 import { Socket } from "socket.io";
+import { threadId } from "worker_threads";
 
 type SocketSpectator = Socket<ToServerEvents, ToClientEvents>;
 
@@ -282,8 +283,9 @@ export class Spectator {
             case "option3":
                 if (this._isFirstRoundVoting) {
                     console.log("Randomizing player blocks");
-                    this.broadcastRandomTrade(this.getRandomPlayers());
-                    // FIXME: Randomize player blocks.
+                    const [playerPair1, playerPair2] = this.getRandomPlayers();
+                    this.broadcastRandomTrade(playerPair1, 1);
+                    this.broadcastRandomTrade(playerPair2, 2);
                     this.broadcastFinalDecision("random block swap");
                 } else if (this._previouslyVotedOption == "option2") {
                     this.broadcastVotedTetroToSpawn(this._randTetros[2]);
@@ -313,16 +315,18 @@ export class Spectator {
             this._randTetros.push(randomIndex);
         }
     }
-    private getRandomPlayers(): [number, number] {
-        const remainingPlayers = [0, 1, 2, 3];
-        const randomPlayerArr = [];
-        for (let i = 0; i < 2; i++) {
-            const playerIndex = Math.floor(
-                Math.random() * remainingPlayers.length
-            );
-            randomPlayerArr.push(remainingPlayers[playerIndex]);
-            randomPlayerArr.splice(playerIndex, 1);
+    private shuffleArr(arr: Array<number>) {
+        for (let i = arr.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [arr[i], arr[j]] = [arr[j], arr[i]];
         }
-        return [randomPlayerArr[0], randomPlayerArr[1]];
+        return arr;
+    }
+    private getRandomPlayers(): [[number, number], [number, number]] {
+        const shuffledPlayers = this.shuffleArr([0, 1, 2, 3]);
+        return [
+            [shuffledPlayers[0], shuffledPlayers[1]],
+            [shuffledPlayers[2], shuffledPlayers[3]],
+        ];
     }
 }

@@ -4,17 +4,16 @@ import { emitWarning } from "process";
 import { Socket } from "socket.io";
 
 export class Trade {
-    //currentOffer should be a socket
     currentOfferer: Socket<ToClientEvents, ToServerEvents> | null = null;
     tradeActive: boolean;
     currentTradeOffer: TetrominoType | null;
-    isRandomTrade: boolean;
+    pairNum: 1 | 2 | null;
 
-    constructor(isRandomTrade: boolean = false) {
+    constructor(pairNum: 1 | 2 | null = null) {
         this.currentOfferer = null;
         this.tradeActive = false;
         this.currentTradeOffer = null;
-        this.isRandomTrade = isRandomTrade;
+        this.pairNum = pairNum;
     }
     public addTrade(
         socket: Socket<ToClientEvents, ToServerEvents>,
@@ -31,9 +30,17 @@ export class Trade {
         ) {
             const acceptingSocket = socket;
             const acceptingTetromino = tradeOffer;
-            if (this.isRandomTrade) {
-                acceptingSocket.emit("sendRandomPiece", this.currentTradeOffer);
-                this.currentOfferer.emit("sendRandomPiece", acceptingTetromino);
+            if (this.pairNum) {
+                acceptingSocket.emit(
+                    "sendRandomPiece",
+                    this.currentTradeOffer,
+                    this.pairNum
+                );
+                this.currentOfferer.emit(
+                    "sendRandomPiece",
+                    acceptingTetromino,
+                    this.pairNum
+                );
                 this.clearTrade();
             } else {
                 acceptingSocket.emit("sendTradePiece", this.currentTradeOffer);

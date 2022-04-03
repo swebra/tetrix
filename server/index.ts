@@ -97,8 +97,8 @@ const remainingPlayers: broadcast["remainingPlayers"] = (
     io.sockets.emit("updateRemainingPlayers", playersNeeded);
 };
 
-const trader = new Trade(false);
-const randTrader = new Trade(true);
+const trader = new Trade(null);
+const randTradePair = [new Trade(1), new Trade(2)];
 const fallRate: broadcast["fallRate"] = (fallRate: number) => {
     io.sockets.emit("updateFallRate", fallRate);
 };
@@ -117,8 +117,11 @@ const votedDecision: broadcast["decision"] = (votedDecision: string) => {
 const updateBoard: broadcast["updateBoard"] = (board: BoardState) => {
     io.sockets.emit("updateBoard", board);
 };
-const randomTrade: broadcast["randomTrade"] = (playerIds: [number, number]) => {
-    io.sockets.emit("randomTrade", playerIds);
+const randomTrade: broadcast["randomTrade"] = (
+    playerIds: [number, number],
+    pairNum: 1 | 2
+) => {
+    io.sockets.emit("randomTrade", playerIds, pairNum);
 };
 
 // ==============================================
@@ -180,9 +183,12 @@ io.on("connection", (socket) => {
         const tetrominoType = args[1];
         trader.addTrade(socket, tetrominoType);
     });
-    socket.on("sendRandomPiece", (tetrominoType: TetrominoType) => {
-        randTrader.addTrade(socket, tetrominoType);
-    });
+    socket.on(
+        "sendRandomPiece",
+        (tetrominoType: TetrominoType, pairNum: 1 | 2) => {
+            randTradePair[pairNum - 1].addTrade(socket, tetrominoType);
+        }
+    );
     socket.on("clearTrade", () => {
         trader.clearTrade();
         socket.broadcast.emit("clearTrade");
