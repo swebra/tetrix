@@ -255,7 +255,9 @@ export class Spectator {
                 } else if (this._previouslyVotedOption == "option2") {
                     this.broadcastVotedTetroToSpawn(this._randTetros[0]);
                     this.broadcastFinalDecision(
-                        `spawning ${this._randTetros[0]} pieces`
+                        `spawning ${TetrominoType[
+                            this._randTetros[0]
+                        ].toLowerCase()} pieces`
                     );
                 }
                 break;
@@ -272,7 +274,9 @@ export class Spectator {
                 } else if (this._previouslyVotedOption == "option2") {
                     this.broadcastVotedTetroToSpawn(this._randTetros[1]);
                     this.broadcastFinalDecision(
-                        `spawning ${this._randTetros[1]} pieces`
+                        `spawning ${TetrominoType[
+                            this._randTetros[1]
+                        ].toLowerCase()} pieces`
                     );
                 }
                 break;
@@ -283,7 +287,9 @@ export class Spectator {
                 } else if (this._previouslyVotedOption == "option2") {
                     this.broadcastVotedTetroToSpawn(this._randTetros[2]);
                     this.broadcastFinalDecision(
-                        `spawning ${this._randTetros[2]} pieces`
+                        `spawning ${TetrominoType[
+                            this._randTetros[2]
+                        ].toLowerCase()} pieces`
                     );
                 }
                 break;
