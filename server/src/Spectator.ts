@@ -282,7 +282,6 @@ export class Spectator {
                 break;
             case "option3":
                 if (this._isFirstRoundVoting) {
-                    console.log("Randomizing player blocks");
                     const [playerPair1, playerPair2] = this.getRandomPlayers();
                     this.broadcastRandomTrade(playerPair1, 1);
                     this.broadcastRandomTrade(playerPair2, 2);

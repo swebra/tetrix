@@ -23,7 +23,6 @@ export class Trade {
             this.currentOfferer = socket;
             this.currentTradeOffer = tradeOffer;
             this.tradeActive = true;
-            console.log(`Trade added for pairNum=${this.pairNum}`);
         } else if (
             this.currentOfferer &&
             this.currentTradeOffer &&
@@ -32,11 +31,7 @@ export class Trade {
         ) {
             const acceptingSocket = socket;
             const acceptingTetromino = tradeOffer;
-            console.log(this.pairNum);
             if (this.pairNum != null) {
-                console.log(
-                    `Sending random Piece with pairNum=${this.pairNum}`
-                );
                 acceptingSocket.emit(
                     "sendRandomPiece",
                     this.currentTradeOffer,
@@ -47,16 +42,10 @@ export class Trade {
                     acceptingTetromino,
                     this.pairNum
                 );
-                console.log(
-                    `The pieces ${this.currentTradeOffer} and ${acceptingTetromino} were sent`
-                );
                 this.clearTrade();
             } else {
                 acceptingSocket.emit("sendTradePiece", this.currentTradeOffer);
                 this.currentOfferer.emit("sendTradePiece", acceptingTetromino);
-                console.log(
-                    `The pieces ${this.currentTradeOffer} and ${acceptingTetromino} were sent`
-                );
             }
         }
     }

@@ -129,9 +129,6 @@ const randomTrade: broadcast["randomTrade"] = (
     playerIds: [number, number],
     pairNum: 1 | 2
 ) => {
-    console.log(
-        `Random trade is calling with pairNum = ${pairNum} and playerIds ${playerIds}`
-    );
     io.sockets.emit("randomTrade", playerIds, pairNum);
 };
 
@@ -204,9 +201,6 @@ io.on("connection", (socket) => {
     socket.on(
         "sendRandomPiece",
         (tetrominoType: TetrominoType, pairNum: 1 | 2) => {
-            console.log(
-                `sendRandomPiece is being called with pairNum=${pairNum}`
-            );
             randTradePair[pairNum - 1].addTrade(socket, tetrominoType);
         }
     );
