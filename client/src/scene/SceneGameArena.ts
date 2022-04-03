@@ -7,7 +7,7 @@ import { KeyThrottleManager } from "../KeyThrottleManager";
 
 import { Socket } from "socket.io-client";
 
-import { BOARD_SIZE, TILE_SCALE } from "common/shared";
+import { TILE_SCALE } from "common/shared";
 import { ToClientEvents, ToServerEvents } from "common/messages/sceneGameArena";
 import { ControlsUI } from "./ControlsUI";
 import { ActiveEventsUI } from "./ActiveEventsUI";
@@ -46,6 +46,10 @@ export class SceneGameArena extends Phaser.Scene {
         this.load.image("arena-border", "assets/arena-border.png");
         this.load.image("container-controls", "assets/container-controls.png");
         this.load.image("container-voting", "assets/container-voting.png");
+        this.load.image(
+            "container-trade-controls",
+            "assets/container-trade-controls.png"
+        );
 
         this.load.bitmapFont(
             "brawl",
@@ -57,6 +61,8 @@ export class SceneGameArena extends Phaser.Scene {
             frameWidth: 8,
             frameHeight: 8,
         });
+
+        this.load.image("key-shift", "assets/key-shift.png");
         this.load.spritesheet("key", "assets/keys.png", {
             frameWidth: 13,
             frameHeight: 13,
@@ -74,10 +80,10 @@ export class SceneGameArena extends Phaser.Scene {
             .setOrigin(0, 0)
             .setScale(TILE_SCALE);
 
+        this.trade = new TradeUI(this, this.gameState.playerId);
         this.scoreboard = new ScoreboardUI(this, this.socket);
         new ActiveEventsUI(this, this.socket);
         if (this.gameState.playerId != null) {
-            this.trade = new TradeUI(this);
             new ControlsUI(this);
             this.initControls();
         } else {
@@ -153,34 +159,24 @@ export class SceneGameArena extends Phaser.Scene {
         });
 
         this.keyThrottleManager.register([shift], "trade", () => {
-            let tradeChanged = false;
             if (
                 this.gameState.currentTetromino.isTraded ||
                 this.trade.tradeState == TradeState.Offered ||
                 this.trade.tradeState == TradeState.Accepted
             ) {
-                //ignore
-            } else if (this.trade.tradeState == TradeState.NoTrade) {
-                this.gameState.tradeState = TradeState.Offered;
-                this.trade.updateNewTradeState(
-                    this.gameState.tradeState,
-                    this.gameState.tradingPlayerId
-                );
-                tradeChanged = true;
-            } else if (this.trade.tradeState == TradeState.Pending) {
-                this.gameState.tradeState = TradeState.Accepted;
-                this.trade.updateNewTradeState(
-                    this.gameState.tradeState,
-                    this.gameState.tradingPlayerId
-                );
-                tradeChanged = true;
+                return;
             }
 
-            if (tradeChanged) {
-                this.gameState.emitTrade();
-                //update the trade state immediately on emit
-                this.updateFromTradeState();
+            if (this.trade.tradeState == TradeState.NoTrade) {
+                this.gameState.tradeState = TradeState.Offered;
+                this.gameState.tradeTetrominoType =
+                    this.gameState.currentTetromino.getType();
+            } else if (this.trade.tradeState == TradeState.Pending) {
+                this.gameState.tradeState = TradeState.Accepted;
             }
+
+            // UI updated on next update cycle
+            this.gameState.emitTrade();
         });
     }
 
@@ -191,6 +187,7 @@ export class SceneGameArena extends Phaser.Scene {
         this.socket.removeListener("initPlayer");
 
         this.socket.on("initPlayer", (playerId) => {
+            this.trade.addControls(playerId);
             new ControlsUI(this);
             this.spectator?.destroy();
             this.spectator = undefined;
@@ -224,8 +221,8 @@ export class SceneGameArena extends Phaser.Scene {
         // 12 fps
         if (this.frameTimeElapsed > 1000 / this.FRAMERATE) {
             this.updateDrawPlayers();
-            this.updateFromTradeState();
             this.drawPendingMonominoes();
+            this.updateTradeUI();
             // start next frame
             this.frameTimeElapsed = 0;
         }
@@ -251,24 +248,20 @@ export class SceneGameArena extends Phaser.Scene {
         this.gameState.monominoesToDraw = [];
     }
 
-    private updateFromTradeState() {
-        if (this.gameState.playerId == null) {
-            return;
-        }
-        this.trade.updateNewTradeState(
-            this.gameState.tradeState,
-            this.gameState.tradingPlayerId
-        );
-        if (this.gameState.currentTetromino.isTraded) {
-            this.trade.existingText();
-        }
-    }
-
     private updateDrawPlayers() {
         if (this.gameState.playerId != null)
             this.gameState.currentTetromino.draw(this);
         this.gameState.otherTetrominoes.forEach((tetromino) =>
             tetromino.draw(this)
+        );
+    }
+
+    private updateTradeUI() {
+        this.trade.update(
+            this.gameState.tradeState,
+            !this.gameState.currentTetromino?.isTraded || false,
+            this.gameState.tradeTetrominoType,
+            this.gameState.tradingPlayerId
         );
     }
 

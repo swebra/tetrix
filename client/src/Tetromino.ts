@@ -167,9 +167,11 @@ export class Tetromino {
             monomino.position = lookahead.tiles[i];
         });
     }
+
     getType() {
         return this.type;
     }
+
     setType(type: TetrominoType) {
         if (this.type == type) {
             return;
