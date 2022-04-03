@@ -280,7 +280,10 @@ export class GameState {
         this.socket.on(
             "randomTrade",
             (playerIds: [number, number], pairNum: 1 | 2) => {
-                if (this.playerId && this.playerId in playerIds) {
+                if (
+                    this.playerId != null &&
+                    playerIds.includes(this.playerId)
+                ) {
                     this.socket.emit(
                         "sendRandomPiece",
                         this.currentTetromino.getType(),
