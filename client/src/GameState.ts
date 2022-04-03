@@ -567,7 +567,7 @@ export class GameState {
         }
 
         if (
-            this.enteringNeighborPrivateArea(lookahead) ||
+            this.isInNeighborSection(lookahead) ||
             this.overlapWithBoard(lookahead) ||
             this.overlapWithPlayers(lookahead, this.otherTetrominoes)
         ) {
@@ -578,9 +578,7 @@ export class GameState {
         return true;
     }
 
-    private enteringNeighborPrivateArea(
-        lookahead: TetrominoLookahead
-    ): boolean {
+    private isInNeighborSection(lookahead: TetrominoLookahead): boolean {
         return lookahead.tiles.some(([_, col]) => {
             return (
                 col < PRIVATE_AREA_LENGTH ||
