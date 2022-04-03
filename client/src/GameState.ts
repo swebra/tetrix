@@ -1,6 +1,11 @@
 import { Socket } from "socket.io-client";
 
-import { BoardState, BOARD_SIZE, WALL_SIZE } from "common/shared";
+import {
+    BoardState,
+    BOARD_SIZE,
+    PRIVATE_AREA_LENGTH,
+    WALL_SIZE,
+} from "common/shared";
 import { TetrominoType } from "common/TetrominoType";
 import { ToServerEvents, ToClientEvents } from "common/messages/game";
 import { TradeState } from "common/TradeState";
@@ -570,6 +575,7 @@ export class GameState {
         }
 
         if (
+            this.isInNeighborSection(lookahead) ||
             this.overlapWithBoard(lookahead) ||
             this.overlapWithPlayers(lookahead, this.otherTetrominoes)
         ) {
@@ -578,6 +584,15 @@ export class GameState {
 
         this.currentTetromino.updateFromLookahead(lookahead);
         return true;
+    }
+
+    private isInNeighborSection(lookahead: TetrominoLookahead): boolean {
+        return lookahead.tiles.some(([_, col]) => {
+            return (
+                col < PRIVATE_AREA_LENGTH ||
+                col >= BOARD_SIZE - PRIVATE_AREA_LENGTH
+            );
+        });
     }
 
     /**
