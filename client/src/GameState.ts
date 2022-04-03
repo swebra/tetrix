@@ -1,6 +1,11 @@
 import { Socket } from "socket.io-client";
 
-import { BoardState, BOARD_SIZE, WALL_SIZE } from "common/shared";
+import {
+    BoardState,
+    BOARD_SIZE,
+    PRIVATE_AREA_LENGTH,
+    WALL_SIZE,
+} from "common/shared";
 import { TetrominoType } from "common/TetrominoType";
 import { ToServerEvents, ToClientEvents } from "common/messages/game";
 import { TradeState } from "common/TradeState";
@@ -260,6 +265,7 @@ export class GameState {
             // push to monomino array waiting to draw
             this.updateLineClearing();
         });
+
         this.socket.on("playerTrade", (playerId, _, otherTradeState) => {
             if (otherTradeState == TradeState.Offered) {
                 this.tradeState = TradeState.Pending;
@@ -269,11 +275,13 @@ export class GameState {
                 this.tradingPlayerId = null;
             }
         });
+
         this.socket.on("sendTradePiece", (tetrominoType) => {
             this.swapTetromino(tetrominoType);
             this.clearTradeAndEmit();
             this.emitPlayerMove();
         });
+
         this.socket.on("clearTrade", () => {
             this.clearLocalTrade();
         });
@@ -552,10 +560,15 @@ export class GameState {
     }
 
     public placeTetromino(tetromino: Tetromino) {
-        tetromino.monominoes.forEach((monomino) => {
-            this.board[monomino.position[0]][monomino.position[1]] = monomino;
-        });
+        this.monominoesToDraw = this.monominoesToDraw.concat(
+            tetromino.monominoes.map((monomino) => {
+                this.board[monomino.position[0]][monomino.position[1]] =
+                    monomino;
+                return monomino;
+            })
+        );
     }
+
     public emitTrade() {
         if (this.playerId != null) {
             this.socket.emit(
@@ -587,6 +600,7 @@ export class GameState {
         }
 
         if (
+            this.isInNeighborSection(lookahead) ||
             this.overlapWithBoard(lookahead) ||
             this.overlapWithPlayers(lookahead, this.otherTetrominoes)
         ) {
@@ -595,6 +609,15 @@ export class GameState {
 
         this.currentTetromino.updateFromLookahead(lookahead);
         return true;
+    }
+
+    private isInNeighborSection(lookahead: TetrominoLookahead): boolean {
+        return lookahead.tiles.some(([_, col]) => {
+            return (
+                col < PRIVATE_AREA_LENGTH ||
+                col >= BOARD_SIZE - PRIVATE_AREA_LENGTH
+            );
+        });
     }
 
     /**
