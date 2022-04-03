@@ -97,8 +97,16 @@ const remainingPlayers: broadcast["remainingPlayers"] = (
     io.sockets.emit("updateRemainingPlayers", playersNeeded);
 };
 
+//Currently, the Trade class does normal trades if not given a pair number
+//And does random trades if given a pair number
+
 const trader = new Trade(null);
+
+//2 random traders for 2 pairs of random trades
+//The pair num is passed to the client so that the client knows which pair its
+//piece is to be sent to
 const randTradePair = [new Trade(1), new Trade(2)];
+
 const fallRate: broadcast["fallRate"] = (fallRate: number) => {
     io.sockets.emit("updateFallRate", fallRate);
 };

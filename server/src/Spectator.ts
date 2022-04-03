@@ -315,6 +315,9 @@ export class Spectator {
             this._randTetros.push(randomIndex);
         }
     }
+    /**
+     * Shuffle helper function
+     */
     private shuffleArr(arr: Array<number>) {
         for (let i = arr.length - 1; i > 0; i--) {
             const j = Math.floor(Math.random() * (i + 1));
@@ -322,6 +325,10 @@ export class Spectator {
         }
         return arr;
     }
+
+    /**
+     * Returns two random pairs of of players
+     */
     private getRandomPlayers(): [[number, number], [number, number]] {
         const shuffledPlayers = this.shuffleArr([0, 1, 2, 3]);
         return [
