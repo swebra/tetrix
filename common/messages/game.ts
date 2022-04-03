@@ -15,6 +15,8 @@ export interface ToClientEvents {
     sendTradePiece: (tetrominoType: TetrominoType) => void;
     clearTrade: () => void;
     reportBoard: (callback: (board: BoardState) => void) => void;
+    randomTrade: (playerIds: [number, number], pairNum: 1 | 2) => void;
+    sendRandomPiece: (tetrominoType: TetrominoType, pairNum: 1 | 2) => void;
 }
 
 export interface ToServerEvents {
@@ -29,4 +31,5 @@ export interface ToServerEvents {
     endGame: () => void;
     gainPoints: (playerId: PlayerID, score: 1 | 3 | 5 | 8) => void;
     losePoints: (playerId: PlayerID) => void;
+    sendRandomPiece: (tetrominoType: TetrominoType, pairNum: 1 | 2) => void;
 }

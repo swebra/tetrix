@@ -1,12 +1,20 @@
 import { ToClientEvents, ToServerEvents } from "common/messages/trade";
 import { TetrominoType } from "common/TetrominoType";
+import { emitWarning } from "process";
 import { Socket } from "socket.io";
 
 export class Trade {
-    //currentOffer should be a socket
     currentOfferer: Socket<ToClientEvents, ToServerEvents> | null = null;
-    tradeActive: boolean = false;
-    currentTradeOffer: TetrominoType | null = null;
+    tradeActive: boolean;
+    currentTradeOffer: TetrominoType | null;
+    pairNum: 1 | 2 | null;
+
+    constructor(pairNum: 1 | 2 | null = null) {
+        this.currentOfferer = null;
+        this.tradeActive = false;
+        this.currentTradeOffer = null;
+        this.pairNum = pairNum;
+    }
     public addTrade(
         socket: Socket<ToClientEvents, ToServerEvents>,
         tradeOffer: TetrominoType
@@ -18,15 +26,27 @@ export class Trade {
         } else if (
             this.currentOfferer &&
             this.currentTradeOffer &&
-            this.tradeActive
+            this.tradeActive &&
+            socket != this.currentOfferer
         ) {
             const acceptingSocket = socket;
             const acceptingTetromino = tradeOffer;
-            acceptingSocket.emit("sendTradePiece", this.currentTradeOffer);
-            this.currentOfferer.emit("sendTradePiece", acceptingTetromino);
-            console.log(
-                `The pieces ${this.currentTradeOffer} and ${acceptingTetromino} were sent`
-            );
+            if (this.pairNum != null) {
+                acceptingSocket.emit(
+                    "sendRandomPiece",
+                    this.currentTradeOffer,
+                    this.pairNum
+                );
+                this.currentOfferer.emit(
+                    "sendRandomPiece",
+                    acceptingTetromino,
+                    this.pairNum
+                );
+                this.clearTrade();
+            } else {
+                acceptingSocket.emit("sendTradePiece", this.currentTradeOffer);
+                this.currentOfferer.emit("sendTradePiece", acceptingTetromino);
+            }
         }
     }
     public clearTrade() {

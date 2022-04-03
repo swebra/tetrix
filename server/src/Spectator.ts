@@ -4,6 +4,7 @@ import { broadcast } from "./broadcast";
 import { TetrominoType } from "common/TetrominoType";
 import { ToServerEvents, ToClientEvents } from "common/messages/spectator";
 import { Socket } from "socket.io";
+import { threadId } from "worker_threads";
 
 type SocketSpectator = Socket<ToServerEvents, ToClientEvents>;
 
@@ -27,12 +28,13 @@ export class Spectator {
     private broadcastHideVotingSequence: broadcast["hideVotingSequence"];
     private broadcastVotedTetroToSpawn: broadcast["votedTetroToSpawn"];
     private broadcastFinalDecision: broadcast["decision"];
-
+    private broadcastRandomTrade: broadcast["randomTrade"];
     constructor(
         showVotingSequenceEvent: broadcast["showVotingSequence"],
         hideVotingSequenceEvent: broadcast["hideVotingSequence"],
         votedTetroToSpawn: broadcast["votedTetroToSpawn"],
-        finalDecision: broadcast["decision"]
+        finalDecision: broadcast["decision"],
+        randomTrade: broadcast["randomTrade"]
     ) {
         this._isFirstRoundVoting = true;
         this._isAcceptingVotes = false;
@@ -45,6 +47,7 @@ export class Spectator {
             option3: 0,
         };
         this._randTetros = [];
+
         this._countdownValue = 10;
         this._secondVotingRoundSelection = "null";
         this._isGameRunning = false;
@@ -52,6 +55,7 @@ export class Spectator {
         this.broadcastHideVotingSequence = hideVotingSequenceEvent;
         this.broadcastVotedTetroToSpawn = votedTetroToSpawn;
         this.broadcastFinalDecision = finalDecision;
+        this.broadcastRandomTrade = randomTrade;
     }
 
     get countdownValue(): number {
@@ -278,7 +282,9 @@ export class Spectator {
                 break;
             case "option3":
                 if (this._isFirstRoundVoting) {
-                    console.log("Randomizing player blocks"); // FIXME: Randomize player blocks.
+                    const [playerPair1, playerPair2] = this.getRandomPlayers();
+                    this.broadcastRandomTrade(playerPair1, 1);
+                    this.broadcastRandomTrade(playerPair2, 2);
                     this.broadcastFinalDecision("random block swap");
                 } else if (this._previouslyVotedOption == "option2") {
                     this.broadcastVotedTetroToSpawn(this._randTetros[2]);
@@ -307,5 +313,26 @@ export class Spectator {
             enumIndexs = enumIndexs.filter((index) => index !== randomIndex);
             this._randTetros.push(randomIndex);
         }
+    }
+    /**
+     * Shuffle helper function
+     */
+    private shuffleArr(arr: Array<number>) {
+        for (let i = arr.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [arr[i], arr[j]] = [arr[j], arr[i]];
+        }
+        return arr;
+    }
+
+    /**
+     * Returns two random pairs of of players
+     */
+    private getRandomPlayers(): [[number, number], [number, number]] {
+        const shuffledPlayers = this.shuffleArr([0, 1, 2, 3]);
+        return [
+            [shuffledPlayers[0], shuffledPlayers[1]],
+            [shuffledPlayers[2], shuffledPlayers[3]],
+        ];
     }
 }
