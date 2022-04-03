@@ -5,7 +5,7 @@ export class ControlsUI {
     constructor(scene: Scene) {
         scene.add
             .image(
-                8 * TILE_SCALE,
+                7 * TILE_SCALE,
                 BOARD_PX - 100 * TILE_SCALE,
                 "container-controls"
             )
@@ -13,7 +13,7 @@ export class ControlsUI {
             .setScale(TILE_SCALE);
 
         // .5 needed to account for image centering
-        const startX = 21.5 * TILE_SCALE;
+        const startX = 20.5 * TILE_SCALE;
         const startY = BOARD_PX - 86.5 * TILE_SCALE;
 
         const controlInfo = [
@@ -28,7 +28,7 @@ export class ControlsUI {
             const y = startY + i * (15 * TILE_SCALE);
             scene.add.image(startX, y, "key", i).setScale(TILE_SCALE);
             scene.add
-                .bitmapText(startX + 9 * TILE_SCALE, y, "brawl", str, 31.5)
+                .bitmapText(startX + 9.5 * TILE_SCALE, y, "brawl", str, 31.5)
                 .setOrigin(0, 0.5);
         });
     }
