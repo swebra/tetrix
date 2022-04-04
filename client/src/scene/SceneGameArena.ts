@@ -161,17 +161,17 @@ export class SceneGameArena extends Phaser.Scene {
         this.keyThrottleManager.register([shift], "trade", () => {
             if (
                 this.gameState.currentTetromino.isTraded ||
-                this.trade.tradeState == TradeState.Offered ||
-                this.trade.tradeState == TradeState.Accepted
+                this.gameState.tradeState == TradeState.Offered ||
+                this.gameState.tradeState == TradeState.Accepted
             ) {
                 return;
             }
 
-            if (this.trade.tradeState == TradeState.NoTrade) {
+            if (this.gameState.tradeState == TradeState.NoTrade) {
                 this.gameState.tradeState = TradeState.Offered;
                 this.gameState.tradeTetrominoType =
                     this.gameState.currentTetromino.getType();
-            } else if (this.trade.tradeState == TradeState.Pending) {
+            } else if (this.gameState.tradeState == TradeState.Pending) {
                 this.gameState.tradeState = TradeState.Accepted;
             }
 
