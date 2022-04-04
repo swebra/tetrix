@@ -5,17 +5,37 @@ import { BoardState } from "common/shared";
 import { broadcast } from "./broadcast";
 
 export class BoardSync {
+    static PLACING_COOLDOWN_PERIOD: number = 500; // ms
     private socketsWithTruth: Array<Socket> = [];
     private broadcastUpdateBoard: broadcast["updateBoard"];
+    private lastPlacingTS: number = new Date().getTime();
 
     constructor(broadcastUpdateBoard: broadcast["updateBoard"]) {
         this.broadcastUpdateBoard = broadcastUpdateBoard;
         setInterval(async () => {
             const socket = this.pickRandomSourceOfTruth();
             if (!socket) return;
+
             const boardState = await this.getBoardFromClient(socket);
+            const now = new Date().getTime();
+            if (now - this.lastPlacingTS < BoardSync.PLACING_COOLDOWN_PERIOD) {
+                console.log(
+                    "BoardSync: skipping update at",
+                    now,
+                    ", last placing event: ",
+                    this.lastPlacingTS,
+                    "diff:",
+                    now - this.lastPlacingTS
+                );
+                // skip when sync is less than 200ms after the previous placing event
+                return;
+            }
             this.broadcastUpdateBoard(boardState);
         }, 10000);
+    }
+
+    public updateLastPlacingTS() {
+        this.lastPlacingTS = new Date().getTime();
     }
 
     public initSocketListeners(

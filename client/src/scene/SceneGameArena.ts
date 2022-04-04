@@ -184,6 +184,7 @@ export class SceneGameArena extends Phaser.Scene {
         this.socket.removeListener("toSceneGameOver");
         this.socket.removeListener("updateFallRate");
         this.socket.removeListener("initPlayer");
+        this.socket.removeListener("updateBoard");
 
         this.socket.on("initPlayer", (playerId) => {
             this.trade.addControls(playerId);

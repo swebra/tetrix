@@ -213,6 +213,7 @@ io.on("connection", (socket) => {
         if (playerId == null) {
             return;
         }
+        boardSync.updateLastPlacingTS();
         socket.broadcast.emit("playerPlace", playerId, state);
     });
 
