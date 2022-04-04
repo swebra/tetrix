@@ -36,6 +36,15 @@ describe("Testing 'Spectator'", () => {
         expect(setTimeout).toHaveBeenCalledWith(expect.any(Function), 12000);
     });
 
+    test("Reset Voting Data Before Starting Another", () => {
+        expect(spectator.countdownValue).toBe(10);
+        spectator.generateFirstVotingSequence(level);
+        jest.runAllTimers();
+        expect(spectator.countdownValue).toBe(9);
+        spectator.generateFirstVotingSequence(level);
+        expect(spectator.countdownValue).toBe(10);
+    });
+
     test("Test Second Voting Sequence", () => {
         expect(spectator.countdownValue).toBe(10);
         spectator.generateSecondVotingSequence("", level);

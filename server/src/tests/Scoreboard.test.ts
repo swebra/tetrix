@@ -23,6 +23,15 @@ describe("Testing 'Spectator'", () => {
         expect(updateScoreboardUI).toHaveBeenCalled();
     });
 
+    test("Reset Scores", () => {
+        expect(board.currentTeamScore).toBe(0);
+        board.incrementScore(0, 10, level);
+        expect(board.currentTeamScore).toBe(10);
+        expect(board.accumulatedScore).toBe(10);
+        board.resetScores();
+        expect(board.currentTeamScore).toBe(0);
+    });
+
     test("Test Resetting AccumulatedScore Upon Level Increment", () => {
         const updateLevel = jest.spyOn(level, "checkUpdateLevel");
 
