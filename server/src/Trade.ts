@@ -3,7 +3,7 @@ import { TetrominoType } from "common/TetrominoType";
 import { Socket } from "socket.io";
 
 export class Trade {
-    currentOfferer: Socket<ToClientEvents, ToServerEvents> | null = null;
+    currentOfferer: Socket<ToClientEvents, ToServerEvents> | null;
     tradeActive: boolean;
     currentTradeOffer: TetrominoType | null;
     pairNum: 1 | 2 | null;
