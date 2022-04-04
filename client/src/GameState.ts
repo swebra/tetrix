@@ -45,8 +45,6 @@ export class GameState {
     tradeTetrominoType!: TetrominoType | null;
     tradingPlayerId!: 0 | 1 | 2 | 3 | null;
 
-    public monominoesToDraw: Array<Monomino> = [];
-
     lineCheckSequence!: Array<LineCheckTask>;
     // template used to generate lineCheckSequence once playerId is received
     static LineCheckTemplate: Array<LineCheckTask> = [
@@ -185,8 +183,7 @@ export class GameState {
         return boardFromPlayer0;
     }
 
-    public fromBoardState(boardState: BoardState): Array<Monomino> {
-        const needRedraw = [];
+    public fromBoardState(boardState: BoardState) {
         const ccRotations = 4 - ((this.playerId || 0) % 4);
 
         for (let row = 0; row < BOARD_SIZE; row++) {
@@ -213,13 +210,9 @@ export class GameState {
                             this.board[newRow][newCol]
                         );
                     this.board[newRow][newCol] = monomino;
-                    if (shouldRedraw) {
-                        needRedraw.push(monomino);
-                    }
                 }
             }
         }
-        return needRedraw;
     }
 
     constructor(socket: GameSocket) {
@@ -368,6 +361,7 @@ export class GameState {
             this.currentTetromino.reportState()
         );
         this.placeTetromino(this.currentTetromino);
+        this.currentTetromino.dropSprites();
 
         if (this.tradeState === TradeState.Offered) {
             //clear the trade if this user was offering a trade
@@ -394,48 +388,39 @@ export class GameState {
     }
 
     public updateLineClearing(tetrominoOwner: 0 | 1 | 2 | 3 | null = null) {
-        this.monominoesToDraw = this.monominoesToDraw.concat(
-            this.lineCheckSequence
-                .map((task) => {
-                    const linesToClear = this.scanLinesToClear(task);
-                    if (linesToClear.length === 0) {
-                        return [];
-                    }
-                    // create a map to record by how much we should fall/offset each lines after removing
-                    const linesToFall = this.prepareLinesToFall(
-                        task,
-                        linesToClear
-                    );
-                    this.removeLines(task, linesToClear);
-                    const monominoesToDraw = this.fallLines(task, linesToFall);
+        this.lineCheckSequence.map((task) => {
+            const linesToClear = this.scanLinesToClear(task);
+            if (linesToClear.length === 0) {
+                return [];
+            }
+            // create a map to record by how much we should fall/offset each lines after removing
+            const linesToFall = this.prepareLinesToFall(task, linesToClear);
+            this.removeLines(task, linesToClear);
+            this.fallLines(task, linesToFall);
 
-                    if (
-                        tetrominoOwner != null &&
-                        this.playerId != null &&
-                        this.playerId === tetrominoOwner
-                    ) {
-                        let score: 1 | 3 | 5 | 8 = 1;
-                        switch (linesToClear.length) {
-                            case 1:
-                                score = 1;
-                                break;
-                            case 2:
-                                score = 3;
-                                break;
-                            case 3:
-                                score = 5;
-                                break;
-                            case 4:
-                                score = 8;
-                                break;
-                        }
-                        this.socket.emit("gainPoints", this.playerId, score);
-                    }
-
-                    return monominoesToDraw;
-                })
-                .reduce((total, curr) => [...total, ...curr])
-        );
+            if (
+                tetrominoOwner != null &&
+                this.playerId != null &&
+                this.playerId === tetrominoOwner
+            ) {
+                let score: 1 | 3 | 5 | 8 = 1;
+                switch (linesToClear.length) {
+                    case 1:
+                        score = 1;
+                        break;
+                    case 2:
+                        score = 3;
+                        break;
+                    case 3:
+                        score = 5;
+                        break;
+                    case 4:
+                        score = 8;
+                        break;
+                }
+                this.socket.emit("gainPoints", this.playerId, score);
+            }
+        });
     }
 
     private removeLines(task: LineCheckTask, linesToClear: Array<number>) {
@@ -567,13 +552,10 @@ export class GameState {
     }
 
     public placeTetromino(tetromino: Tetromino) {
-        this.monominoesToDraw = this.monominoesToDraw.concat(
-            tetromino.monominoes.map((monomino) => {
-                this.board[monomino.position[0]][monomino.position[1]] =
-                    monomino;
-                return monomino;
-            })
-        );
+        tetromino.monominoes.map((monomino) => {
+            this.board[monomino.position[0]][monomino.position[1]] = monomino;
+            return monomino;
+        });
     }
 
     public emitTrade() {
