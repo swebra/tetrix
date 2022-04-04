@@ -1,6 +1,5 @@
 import { ToClientEvents, ToServerEvents } from "common/messages/trade";
 import { TetrominoType } from "common/TetrominoType";
-import { emitWarning } from "process";
 import { Socket } from "socket.io";
 
 export class Trade {
@@ -15,6 +14,7 @@ export class Trade {
         this.currentTradeOffer = null;
         this.pairNum = pairNum;
     }
+
     public addTrade(
         socket: Socket<ToClientEvents, ToServerEvents>,
         tradeOffer: TetrominoType
@@ -25,7 +25,7 @@ export class Trade {
             this.tradeActive = true;
         } else if (
             this.currentOfferer &&
-            this.currentTradeOffer &&
+            this.currentTradeOffer != null &&
             this.tradeActive &&
             socket != this.currentOfferer
         ) {
@@ -49,6 +49,7 @@ export class Trade {
             }
         }
     }
+
     public clearTrade() {
         this.tradeActive = false;
         this.currentOfferer = null;
