@@ -7,15 +7,35 @@ import { broadcast } from "./broadcast";
 export class BoardSync {
     private socketsWithTruth: Array<Socket> = [];
     private broadcastUpdateBoard: broadcast["updateBoard"];
+    private lastPlacingTS: number = new Date().getTime();
 
     constructor(broadcastUpdateBoard: broadcast["updateBoard"]) {
         this.broadcastUpdateBoard = broadcastUpdateBoard;
         setInterval(async () => {
             const socket = this.pickRandomSourceOfTruth();
             if (!socket) return;
+
+            const tsBeforeReport = new Date().getTime();
             const boardState = await this.getBoardFromClient(socket);
+
+            if (this.lastPlacingTS >= tsBeforeReport) {
+                console.log(
+                    "BoardSync: skipping update at",
+                    new Date().getTime(),
+                    ", last placing event: ",
+                    this.lastPlacingTS,
+                    "diff:",
+                    this.lastPlacingTS - tsBeforeReport
+                );
+                // skip because a newer place event invalidates this reported state
+                return;
+            }
             this.broadcastUpdateBoard(boardState);
         }, 10000);
+    }
+
+    public updateLastPlacingTS() {
+        this.lastPlacingTS = new Date().getTime();
     }
 
     public initSocketListeners(
