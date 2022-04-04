@@ -4,7 +4,7 @@ import { GameState } from "../GameState";
 import { ScoreboardUI } from "./ScoreboardUI";
 
 import { ToClientEvents, ToServerEvents } from "common/messages/sceneGameOver";
-import { ColoredScore } from "common/shared";
+import { TILE_SCALE, ColoredScore } from "common/shared";
 
 type SocketGameOver = Socket<ToClientEvents, ToServerEvents>;
 
@@ -29,6 +29,8 @@ export class SceneGameOver extends Phaser.Scene {
     }
 
     preload() {
+        this.load.image("game-over-border", "assets/game-over-border.png");
+
         this.load.bitmapFont(
             "brawl",
             "assets/barcade-brawl.png",
@@ -37,6 +39,10 @@ export class SceneGameOver extends Phaser.Scene {
     }
 
     create() {
+        this.add
+            .image(0, 0, "game-over-border")
+            .setOrigin(0, 0)
+            .setScale(TILE_SCALE);
         new ScoreboardUI(this, this.socket, this.playerData);
 
         // Clean out any old listeners to avoid accumulation.

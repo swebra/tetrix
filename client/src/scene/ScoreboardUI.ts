@@ -89,14 +89,14 @@ export class ScoreboardUI {
         playerData: Array<ColoredScore>
     ) {
         const center = BOARD_PX / 2;
-        let startY = BOARD_PX / 3;
+        let startY = BOARD_PX / 3 + 0.5;
 
         scene.add
             .bitmapText(center, startY, "brawl", "game over", 84)
             .setOrigin(0.5);
 
         playerData.forEach((pts) => {
-            startY += 72;
+            startY += 15 * TILE_SCALE;
             const color =
                 pts.color in COLORS
                     ? COLORS[<keyof typeof COLORS>pts.color]
@@ -119,7 +119,7 @@ export class ScoreboardUI {
         scene.add
             .bitmapText(
                 center,
-                startY + 200,
+                startY + 35 * TILE_SCALE,
                 "brawl",
                 "new game starting soon",
                 42
