@@ -46,6 +46,12 @@ export class GameState {
     tradingPlayerId!: 0 | 1 | 2 | 3 | null;
 
     lineCheckSequence!: Array<LineCheckTask>;
+
+    static SYNC_PLACING_COOLDOWN =
+        import.meta.env.VITE_SYNC_PLACING_COOLDOWN || 200; // ms
+    // timestamp of the last placing event emitted by this client, used to skip sync update
+    lastPlacingTS: number = new Date().getTime();
+
     // template used to generate lineCheckSequence once playerId is received
     static LineCheckTemplate: Array<LineCheckTask> = [
         {
@@ -184,6 +190,19 @@ export class GameState {
     }
 
     public fromBoardState(boardState: BoardState) {
+        if (
+            new Date().getTime() - this.lastPlacingTS <
+            GameState.SYNC_PLACING_COOLDOWN
+        ) {
+            // skip if board sync comes in too short after the last placing by this client
+            if (import.meta.env.DEV) {
+                console.log(
+                    "fromBoardState: skipping board sync because it's too close since last placing"
+                );
+            }
+            return;
+        }
+
         const ccRotations = 4 - ((this.playerId || 0) % 4);
 
         for (let row = 0; row < BOARD_SIZE; row++) {
@@ -354,6 +373,7 @@ export class GameState {
         if (this.playerId == null) {
             return;
         }
+        this.lastPlacingTS = new Date().getTime();
         // place on board and emit events to the server
         this.socket.emit(
             "playerPlace",
