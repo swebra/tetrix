@@ -144,7 +144,6 @@ export class SceneGameArena extends Phaser.Scene {
                 const currentOwner = this.gameState.currentTetromino.ownerId;
                 this.gameState.emitAndPlaceCurrentTetromino();
                 this.gameState.updateLineClearing(currentOwner);
-                this.drawPendingMonominoes();
             } else if (result != null) {
                 this.gameState.currentTetromino.draw(this);
             }
@@ -207,11 +206,9 @@ export class SceneGameArena extends Phaser.Scene {
         });
 
         this.socket.on("updateBoard", (boardState: any) => {
-            const monominoesToDraw = this.gameState.fromBoardState(boardState);
-            monominoesToDraw.forEach((monomino) => {
-                monomino.draw(this);
-            });
+            this.gameState.fromBoardState(boardState);
         });
+
         // request to sync with other players
         this.socket.emit("requestBoard");
     }
@@ -221,11 +218,21 @@ export class SceneGameArena extends Phaser.Scene {
         // 12 fps
         if (this.frameTimeElapsed > 1000 / this.FRAMERATE) {
             this.updateDrawPlayers();
-            this.drawPendingMonominoes();
+            this.updateDrawBoard();
             this.updateTradeUI();
             // start next frame
             this.frameTimeElapsed = 0;
         }
+    }
+
+    private updateDrawBoard() {
+        this.gameState.board.forEach((row) =>
+            row.forEach((monomino) => {
+                if (monomino) {
+                    monomino.draw(this);
+                }
+            })
+        );
     }
 
     private updateFallTimer(interval: number) {
@@ -238,14 +245,6 @@ export class SceneGameArena extends Phaser.Scene {
             callback: () => this.updateFalling(),
             loop: true,
         });
-    }
-
-    private drawPendingMonominoes() {
-        if (this.gameState.monominoesToDraw.length === 0) return;
-        this.gameState.monominoesToDraw.forEach((monomino) =>
-            monomino.draw(this)
-        );
-        this.gameState.monominoesToDraw = [];
     }
 
     private updateDrawPlayers() {
