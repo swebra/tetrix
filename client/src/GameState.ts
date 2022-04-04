@@ -50,7 +50,7 @@ export class GameState {
     static SYNC_PLACING_COOLDOWN =
         import.meta.env.VITE_SYNC_PLACING_COOLDOWN || 200; // ms
     // timestamp of the last placing event emitted by this client, used to skip sync update
-    lastPlacingTS: number = new Date().getTime();
+    lastPlacingTS!: number;
 
     // template used to generate lineCheckSequence once playerId is received
     static LineCheckTemplate: Array<LineCheckTask> = [
@@ -82,6 +82,7 @@ export class GameState {
      */
     public initialize() {
         this.playerId = null;
+        this.lastPlacingTS = new Date().getTime();
         this.initBoard();
         this.randomBag = new RandomBag(this.socket);
 
