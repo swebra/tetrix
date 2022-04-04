@@ -10,9 +10,6 @@ export class TradeUI {
     /* eslint-disable @typescript-eslint/no-explicit-any */
     lastUpdateArgs?: Array<any>;
 
-    tradeState: TradeState;
-    drawControls: boolean;
-
     offer: Phaser.GameObjects.BitmapText;
     tetrominoPosition: [number, number];
     tetromino?: Tetromino;
@@ -22,8 +19,6 @@ export class TradeUI {
     constructor(scene: Scene, playerId: 0 | 1 | 2 | 3 | null) {
         this.scene = scene;
         this.playerId = playerId;
-        this.tradeState = TradeState.NoTrade;
-        this.drawControls = true;
 
         const centerX = 56 * TILE_SCALE;
         let startY = 33 * TILE_SCALE;
