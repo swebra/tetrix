@@ -196,11 +196,9 @@ export class GameState {
             GameState.SYNC_PLACING_COOLDOWN
         ) {
             // skip if board sync comes in too short after the last placing by this client
-            if (import.meta.env.DEV) {
-                console.log(
-                    "fromBoardState: skipping board sync because it's too close since last placing"
-                );
-            }
+            console.log(
+                "fromBoardState: skipping board sync because it's too close since last placing"
+            );
             return;
         }
 
