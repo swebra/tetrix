@@ -56,10 +56,6 @@ export class SceneWaitingRoom extends Phaser.Scene {
         this.socket.removeListener("toSceneGameOver");
 
         // Assign the new listeners.
-        this.socket.on("updateRemainingPlayers", (remainingPlayers: number) => {
-            this.updatePlayersRemaining(remainingPlayers);
-        });
-
         this.socket.on("toSceneWaitingRoom", () => {
             this.renderWaitingRoom();
         });
@@ -117,6 +113,10 @@ export class SceneWaitingRoom extends Phaser.Scene {
             .bitmapText(center, 900, "brawl", "", 31.5)
             .setOrigin(0.5);
         this.updatePlayersRemaining(4);
+
+        this.socket.on("updateRemainingPlayers", (remainingPlayers: number) => {
+            this.updatePlayersRemaining(remainingPlayers);
+        });
         this.socket.emit("requestRemainingPlayers");
     }
 
