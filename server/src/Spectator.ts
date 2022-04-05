@@ -61,6 +61,10 @@ export class Spectator {
         return this._countdownValue;
     }
 
+    get randTetros(): Array<TetrominoType> {
+        return this._randTetros;
+    }
+
     initSocketListeners(socket: SocketSpectator) {
         socket.on("vote", (votingResult: string) => {
             this.getResult(votingResult);
