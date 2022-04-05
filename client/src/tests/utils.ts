@@ -1,13 +1,10 @@
-import { GameState } from "../GameState";
-import SocketMock from "socket.io-mock";
-import { Socket as ClientSocket } from "socket.io-client";
-import { RandomBag } from "../RandomBag";
+import { SocketServerMock, SocketClientMock } from "socket.io-mock-ts";
 
 /**
  * @returns [serverSocket, clientSocket]
  */
-export function useMockSockets() {
-    const serverSocket = new SocketMock();
-    const clientSocket = serverSocket.socketClient;
+export function useMockSockets(): [SocketServerMock, SocketClientMock] {
+    const serverSocket = new SocketServerMock();
+    const clientSocket = serverSocket.clientMock;
     return [serverSocket, clientSocket];
 }

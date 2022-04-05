@@ -8,7 +8,7 @@ describe("RandomBag", () => {
 
     beforeEach(() => {
         [serverSocket, clientSocket] = useMockSockets();
-        randomBag = new RandomBag(clientSocket);
+        randomBag = new RandomBag(clientSocket as any);
     });
 
     test("[FR6 Tetromino spawn generation] random bag is generating in a cycle of 7", () => {

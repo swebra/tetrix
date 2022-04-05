@@ -1,16 +1,15 @@
+import { SocketClientMock, SocketServerMock } from "socket.io-mock-ts";
 import { GameState } from "../GameState";
-import SocketMock from "socket.io-mock";
-import { Socket as ClientSocket } from "socket.io-client";
 import { RandomBag } from "../RandomBag";
 import { useMockSockets } from "./utils";
 
 let gameState: GameState;
-let serverSocket: any;
-let clientSocket: ClientSocket;
+let serverSocket: SocketServerMock;
+let clientSocket: SocketClientMock;
 
 beforeEach(() => {
     [serverSocket, clientSocket] = useMockSockets();
-    gameState = new GameState(clientSocket);
+    gameState = new GameState(clientSocket as any);
 });
 // FR1 skipped
 
@@ -92,7 +91,7 @@ describe("GameState", () => {
 
     it("[FR4 Tetromino spawning] starts currentTetromino at the top of the game", async () => {
         // mock randomBag
-        const randomBag = new RandomBag(clientSocket);
+        const randomBag = new RandomBag(clientSocket as any);
         randomBag.getNextType = vi.fn().mockReturnValue(6);
         const spyRandomBag = vi.spyOn(randomBag, "getNextType");
         gameState.randomBag = randomBag;
