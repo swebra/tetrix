@@ -124,9 +124,7 @@ describe("GameState", () => {
         // spy on socket
         const mockedClientSocket = {
             on: vi.fn(),
-            emit: vi.fn().mockImplementation((...args: any) => {
-                console.log(...args);
-            }),
+            emit: vi.fn(),
         };
         gameState.socket = mockedClientSocket as any;
 
@@ -153,5 +151,75 @@ describe("GameState", () => {
             0,
             { position: [3, 19], rotation: 0, type: 6 }
         );
+    });
+
+    it("[FR9 Tetromino collision] can collide into other tetromino", () => {
+        // spy on socket
+        const mockedClientSocket = {
+            on: vi.fn(),
+            emit: vi.fn(),
+        };
+        gameState.socket = mockedClientSocket as any;
+
+        // stub random bag
+        const randomBag = new RandomBag(clientSocket as any);
+        randomBag.getNextType = vi.fn().mockReturnValue(6);
+        gameState.randomBag = randomBag;
+
+        // init player
+        serverSocket.emit("initPlayer", 0);
+        const anotherPlayer = gameState.otherTetrominoes[1]; // assumed id = 2
+        // simulat another player who is at row 5
+        anotherPlayer.position[0] = 5;
+        anotherPlayer.monominoes.forEach(
+            (monomino) => (monomino.position[0] = 5)
+        );
+
+        // assert that a placing event is emitted after 4 fall calls
+        // simulating a collision with the anotherPlayer
+        for (let i = 0; i < 5; i++) {
+            gameState.updateFalling();
+        }
+
+        expect(mockedClientSocket.emit).toHaveBeenNthCalledWith(
+            4,
+            "playerPlace",
+            0,
+            { position: [3, 19], rotation: 0, type: 6 }
+        );
+    });
+
+    it("[FR9 Tetromino collision] can freeze when others collide into us", () => {
+        // spy on socket
+        const mockedClientSocket = {
+            on: vi.fn(),
+            emit: vi.fn(),
+        };
+        gameState.socket = mockedClientSocket as any;
+
+        // stub random bag
+        const randomBag = new RandomBag(clientSocket as any);
+        randomBag.getNextType = vi.fn().mockReturnValue(6);
+        gameState.randomBag = randomBag;
+
+        gameState.emitAndPlaceCurrentTetromino = vi.fn();
+        // init player
+        serverSocket.emit("initPlayer", 0);
+
+        const anotherPlayer = gameState.otherTetrominoes[1]; // assumed id = 2
+        // simulate another player who is at row 5
+        gameState.otherTetrominoes[1].position = [0, 18];
+        gameState.otherTetrominoes[1].setType(0);
+        gameState.otherTetrominoes[1].monominoes.forEach(
+            (monomino) => (monomino.position[0] = 1)
+        );
+
+        // simulate remote event of player moving in an colliding
+        serverSocket.emit("playerMove", 2, anotherPlayer.reportState());
+        serverSocket.emit("playerPlace", 2, anotherPlayer.reportState());
+
+        // assert that the local game also emit a collision event and respawned
+        expect(gameState.emitAndPlaceCurrentTetromino).toHaveBeenCalledOnce();
+        expect(randomBag.getNextType).toHaveBeenCalledOnce();
     });
 });
