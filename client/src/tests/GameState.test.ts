@@ -1,5 +1,7 @@
+import { BOARD_SIZE, WALL_SIZE } from "common/shared";
 import { SocketClientMock, SocketServerMock } from "socket.io-mock-ts";
 import { GameState } from "../GameState";
+import { Monomino } from "../Monomino";
 import { RandomBag } from "../RandomBag";
 import { useMockSockets } from "./utils";
 
@@ -105,5 +107,51 @@ describe("GameState", () => {
         expect(gameState.currentTetromino.rotation).toEqual(0);
         expect(spyRandomBag).toHaveBeenCalledOnce();
         vi.clearAllMocks();
+    });
+
+    it("[FR7 Level fall rate] the tetromino can fall by 1 row", () => {
+        serverSocket.emit("initPlayer", 0);
+
+        const [oldRow, oldCol] = gameState.currentTetromino.position;
+        gameState.updateFalling();
+        const [row, col] = gameState.currentTetromino.position;
+
+        expect(col).toEqual(oldCol);
+        expect(row).toEqual(oldRow + 1);
+    });
+
+    it("[FR8 Level fall rate] the tetromino is placed if cannot fall", async () => {
+        // spy on socket
+        const mockedClientSocket = {
+            on: vi.fn(),
+            emit: vi.fn().mockImplementation((...args: any) => {
+                console.log(...args);
+            }),
+        };
+        gameState.socket = mockedClientSocket as any;
+
+        // stub random bag
+        const randomBag = new RandomBag(clientSocket as any);
+        randomBag.getNextType = vi.fn().mockReturnValue(6);
+        gameState.randomBag = randomBag;
+
+        // init player
+        serverSocket.emit("initPlayer", 0);
+
+        // generate a wall at row=5 in the arena to stop the tetromino
+        for (let col = WALL_SIZE; col < BOARD_SIZE - WALL_SIZE - 2; col++) {
+            gameState.board[5][col] = new Monomino(0, [5, col], null);
+        }
+
+        // assert that a placing event is emitted after 4 fall calls
+        for (let i = 0; i < 5; i++) {
+            gameState.updateFalling();
+        }
+        expect(mockedClientSocket.emit).toHaveBeenNthCalledWith(
+            4,
+            "playerPlace",
+            0,
+            { position: [3, 19], rotation: 0, type: 6 }
+        );
     });
 });
