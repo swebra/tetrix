@@ -1,13 +1,36 @@
 import { Level } from "../Level";
+import { SocketServerMock } from "socket.io-mock-ts";
 
 describe("Testing 'Level'", () => {
     let level: Level;
+    let clientSocket: any;
+    let serverSocket: any;
 
     jest.useFakeTimers();
     jest.spyOn(global, "setTimeout");
 
+    beforeAll(() => {
+        serverSocket = new SocketServerMock();
+        clientSocket = serverSocket.clientMock;
+    });
+
     beforeEach(() => {
         level = new Level(jest.fn());
+    });
+
+    test("Testing requestFallRate event", () => {
+        level.initSocketListeners(clientSocket);
+        clientSocket.emit("requestFallRate");
+        serverSocket.once("updateFallRate", (eventData: number) => {
+            expect(eventData).toBeDefined();
+        });
+    });
+
+    test("Testing getFallRate event", () => {
+        level.getFallRate(clientSocket);
+        serverSocket.once("updateFallRate", (eventData: number) => {
+            expect(eventData).toBeDefined();
+        });
     });
 
     test("Valid level increments", () => {
