@@ -1,8 +1,10 @@
+import { TetrominoState } from "common/message";
 import { BOARD_SIZE, WALL_SIZE } from "common/shared";
 import { SocketClientMock, SocketServerMock } from "socket.io-mock-ts";
 import { GameState } from "../GameState";
 import { Monomino } from "../Monomino";
 import { RandomBag } from "../RandomBag";
+import { Tetromino } from "../Tetromino";
 import { useMockSockets } from "./utils";
 
 let gameState: GameState;
@@ -222,4 +224,108 @@ describe("GameState", () => {
         expect(gameState.emitAndPlaceCurrentTetromino).toHaveBeenCalledOnce();
         expect(randomBag.getNextType).toHaveBeenCalledOnce();
     });
+
+    it("[FR10 Tetromino movement restriction] test isInOppositeSection", () => {
+        // init player
+        serverSocket.emit("initPlayer", 0);
+
+        gameState.currentTetromino.position = [BOARD_SIZE - 1, 19];
+        gameState.currentTetromino.monominoes.forEach((monomino) => {
+            monomino.position = [BOARD_SIZE - 1, 19];
+        });
+        expect(gameState.isInOppositeSection()).toBeTruthy();
+    });
+
+    it("[FR10 Tetromino movement restriction] test isInOppositeSection", () => {
+        // init player
+        serverSocket.emit("initPlayer", 0);
+
+        gameState.currentTetromino.position = [BOARD_SIZE - 1, 19];
+        gameState.currentTetromino.monominoes.forEach((monomino) => {
+            monomino.position = [BOARD_SIZE - 1, 19];
+        });
+        expect(gameState.isInOppositeSection()).toBeTruthy();
+    });
+
+    it("[FR11 Tetromino fall through] test moveIfCan will trigger respawn if exceeded the bottom boundary", () => {
+        // init player
+        serverSocket.emit("initPlayer", 0);
+
+        gameState.currentTetromino.position = [BOARD_SIZE - 1, 19];
+        gameState.currentTetromino.monominoes.forEach((monomino) => {
+            monomino.position = [BOARD_SIZE - 1, 19];
+        });
+
+        // spy on socket
+        const mockedClientSocket = {
+            on: vi.fn(),
+            emit: vi.fn(),
+        };
+        gameState.socket = mockedClientSocket as any;
+
+        const result = gameState.moveIfCan(Tetromino.fall);
+        expect(result).toBeTruthy();
+        // assert that lose point event is emitted
+        expect(mockedClientSocket.emit).toBeCalledWith("losePoints", 0);
+        expect(gameState.currentTetromino.position[0]).toEqual(0);
+    });
+
+    it("[FR12 Player control move left] can move left", () => {
+        testControl(Tetromino.slide(-1), {
+            position: [0, 18],
+            rotation: 0,
+            type: 6,
+        });
+    });
+
+    it("[FR13 Player control move down] can move down", () => {
+        testControl(Tetromino.fall, {
+            position: [1, 19],
+            rotation: 0,
+            type: 6,
+        });
+    });
+
+    it("[FR14 Player control move right] can move right", () => {
+        testControl(Tetromino.slide(1), {
+            position: [0, 20],
+            rotation: 0,
+            type: 6,
+        });
+    });
+
+    it("[FR15 Player control rotateCCW] can rotate counter clockwise", () => {
+        testControl(Tetromino.rotateCCW, {
+            position: [0, 19],
+            rotation: 3,
+            type: 6,
+        });
+    });
+
+    it("[FR16 Player control rotateCW] can rotate clockwise", () => {
+        testControl(Tetromino.rotateCW, {
+            position: [0, 19],
+            rotation: 1,
+            type: 6,
+        });
+    });
+
+    function testControl(movefunc: any, expectedState: TetrominoState) {
+        // stub random bag
+        const randomBag = new RandomBag(clientSocket as any);
+        randomBag.getNextType = vi.fn().mockReturnValue(6);
+        gameState.randomBag = randomBag;
+        // init player
+        serverSocket.emit("initPlayer", 0);
+        // spy on socket
+        const mockedClientSocket = {
+            on: vi.fn(),
+            emit: vi.fn(),
+        };
+        gameState.socket = mockedClientSocket as any;
+
+        const result = gameState.moveIfCan(movefunc);
+        expect(result).toBeTruthy();
+        expect(gameState.currentTetromino.reportState()).toEqual(expectedState);
+    }
 });
