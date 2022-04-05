@@ -2,14 +2,14 @@ import { GameState } from "../GameState";
 import SocketMock from "socket.io-mock";
 import { Socket as ClientSocket } from "socket.io-client";
 import { RandomBag } from "../RandomBag";
+import { useMockSockets } from "./utils";
 
 let gameState: GameState;
 let serverSocket: any;
 let clientSocket: ClientSocket;
 
 beforeEach(() => {
-    serverSocket = new SocketMock();
-    clientSocket = serverSocket.socketClient;
+    [serverSocket, clientSocket] = useMockSockets();
     gameState = new GameState(clientSocket);
 });
 // FR1 skipped
