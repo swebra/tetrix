@@ -123,20 +123,13 @@ describe("GameState", () => {
     });
 
     it("[FR8 Level fall rate] the tetromino is placed if cannot fall", async () => {
+        setupSimplePlayer();
         // spy on socket
         const mockedClientSocket = {
             on: vi.fn(),
             emit: vi.fn(),
         };
         gameState.socket = mockedClientSocket as any;
-
-        // stub random bag
-        const randomBag = new RandomBag(clientSocket as any);
-        randomBag.getNextType = vi.fn().mockReturnValue(6);
-        gameState.randomBag = randomBag;
-
-        // init player
-        serverSocket.emit("initPlayer", 0);
 
         // generate a wall at row=5 in the arena to stop the tetromino
         for (let col = WALL_SIZE; col < BOARD_SIZE - WALL_SIZE - 2; col++) {
@@ -156,6 +149,7 @@ describe("GameState", () => {
     });
 
     it("[FR9 Tetromino collision] can collide into other tetromino", () => {
+        setupSimplePlayer();
         // spy on socket
         const mockedClientSocket = {
             on: vi.fn(),
@@ -163,13 +157,6 @@ describe("GameState", () => {
         };
         gameState.socket = mockedClientSocket as any;
 
-        // stub random bag
-        const randomBag = new RandomBag(clientSocket as any);
-        randomBag.getNextType = vi.fn().mockReturnValue(6);
-        gameState.randomBag = randomBag;
-
-        // init player
-        serverSocket.emit("initPlayer", 0);
         const anotherPlayer = gameState.otherTetrominoes[1]; // assumed id = 2
         // simulat another player who is at row 5
         anotherPlayer.position[0] = 5;
@@ -310,13 +297,169 @@ describe("GameState", () => {
         });
     });
 
+    it("[FR17 Line clearing] clearing one line", () => {
+        setupSimplePlayer();
+        setupRowInBoard(
+            3,
+            [...Array(BOARD_SIZE - 2 * WALL_SIZE - 1).keys()].map(
+                (x) => x + WALL_SIZE
+            )
+        );
+
+        // spy on socket
+        const mockedClientSocket = {
+            on: vi.fn(),
+            emit: vi.fn(),
+        };
+        gameState.socket = mockedClientSocket as any;
+
+        gameState.moveIfCan(Tetromino.rotateCCW);
+        gameState.moveIfCan(Tetromino.slide(1));
+        gameState.moveIfCan(Tetromino.slide(1));
+        gameState.moveIfCan(Tetromino.slide(1));
+        gameState.moveIfCan(Tetromino.slide(1));
+        expect(mockedClientSocket.emit).toHaveBeenCalledTimes(0);
+
+        gameState.updateFalling();
+        expect(mockedClientSocket.emit).toHaveBeenCalledWith("playerMove", 0, {
+            position: [1, 23],
+            rotation: 3,
+            type: 6,
+        });
+        gameState.updateFalling();
+        // assert that placing event happens
+        expect(mockedClientSocket.emit).toHaveBeenCalledWith("playerPlace", 0, {
+            position: [1, 23],
+            rotation: 3,
+            type: 6,
+        });
+
+        // assert that line clearing happens
+        gameState.updateLineClearing(0);
+        expect(mockedClientSocket.emit).toHaveBeenCalledWith("playerMove", 0, {
+            position: [0, 19],
+            rotation: 0,
+            type: 6,
+        });
+        expect(mockedClientSocket.emit).toHaveBeenCalledWith(
+            "gainPoints",
+            0,
+            1
+        );
+
+        // assert line clearing result in the 4th row being cleared and block fall down
+        assertRow(3, [23, 24]);
+        assertRow(2, [24]);
+    });
+
+    it("[FR17 Line clearing] clearing multiple separated lines", () => {
+        setupSimplePlayer(0);
+        setupRowInBoard(
+            5,
+            [...Array(BOARD_SIZE - 2 * WALL_SIZE - 1).keys()].map(
+                (x) => x + WALL_SIZE
+            )
+        );
+
+        // this row won't be cleared
+        setupRowInBoard(
+            6,
+            [...Array(BOARD_SIZE - 2 * WALL_SIZE - 2).keys()].map(
+                (x) => x + WALL_SIZE
+            )
+        );
+
+        setupRowInBoard(
+            7,
+            [...Array(BOARD_SIZE - 2 * WALL_SIZE - 1).keys()].map(
+                (x) => x + WALL_SIZE
+            )
+        );
+
+        setupRowInBoard(8, [24]);
+
+        // spy on socket
+        const mockedClientSocket = {
+            on: vi.fn(),
+            emit: vi.fn(),
+        };
+        gameState.socket = mockedClientSocket as any;
+
+        gameState.moveIfCan(Tetromino.rotateCCW);
+        gameState.moveIfCan(Tetromino.slide(1));
+        gameState.moveIfCan(Tetromino.slide(1));
+        gameState.moveIfCan(Tetromino.slide(1));
+        gameState.moveIfCan(Tetromino.slide(1));
+        gameState.moveIfCan(Tetromino.slide(1));
+        expect(mockedClientSocket.emit).toHaveBeenCalledTimes(0);
+
+        gameState.updateFalling();
+        expect(mockedClientSocket.emit).toHaveBeenCalledWith("playerMove", 0, {
+            position: [1, 23],
+            rotation: 3,
+            type: 0,
+        });
+
+        gameState.updateFalling();
+        gameState.updateFalling();
+        gameState.updateFalling();
+        gameState.updateFalling();
+
+        expect(mockedClientSocket.emit).toHaveBeenCalledWith("playerMove", 0, {
+            position: [2, 23],
+            rotation: 3,
+            type: 0,
+        });
+        expect(mockedClientSocket.emit).toHaveBeenCalledWith("playerMove", 0, {
+            position: [3, 23],
+            rotation: 3,
+            type: 0,
+        });
+        expect(mockedClientSocket.emit).toHaveBeenCalledWith("playerMove", 0, {
+            position: [4, 23],
+            rotation: 3,
+            type: 0,
+        });
+        // assert that placing event happens
+        expect(mockedClientSocket.emit).toHaveBeenCalledWith("playerPlace", 0, {
+            position: [4, 23],
+            rotation: 3,
+            type: 0,
+        });
+        // reset to initial spawning position
+        expect(mockedClientSocket.emit).toHaveBeenCalledWith("playerMove", 0, {
+            position: [0, 18],
+            rotation: 0,
+            type: 0,
+        });
+
+        expect(mockedClientSocket.emit).toHaveBeenCalledWith(
+            "gainPoints",
+            0,
+            3
+        );
+
+        assertRow(6, [24]);
+        assertRow(7, [15, 16, 17, 18, 19, 20, 21, 22, 24]);
+        assertRow(8, [24]);
+    });
+
+    function setupRowInBoard(row: number, cols: Array<number>) {
+        cols.forEach((col) => {
+            gameState.board[row][col] = new Monomino(0, [row, col], null);
+        });
+    }
+
+    function assertRow(row: number, cols: Array<number>) {
+        expect(
+            gameState.board[row]
+                .filter((x) => !!x)
+                .map((x) => x && x.position[1])
+        ).toEqual(cols);
+    }
+
     function testControl(movefunc: any, expectedState: TetrominoState) {
-        // stub random bag
-        const randomBag = new RandomBag(clientSocket as any);
-        randomBag.getNextType = vi.fn().mockReturnValue(6);
-        gameState.randomBag = randomBag;
-        // init player
-        serverSocket.emit("initPlayer", 0);
+        setupSimplePlayer();
         // spy on socket
         const mockedClientSocket = {
             on: vi.fn(),
@@ -327,5 +470,14 @@ describe("GameState", () => {
         const result = gameState.moveIfCan(movefunc);
         expect(result).toBeTruthy();
         expect(gameState.currentTetromino.reportState()).toEqual(expectedState);
+    }
+
+    function setupSimplePlayer(type: number = 6) {
+        // stub random bag
+        const randomBag = new RandomBag(clientSocket as any);
+        randomBag.getNextType = vi.fn().mockReturnValue(type);
+        gameState.randomBag = randomBag;
+        // init player
+        serverSocket.emit("initPlayer", 0);
     }
 });
