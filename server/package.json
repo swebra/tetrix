@@ -4,7 +4,7 @@
 	"scripts": {
 		"start": "node ./build/index.js",
 		"dev": "pnpm ts-node index.ts",
-		"test": "jest --coverage",
+		"test": "jest",
 		"build": "tsc --build",
 		"clean": "rm -rf ./build"
 	},
