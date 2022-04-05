@@ -19,7 +19,7 @@ describe("Testing 'Level'", () => {
         queue.initSocketListeners(clientSocket);
     });
 
-    test("Testing joinQueue event", () => {
+    test("'joinQueue' event", () => {
         const joinQueue = jest.spyOn(queue, "addToQueue");
 
         clientSocket.emit("joinQueue", () => {
@@ -27,7 +27,7 @@ describe("Testing 'Level'", () => {
         });
     });
 
-    test("Testing requestRemainingPlayers event", () => {
+    test("'requestRemainingPlayers' event", () => {
         const getRemainingPlayers = jest.spyOn(queue, "getRemainingPlayers");
 
         clientSocket.emit("requestRemainingPlayers");
@@ -36,7 +36,7 @@ describe("Testing 'Level'", () => {
         });
     });
 
-    test("Testing disconnect event", () => {
+    test("'disconnect' event", () => {
         const removeFromQueue = jest.spyOn(queue, "removeFromQueue");
 
         clientSocket.emit("disconnect", () => {
@@ -44,7 +44,7 @@ describe("Testing 'Level'", () => {
         });
     });
 
-    test("Test Remaining Players", () => {
+    test("Remaining players", () => {
         clientSocket.emit("joinQueue", () => {
             expect(queue.getRemainingPlayers()).toBe(3);
         });
@@ -54,7 +54,7 @@ describe("Testing 'Level'", () => {
         });
     });
 
-    test("Test Reset Queue", () => {
+    test("Reset queue", () => {
         clientSocket.emit("joinQueue", () => {
             expect(queue.getRemainingPlayers()).toBe(3);
         });

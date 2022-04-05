@@ -22,7 +22,7 @@ describe("Testing 'Level'", () => {
         scene.initSocketListeners(clientSocket, scoreboard.getFinalScores());
     });
 
-    test("Testing requestCurrentScene event", () => {
+    test("'requestCurrentScene' event", () => {
         clientSocket.emit("requestCurrentScene");
         serverSocket.once("toSceneWaitingRoom");
 

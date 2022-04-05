@@ -21,7 +21,7 @@ describe("Testing 'Spectator'", () => {
         level = new Level(jest.fn());
     });
 
-    test("Test requestScoreboardData event", () => {
+    test("'requestScoreboardData' event", () => {
         board.initSocketListeners(clientSocket, level);
         clientSocket.emit("requestFallRate");
         serverSocket.once("updateScoreboard", (eventData: any) => {
@@ -52,7 +52,7 @@ describe("Testing 'Spectator'", () => {
         });
     });
 
-    test("Test Increment User Scores", () => {
+    test("[FR18 Scoring Line Clear] increment user scores", () => {
         const updateScoreboardUI = jest.spyOn(board, "updateScoreboardUI");
 
         expect(board.currentTeamScore).toBe(0);
@@ -63,7 +63,7 @@ describe("Testing 'Spectator'", () => {
         expect(updateScoreboardUI).toHaveBeenCalled();
     });
 
-    test("Reset Scores", () => {
+    test("Reset scores", () => {
         expect(board.currentTeamScore).toBe(0);
         board.incrementScore(0, 10, level);
         expect(board.currentTeamScore).toBe(10);
@@ -72,7 +72,7 @@ describe("Testing 'Spectator'", () => {
         expect(board.currentTeamScore).toBe(0);
     });
 
-    test("Test Resetting AccumulatedScore Upon Level Increment", () => {
+    test("Resetting 'accumulatedScore' upon level increment", () => {
         const updateLevel = jest.spyOn(level, "checkUpdateLevel");
 
         expect(board.accumulatedScore).toBe(0);
@@ -84,7 +84,7 @@ describe("Testing 'Spectator'", () => {
         expect(board.accumulatedScore).toBe(0);
     });
 
-    test("Test Decrement User Scores", () => {
+    test("[FR19 Scoring Fall Through] decrement user scores", () => {
         const updateScoreboardUI = jest.spyOn(board, "updateScoreboardUI");
 
         expect(board.orangeScore).toBe(0);
@@ -99,7 +99,7 @@ describe("Testing 'Spectator'", () => {
         expect(updateScoreboardUI).toHaveBeenCalled();
     });
 
-    test("Test Get Final Scores", () => {
+    test("[FR28 Game Show Score] Get final scores", () => {
         expect(board.finalScores.length).toBe(0);
         expect(board.getFinalScores().length).toBe(5);
 

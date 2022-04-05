@@ -27,7 +27,7 @@ describe("Testing 'Spectator'", () => {
         );
     });
 
-    test("Test vote event", () => {
+    test("'vote' event", () => {
         const getResult = jest.spyOn(spectator, "getResult");
 
         spectator.initSocketListeners(clientSocket);
@@ -36,19 +36,19 @@ describe("Testing 'Spectator'", () => {
         });
     });
 
-    test("Test requestVotingSequence event", () => {
+    test("'requestVotingSequence' event", () => {
         spectator.initSocketListeners(clientSocket);
         clientSocket.emit("requestVotingSequence");
         serverSocket.once("showVotingSequence");
     });
 
-    test("Test if Voting State is Maintained", () => {
+    test("Ensure voting state is maintained", () => {
         expect(spectator.isVoteRunning()).toBe("");
         spectator.generateFirstVotingSequence(level);
         expect(spectator.isVoteRunning()).toBe("initialDisplay");
     });
 
-    test("Test First Voting Sequence", () => {
+    test("[FR23 Spectator Display Voting] first voting sequence", () => {
         expect(spectator.countdownValue).toBe(10);
         spectator.generateFirstVotingSequence(level);
 
@@ -59,7 +59,7 @@ describe("Testing 'Spectator'", () => {
         expect(setTimeout).toHaveBeenCalledWith(expect.any(Function), 12000);
     });
 
-    test("Reset Voting Data Before Starting Another", () => {
+    test("Reset voting data before starting another", () => {
         expect(spectator.countdownValue).toBe(10);
         spectator.generateFirstVotingSequence(level);
         jest.runAllTimers();
@@ -68,7 +68,7 @@ describe("Testing 'Spectator'", () => {
         expect(spectator.countdownValue).toBe(10);
     });
 
-    test("Test Second Voting Sequence", () => {
+    test("[FR23 Spectator Display Voting] Second Voting Sequence", () => {
         expect(spectator.countdownValue).toBe(10);
         spectator.generateSecondVotingSequence("", level);
 
@@ -79,13 +79,15 @@ describe("Testing 'Spectator'", () => {
         expect(setTimeout).toHaveBeenCalledWith(expect.any(Function), 12000);
     });
 
-    test("Test Voting Loop", () => {
+    test("Ensure a new voting sequence is called every ~40 seconds", () => {
         spectator.startVotingLoop(level);
         expect(setInterval).toHaveBeenCalled();
+
+        // Using 44 seconds here but the clients will still experience it every 40 seconds.
         expect(setInterval).toHaveBeenCalledWith(expect.any(Function), 44000);
     });
 
-    test("Test Ensure Voting Sequence is Reset When Starting a Voting Sequence", () => {
+    test("Ensure voting sequence is reset when starting a voting sequence", () => {
         const resetVotingRound = jest.spyOn(
             Spectator.prototype as any,
             "resetVotingRound"
@@ -98,7 +100,7 @@ describe("Testing 'Spectator'", () => {
         expect(resetVotingRound).toHaveBeenCalled();
     });
 
-    test("Test Voting Decision - IncreaseFallRate", () => {
+    test("[FR24 Game Dynamic Fall Rate] voting decision - IncreaseFallRate", () => {
         const increaseFallRate = jest.spyOn(level, "spectatorIncreaseFallRate");
         const secondVotingSequence = jest.spyOn(
             spectator,
@@ -123,7 +125,7 @@ describe("Testing 'Spectator'", () => {
         expect(increaseFallRate).toHaveBeenCalled();
     });
 
-    test("Test Voting Decision - DecreaseFallRate", () => {
+    test("[FR24 Game Dynamic Fall Rate] voting decision - DecreaseFallRate", () => {
         const decreaseFallRate = jest.spyOn(level, "spectatorDecreaseFallRate");
         const secondVotingSequence = jest.spyOn(
             spectator,
@@ -148,7 +150,7 @@ describe("Testing 'Spectator'", () => {
         expect(decreaseFallRate).toHaveBeenCalled();
     });
 
-    test("Test Voting Decision - Spawn New Blocks", () => {
+    test("[FR25 Game Change Block Sequence] voting decision - Spawn New Blocks", () => {
         const secondVotingSequence = jest.spyOn(
             spectator,
             "generateSecondVotingSequence"
@@ -170,5 +172,22 @@ describe("Testing 'Spectator'", () => {
         spectator.makeDecision(level);
 
         expect(spectator.randTetros.length).toBe(3);
+    });
+
+    test("[FR26 Game Forced Trade] voting decision - Forced Trade", () => {
+        const secondVotingSequence = jest.spyOn(
+            spectator,
+            "generateSecondVotingSequence"
+        );
+
+        expect(spectator.isVoteRunning()).toBe("");
+        spectator.startVotingLoop(level);
+        spectator.generateFirstVotingSequence(level);
+        expect(spectator.isVoteRunning()).toBe("initialDisplay");
+        spectator.getResult("option3");
+        spectator.makeDecision(level);
+
+        // No further voting sequences should be created.
+        expect(secondVotingSequence).not.toHaveBeenCalled();
     });
 });
