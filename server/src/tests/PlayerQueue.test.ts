@@ -27,11 +27,33 @@ describe("Testing 'Level'", () => {
         });
     });
 
+    test("[FR1 Game Start Condition] Upon receiving 4 join-queue requests, send out the 'initPlayer' event to start the game", () => {
+        const clientSocket2 = serverSocket.clientMock;
+        const clientSocket3 = serverSocket.clientMock;
+        const clientSocket4 = serverSocket.clientMock;
+
+        queue.initSocketListeners(clientSocket2);
+        queue.initSocketListeners(clientSocket3);
+        queue.initSocketListeners(clientSocket4);
+
+        clientSocket.emit("joinQueue");
+        clientSocket2.emit("joinQueue");
+        clientSocket3.emit("joinQueue");
+        clientSocket4.emit("joinQueue", () => {
+            expect(serverSocket.emit).toHaveBeenCalledWith(
+                "initPlayer",
+                expect.any(Number)
+            );
+        });
+    });
+
     test("'requestRemainingPlayers' event", () => {
         const getRemainingPlayers = jest.spyOn(queue, "getRemainingPlayers");
 
-        clientSocket.emit("requestRemainingPlayers");
-        serverSocket.once("updateRemainingPlayers", () => {
+        clientSocket.emit("requestRemainingPlayers", () => {
+            expect(serverSocket.emit).toHaveBeenCalledWith(
+                "updateRemainingPlayers"
+            );
             expect(getRemainingPlayers).toHaveBeenCalled();
         });
     });

@@ -23,12 +23,17 @@ describe("Testing 'Level'", () => {
     });
 
     test("'requestCurrentScene' event", () => {
-        clientSocket.emit("requestCurrentScene");
-        serverSocket.once("toSceneWaitingRoom");
+        clientSocket.emit("requestCurrentScene", () => {
+            expect(serverSocket.emit).toHaveBeenCalledWith(
+                "toSceneWaitingRoom"
+            );
+        });
+    });
 
+    test("Ensure setScene properly updates state", () => {
         scene.setScene("SceneGameOver");
-
-        clientSocket.emit("requestCurrentScene");
-        serverSocket.once("toSceneGameOver");
+        clientSocket.emit("requestCurrentScene", () => {
+            expect(serverSocket.emit).toHaveBeenCalledWith("toSceneGameOver");
+        });
     });
 });

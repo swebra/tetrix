@@ -38,8 +38,13 @@ describe("Testing 'Spectator'", () => {
 
     test("'requestVotingSequence' event", () => {
         spectator.initSocketListeners(clientSocket);
-        clientSocket.emit("requestVotingSequence");
-        serverSocket.once("showVotingSequence");
+        clientSocket.emit("requestVotingSequence", () => {
+            expect(serverSocket.emit).toHaveBeenCalledWith(
+                "showVotingSequence",
+                expect.any(String),
+                expect.any(Array)
+            );
+        });
     });
 
     test("Ensure voting state is maintained", () => {

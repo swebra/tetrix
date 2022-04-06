@@ -18,18 +18,13 @@ describe("Testing 'Level'", () => {
         level = new Level(jest.fn());
     });
 
-    test("requestFallRate event", () => {
+    test("'requestFallRate' event", () => {
         level.initSocketListeners(clientSocket);
-        clientSocket.emit("requestFallRate");
-        serverSocket.once("updateFallRate", (eventData: number) => {
-            expect(eventData).toBeDefined();
-        });
-    });
-
-    test("getFallRate event", () => {
-        level.getFallRate(clientSocket);
-        serverSocket.once("updateFallRate", (eventData: number) => {
-            expect(eventData).toBeDefined();
+        clientSocket.emit("requestFallRate", () => {
+            expect(serverSocket.emit).toHaveBeenCalledWith(
+                "updateFallRate",
+                expect.any(Number)
+            );
         });
     });
 

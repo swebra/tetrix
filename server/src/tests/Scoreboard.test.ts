@@ -23,31 +23,35 @@ describe("Testing 'Spectator'", () => {
 
     test("'requestScoreboardData' event", () => {
         board.initSocketListeners(clientSocket, level);
-        clientSocket.emit("requestFallRate");
-        serverSocket.once("updateScoreboard", (eventData: any) => {
-            expect(eventData).toEqual(
-                expect.arrayContaining([
-                    expect.objectContaining({
-                        color: "orange",
-                        points: 0,
-                    }),
-                    expect.objectContaining({
-                        color: "green",
-                        points: 0,
-                    }),
-                    expect.objectContaining({
-                        color: "pink",
-                        points: 0,
-                    }),
-                    expect.objectContaining({
-                        color: "blue",
-                        points: 0,
-                    }),
-                    expect.objectContaining({
-                        color: "level",
-                        points: 1,
-                    }),
-                ])
+        clientSocket.emit("requestFallRate", () => {
+            expect(serverSocket.emit).toHaveBeenCalledWith(
+                "updateScoreboard",
+                (eventData: any) => {
+                    expect(eventData).toEqual(
+                        expect.arrayContaining([
+                            expect.objectContaining({
+                                color: "orange",
+                                points: 0,
+                            }),
+                            expect.objectContaining({
+                                color: "green",
+                                points: 0,
+                            }),
+                            expect.objectContaining({
+                                color: "pink",
+                                points: 0,
+                            }),
+                            expect.objectContaining({
+                                color: "blue",
+                                points: 0,
+                            }),
+                            expect.objectContaining({
+                                color: "level",
+                                points: 1,
+                            }),
+                        ])
+                    );
+                }
             );
         });
     });
