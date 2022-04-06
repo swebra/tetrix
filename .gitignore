@@ -4,3 +4,4 @@ yarn.lock
 .env
 node_modules
 .pnpm-debug.log
+coverage
