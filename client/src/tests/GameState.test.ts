@@ -596,9 +596,79 @@ describe("GameState", () => {
         expect(gameState.currentTetromino.isTraded).toBeTruthy();
         expect(mockedClientSocket.emit).toHaveBeenCalledWith(
             "playerMove",
-            TetrominoType.I,
+            0,
             gameState.currentTetromino.reportState()
         );
+    });
+
+    it("[FR27 Game end condition] game should end when the piece cannot place anymore", () => {
+        setupSimplePlayer(TetrominoType.T);
+        const mockedClientSocket = {
+            on: vi.fn(),
+            emit: vi.fn(),
+        };
+        gameState.socket = mockedClientSocket as any;
+        // create a row in the second row
+        setupRowInBoard(1, [18, 19, 20]);
+
+        gameState.updateFalling();
+
+        expect(mockedClientSocket.emit).toHaveBeenCalledWith("playerPlace", 0, {
+            type: TetrominoType.T,
+            position: [0, 19],
+            rotation: 0,
+        });
+
+        // assert that end game event is emitted when the piece is blocked at the top when placed.
+        expect(mockedClientSocket.emit).toHaveBeenCalledWith("endGame");
+
+        expect(mockedClientSocket.emit).toHaveBeenCalledWith(
+            "playerMove",
+            0,
+            gameState.currentTetromino.reportState()
+        );
+    });
+
+    it("can update from a given boardState (sync update)", async () => {
+        // create some rows in the board to create a remote board state
+        setupRowInBoard(1, [0, 1, 2]);
+        const remoteState = gameState.toBoardState();
+        // assert remoteState is generated correctly
+        expect(
+            remoteState[1]
+                .filter((x) => !!x)
+                .map(
+                    (monominoState, i) =>
+                        monominoState && monominoState.position === [1, i]
+                )
+        );
+
+        gameState = new GameState(clientSocket as any);
+        gameState.lastPlacingTS = 0;
+        gameState.fromBoardState(remoteState);
+
+        expect(gameState.toBoardState()).toStrictEqual(remoteState);
+    });
+
+    it("can skip an update from a given boardState (sync update) if last placed is very recent", async () => {
+        // create some rows in the board to create a remote board state
+        setupRowInBoard(1, [0, 1, 2]);
+        const remoteState = gameState.toBoardState();
+        // assert remoteState is generated correctly
+        expect(
+            remoteState[1]
+                .filter((x) => !!x)
+                .map(
+                    (monominoState, i) =>
+                        monominoState && monominoState.position === [1, i]
+                )
+        );
+
+        gameState = new GameState(clientSocket as any);
+        const prev = gameState.toBoardState();
+        gameState.fromBoardState(remoteState);
+
+        expect(gameState.toBoardState()).toStrictEqual(prev);
     });
 
     function setupRowInBoard(row: number, cols: Array<number>) {
