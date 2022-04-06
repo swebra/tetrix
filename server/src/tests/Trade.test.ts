@@ -6,14 +6,10 @@ import { TetrominoType } from "../../../common/TetrominoType";
 describe("Testing 'Trade'", () => {
     let clientSocket1: any;
     let clientSocket2: any;
-    let serverSocket: any;
     let randTrader: Trade;
     let trader: Trade;
-    let client1Tetromino: TetrominoType | null;
-    let client2Tetromino: TetrominoType | null;
+
     beforeAll(() => {
-        client1Tetromino = null;
-        client2Tetromino = null;
         clientSocket1 = new SocketMock();
         clientSocket2 = new SocketMock();
         // clientSocket1.on("sendRandomPiece", (tetromino: TetrominoType) => {
@@ -56,5 +52,23 @@ describe("Testing 'Trade'", () => {
         expect(trader.currentOfferer).toBe(null);
         expect(trader.currentTradeOffer).toBe(null);
         expect(trader.tradeActive).toBe(false);
+    });
+    test("First offer for Random Trade", () => {
+        randTrader.addTrade(clientSocket1, TetrominoType.L);
+        expect(randTrader.currentOfferer).toBe(clientSocket1);
+        expect(randTrader.tradeActive).toBe(true);
+        expect(randTrader.currentTradeOffer).toBe(TetrominoType.L);
+    });
+    test("Second offer for Random Trade", () => {
+        randTrader.currentOfferer = clientSocket1;
+        randTrader.tradeActive = true;
+        randTrader.currentTradeOffer = TetrominoType.I;
+        randTrader.addTrade(clientSocket2, TetrominoType.J);
+        clientSocket1.on("sendRandomPiece", (tetromino: TetrominoType) => {
+            expect(tetromino).toEqual(TetrominoType.J);
+        });
+        clientSocket2.on("sendRandomPiece", (tetromino: TetrominoType) => {
+            expect(tetromino).toEqual(TetrominoType.I);
+        });
     });
 });
