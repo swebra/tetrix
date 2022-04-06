@@ -1,5 +1,6 @@
 import { TetrominoState } from "common/message";
 import { BOARD_SIZE, WALL_SIZE } from "common/shared";
+import { TetrominoType } from "common/TetrominoType";
 import { SocketClientMock, SocketServerMock } from "socket.io-mock-ts";
 import { GameState } from "../GameState";
 import { Monomino } from "../Monomino";
@@ -579,6 +580,25 @@ describe("GameState", () => {
             8
         );
         assertRow(8, [24]);
+    });
+
+    it("[FR26 Game force trade] client can react correctly to 'sendRandomPiece' event from server", () => {
+        setupSimplePlayer(TetrominoType.I);
+        const mockedClientSocket = {
+            on: vi.fn(),
+            emit: vi.fn(),
+        };
+        gameState.socket = mockedClientSocket as any;
+        serverSocket.emit("sendRandomPiece", TetrominoType.T);
+
+        // assert that tetromino is respawned to match event tetromino type
+        expect(gameState.currentTetromino.getType()).toEqual(TetrominoType.T);
+        expect(gameState.currentTetromino.isTraded).toBeTruthy();
+        expect(mockedClientSocket.emit).toHaveBeenCalledWith(
+            "playerMove",
+            TetrominoType.I,
+            gameState.currentTetromino.reportState()
+        );
     });
 
     function setupRowInBoard(row: number, cols: Array<number>) {
