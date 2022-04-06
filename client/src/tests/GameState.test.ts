@@ -234,7 +234,7 @@ describe("GameState", () => {
         expect(gameState.isInOppositeSection()).toBeTruthy();
     });
 
-    it("[FR11 Tetromino fall through] test moveIfCan will trigger respawn if exceeded the bottom boundary", () => {
+    it("[FR11 FR19 Tetromino fall through] test moveIfCan will trigger respawn if exceeded the bottom boundary", () => {
         // init player
         serverSocket.emit("initPlayer", 0);
 
@@ -352,7 +352,7 @@ describe("GameState", () => {
         assertRow(2, [24]);
     });
 
-    it("[FR17 Line clearing] clearing multiple separated lines", () => {
+    it("[FR17, FR18 Line clearing two lines] clearing multiple separated lines", () => {
         setupSimplePlayer(0);
         setupRowInBoard(
             5,
@@ -405,21 +405,6 @@ describe("GameState", () => {
         gameState.updateFalling();
         gameState.updateFalling();
 
-        expect(mockedClientSocket.emit).toHaveBeenCalledWith("playerMove", 0, {
-            position: [2, 23],
-            rotation: 3,
-            type: 0,
-        });
-        expect(mockedClientSocket.emit).toHaveBeenCalledWith("playerMove", 0, {
-            position: [3, 23],
-            rotation: 3,
-            type: 0,
-        });
-        expect(mockedClientSocket.emit).toHaveBeenCalledWith("playerMove", 0, {
-            position: [4, 23],
-            rotation: 3,
-            type: 0,
-        });
         // assert that placing event happens
         expect(mockedClientSocket.emit).toHaveBeenCalledWith("playerPlace", 0, {
             position: [4, 23],
@@ -441,6 +426,158 @@ describe("GameState", () => {
 
         assertRow(6, [24]);
         assertRow(7, [15, 16, 17, 18, 19, 20, 21, 22, 24]);
+        assertRow(8, [24]);
+    });
+
+    it("[FR17, FR18 Line clearing tree lines] clearing multiple separated lines", () => {
+        setupSimplePlayer(0);
+        setupRowInBoard(
+            5,
+            [...Array(BOARD_SIZE - 2 * WALL_SIZE - 1).keys()].map(
+                (x) => x + WALL_SIZE
+            )
+        );
+
+        // this row won't be cleared
+        setupRowInBoard(
+            6,
+            [...Array(BOARD_SIZE - 2 * WALL_SIZE - 1).keys()].map(
+                (x) => x + WALL_SIZE
+            )
+        );
+
+        setupRowInBoard(
+            7,
+            [...Array(BOARD_SIZE - 2 * WALL_SIZE - 1).keys()].map(
+                (x) => x + WALL_SIZE
+            )
+        );
+
+        setupRowInBoard(8, [24]);
+
+        // spy on socket
+        const mockedClientSocket = {
+            on: vi.fn(),
+            emit: vi.fn(),
+        };
+        gameState.socket = mockedClientSocket as any;
+
+        gameState.moveIfCan(Tetromino.rotateCCW);
+        gameState.moveIfCan(Tetromino.slide(1));
+        gameState.moveIfCan(Tetromino.slide(1));
+        gameState.moveIfCan(Tetromino.slide(1));
+        gameState.moveIfCan(Tetromino.slide(1));
+        gameState.moveIfCan(Tetromino.slide(1));
+        expect(mockedClientSocket.emit).toHaveBeenCalledTimes(0);
+
+        gameState.updateFalling();
+        expect(mockedClientSocket.emit).toHaveBeenCalledWith("playerMove", 0, {
+            position: [1, 23],
+            rotation: 3,
+            type: 0,
+        });
+
+        gameState.updateFalling();
+        gameState.updateFalling();
+        gameState.updateFalling();
+        gameState.updateFalling();
+
+        // assert that placing event happens
+        expect(mockedClientSocket.emit).toHaveBeenCalledWith("playerPlace", 0, {
+            position: [4, 23],
+            rotation: 3,
+            type: 0,
+        });
+        // reset to initial spawning position
+        expect(mockedClientSocket.emit).toHaveBeenCalledWith("playerMove", 0, {
+            position: [0, 18],
+            rotation: 0,
+            type: 0,
+        });
+
+        expect(mockedClientSocket.emit).toHaveBeenCalledWith(
+            "gainPoints",
+            0,
+            5
+        );
+
+        assertRow(7, [24]);
+        assertRow(8, [24]);
+    });
+
+    it("[FR17, FR18 Line clearing four lines] clearing multiple separated lines", () => {
+        setupSimplePlayer(0);
+
+        setupRowInBoard(
+            5,
+            [...Array(BOARD_SIZE - 2 * WALL_SIZE - 1).keys()].map(
+                (x) => x + WALL_SIZE
+            )
+        );
+
+        setupRowInBoard(
+            7,
+            [...Array(BOARD_SIZE - 2 * WALL_SIZE - 1).keys()].map(
+                (x) => x + WALL_SIZE
+            )
+        );
+
+        // this row won't be cleared
+        setupRowInBoard(
+            6,
+            [...Array(BOARD_SIZE - 2 * WALL_SIZE - 1).keys()].map(
+                (x) => x + WALL_SIZE
+            )
+        );
+
+        setupRowInBoard(
+            8,
+            [...Array(BOARD_SIZE - 2 * WALL_SIZE - 1).keys()].map(
+                (x) => x + WALL_SIZE
+            )
+        );
+
+        setupRowInBoard(8, [24]);
+
+        // spy on socket
+        const mockedClientSocket = {
+            on: vi.fn(),
+            emit: vi.fn(),
+        };
+        gameState.socket = mockedClientSocket as any;
+
+        gameState.moveIfCan(Tetromino.rotateCCW);
+        gameState.moveIfCan(Tetromino.slide(1));
+        gameState.moveIfCan(Tetromino.slide(1));
+        gameState.moveIfCan(Tetromino.slide(1));
+        gameState.moveIfCan(Tetromino.slide(1));
+        gameState.moveIfCan(Tetromino.slide(1));
+        expect(mockedClientSocket.emit).toHaveBeenCalledTimes(0);
+
+        gameState.updateFalling();
+        expect(mockedClientSocket.emit).toHaveBeenCalledWith("playerMove", 0, {
+            position: [1, 23],
+            rotation: 3,
+            type: 0,
+        });
+
+        gameState.updateFalling();
+        gameState.updateFalling();
+        gameState.updateFalling();
+        gameState.updateFalling();
+
+        // assert that placing event happens
+        expect(mockedClientSocket.emit).toHaveBeenCalledWith("playerPlace", 0, {
+            position: [4, 23],
+            rotation: 3,
+            type: 0,
+        });
+
+        expect(mockedClientSocket.emit).toHaveBeenCalledWith(
+            "gainPoints",
+            0,
+            8
+        );
         assertRow(8, [24]);
     });
 
