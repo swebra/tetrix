@@ -14,6 +14,9 @@
     "socket.io-client": "^4.4.1"
   },
   "devDependencies": {
+    "c8": "^7.11.0",
+    "jsdom": "^19.0.0",
+    "socket.io-mock-ts": "^1.0.2",
     "typescript": "^4.5.5",
     "vite": "^2.8.0",
     "vitest": "^0.3.0"

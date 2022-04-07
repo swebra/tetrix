@@ -408,6 +408,19 @@ export class GameState {
         this.emitPlayerMove();
     }
 
+    public updateFalling() {
+        if (this.playerId == null) {
+            return;
+        }
+        if (this.moveIfCan(Tetromino.fall)) {
+            this.emitPlayerMove();
+        } else {
+            const currentOwner = this.currentTetromino.ownerId;
+            this.emitAndPlaceCurrentTetromino();
+            this.updateLineClearing(currentOwner);
+        }
+    }
+
     public updateLineClearing(tetrominoOwner: 0 | 1 | 2 | 3 | null = null) {
         this.lineCheckSequence.map((task) => {
             const linesToClear = this.scanLinesToClear(task);

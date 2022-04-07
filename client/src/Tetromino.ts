@@ -259,7 +259,7 @@ export class Tetromino {
                     tile[1] + lookahead.position[1],
                 ];
             });
-        lookahead.rotation = <0 | 1 | 2 | 3>(rotation % 4);
+        lookahead.rotation = <0 | 1 | 2 | 3>((rotation + 4) % 4);
         return lookahead;
     }
 
