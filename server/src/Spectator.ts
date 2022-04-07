@@ -4,7 +4,6 @@ import { broadcast } from "./broadcast";
 import { TetrominoType } from "common/TetrominoType";
 import { ToServerEvents, ToClientEvents } from "common/messages/spectator";
 import { Socket } from "socket.io";
-import { threadId } from "worker_threads";
 
 type SocketSpectator = Socket<ToServerEvents, ToClientEvents>;
 
@@ -29,6 +28,7 @@ export class Spectator {
     private broadcastVotedTetroToSpawn: broadcast["votedTetroToSpawn"];
     private broadcastFinalDecision: broadcast["decision"];
     private broadcastRandomTrade: broadcast["randomTrade"];
+
     constructor(
         showVotingSequenceEvent: broadcast["showVotingSequence"],
         hideVotingSequenceEvent: broadcast["hideVotingSequence"],
@@ -47,7 +47,6 @@ export class Spectator {
             option3: 0,
         };
         this._randTetros = [];
-
         this._countdownValue = 10;
         this._secondVotingRoundSelection = "null";
         this._isGameRunning = false;
@@ -60,6 +59,10 @@ export class Spectator {
 
     get countdownValue(): number {
         return this._countdownValue;
+    }
+
+    get randTetros(): Array<TetrominoType> {
+        return this._randTetros;
     }
 
     initSocketListeners(socket: SocketSpectator) {
