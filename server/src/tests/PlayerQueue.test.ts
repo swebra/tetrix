@@ -38,7 +38,9 @@ describe("Testing 'Level'", () => {
 
         clientSocket.emit("joinQueue");
         clientSocket2.emit("joinQueue");
-        clientSocket3.emit("joinQueue");
+        clientSocket3.emit("joinQueue", () => {
+            expect(serverSocket.emit).not.toHaveBeenCalled();
+        });
         clientSocket4.emit("joinQueue", () => {
             expect(serverSocket.emit).toHaveBeenCalledWith(
                 "initPlayer",
