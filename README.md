@@ -6,17 +6,17 @@ The twist is that you must now think multi-directionally, all while attacking or
 The game is designed to be played both cooperatively and competetively. You can try for the highest team score by strategizing, trading and clearing together, or your can sabotage your enemies by blocking them off, stealing their lines and colliding with them directly.
 
 ## Running Instructions
-Ensure you have [NodeJS](https://nodejs.org/en/download/) and [pnpm](https://pnpm.io/) installed before continuing.
+Ensure you have [NodeJS](https://nodejs.org/en/download/) and [npm](https://docs.npmjs.com/cli/v7/configuring-npm/install) installed before continuing.
 - in the root directory, run `npm i`
-- in `/server` run `pnpm build` to build the server
+- in `/server` run `npm run build` to build the server
 
 ### Starting the server
 - Run `export PORT=3001` to let the server run on port 3001. Change this to another port (other than port 3000) if it is already taken.
-- From the root directory, run `cd server && pnpm dev`
+- From the root directory, run `cd server && npm run dev`
 
 ### Starting the client
 This will need to be done in a separate terminal.
-- From the root directory, run `cd client && pnpm dev`
+- From the root directory, run `cd client && npm run dev`
 - Navigate to `localhost:3000` to view the game on your browser. Use multiple browser tabs to simulate multiple clients.
 
 
@@ -29,5 +29,5 @@ This will need to be done in a separate terminal.
 
 
 ## Build
-- `pnpm build` in the monorepo root
+- `npm run build` in the monorepo root
     > `npm run build` is ran on heroku deployment which should work locally, too.
