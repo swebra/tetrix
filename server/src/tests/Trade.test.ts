@@ -33,16 +33,16 @@ describe("Testing 'Trade'", () => {
         expect(trader.pairNum).toBe(null);
     });
     test("Second Offer for regular trader", () => {
-        trader.currentOfferer = clientSocket1;
-        trader.tradeActive = true;
-        trader.currentTradeOffer = TetrominoType.I;
-        trader.addTrade(clientSocket2, TetrominoType.J);
         clientSocket1.on("sendTradePiece", (tetromino: TetrominoType) => {
             expect(tetromino).toEqual(TetrominoType.J);
         });
         clientSocket2.on("sendTradePiece", (tetromino: TetrominoType) => {
             expect(tetromino).toEqual(TetrominoType.I);
         });
+        trader.currentOfferer = clientSocket1;
+        trader.tradeActive = true;
+        trader.currentTradeOffer = TetrominoType.I;
+        trader.addTrade(clientSocket2, TetrominoType.J);
     });
     test("Clear trade", () => {
         trader.currentOfferer = clientSocket1;
@@ -60,15 +60,19 @@ describe("Testing 'Trade'", () => {
         expect(randTrader.currentTradeOffer).toBe(TetrominoType.L);
     });
     test("Second offer for Random Trade", () => {
-        randTrader.currentOfferer = clientSocket1;
-        randTrader.tradeActive = true;
-        randTrader.currentTradeOffer = TetrominoType.I;
-        randTrader.addTrade(clientSocket2, TetrominoType.J);
         clientSocket1.on("sendRandomPiece", (tetromino: TetrominoType) => {
             expect(tetromino).toEqual(TetrominoType.J);
         });
         clientSocket2.on("sendRandomPiece", (tetromino: TetrominoType) => {
             expect(tetromino).toEqual(TetrominoType.I);
         });
+        randTrader.currentOfferer = clientSocket1;
+        randTrader.tradeActive = true;
+        randTrader.currentTradeOffer = TetrominoType.I;
+        randTrader.addTrade(clientSocket2, TetrominoType.J);
+        //randTrader also clears the trades so these checks are needed
+        expect(randTrader.currentOfferer).toBe(null);
+        expect(randTrader.currentTradeOffer).toBe(null);
+        expect(randTrader.tradeActive).toBe(false);
     });
 });
