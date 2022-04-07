@@ -1,16 +1,34 @@
 import { Level } from "../Level";
+import { SocketServerMock } from "socket.io-mock-ts";
 
 describe("Testing 'Level'", () => {
     let level: Level;
+    let clientSocket: any;
+    let serverSocket: any;
 
     jest.useFakeTimers();
     jest.spyOn(global, "setTimeout");
+
+    beforeAll(() => {
+        serverSocket = new SocketServerMock();
+        clientSocket = serverSocket.clientMock;
+    });
 
     beforeEach(() => {
         level = new Level(jest.fn());
     });
 
-    test("Valid level increments", () => {
+    test("'requestFallRate' event", () => {
+        level.initSocketListeners(clientSocket);
+        clientSocket.emit("requestFallRate", () => {
+            expect(serverSocket.emit).toHaveBeenCalledWith(
+                "updateFallRate",
+                expect.any(Number)
+            );
+        });
+    });
+
+    test("[FR20 Game Leveling] ensure valid level increments", () => {
         level.checkUpdateLevel(10);
         expect(level.currentLevel).toBe(1);
 
@@ -18,14 +36,14 @@ describe("Testing 'Level'", () => {
         expect(level.currentLevel).toBe(2);
     });
 
-    test("Updating Fall Rate", () => {
+    test("[FR7 Game Level Fall Rate] updating fall rate", () => {
         expect(level.currentFallRate).toBe(1000);
 
         level.checkUpdateLevel(20);
         expect(level.currentFallRate).toBe(793);
     });
 
-    test("Spectator Increasing Fall Rate & Resetting Fall Rate after 20s", () => {
+    test("[FR24 Game Dynamic Fall Rate] spectator increasing fall rate & resetting fall rate after 20s", () => {
         expect(level.currentFallRate).toBe(1000);
 
         level.spectatorIncreaseFallRate();
@@ -34,7 +52,7 @@ describe("Testing 'Level'", () => {
         expect(setTimeout).toHaveBeenCalledWith(expect.any(Function), 20000);
     });
 
-    test("Spectator Decreasing Fall Rate & Resetting Fall Rate after 20s", () => {
+    test("[FR24 Game Dynamic Fall Rate] spectator decreasing fall rate & resetting fall rate after 20s", () => {
         expect(level.currentFallRate).toBe(1000);
 
         level.spectatorDecreaseFallRate();

@@ -1,18 +1,62 @@
 import { Scoreboard } from "../Scoreboard";
 import { Level } from "../Level";
+import { SocketServerMock } from "socket.io-mock-ts";
 
 describe("Testing 'Spectator'", () => {
     let board: Scoreboard;
-    const level: Level = new Level(jest.fn());
+    let level: Level;
+    let clientSocket: any;
+    let serverSocket: any;
 
     jest.useFakeTimers();
     jest.spyOn(global, "setTimeout");
 
-    beforeEach(() => {
-        board = new Scoreboard(jest.fn());
+    beforeAll(() => {
+        serverSocket = new SocketServerMock();
+        clientSocket = serverSocket.clientMock;
     });
 
-    test("Test Increment User Scores", () => {
+    beforeEach(() => {
+        board = new Scoreboard(jest.fn());
+        level = new Level(jest.fn());
+    });
+
+    test("'requestScoreboardData' event", () => {
+        board.initSocketListeners(clientSocket, level);
+        clientSocket.emit("requestFallRate", () => {
+            expect(serverSocket.emit).toHaveBeenCalledWith(
+                "updateScoreboard",
+                (eventData: any) => {
+                    expect(eventData).toEqual(
+                        expect.arrayContaining([
+                            expect.objectContaining({
+                                color: "orange",
+                                points: 0,
+                            }),
+                            expect.objectContaining({
+                                color: "green",
+                                points: 0,
+                            }),
+                            expect.objectContaining({
+                                color: "pink",
+                                points: 0,
+                            }),
+                            expect.objectContaining({
+                                color: "blue",
+                                points: 0,
+                            }),
+                            expect.objectContaining({
+                                color: "level",
+                                points: 1,
+                            }),
+                        ])
+                    );
+                }
+            );
+        });
+    });
+
+    test("[FR18 Scoring Line Clear] increment user scores", () => {
         const updateScoreboardUI = jest.spyOn(board, "updateScoreboardUI");
 
         expect(board.currentTeamScore).toBe(0);
@@ -23,7 +67,16 @@ describe("Testing 'Spectator'", () => {
         expect(updateScoreboardUI).toHaveBeenCalled();
     });
 
-    test("Test Resetting AccumulatedScore Upon Level Increment", () => {
+    test("Reset scores", () => {
+        expect(board.currentTeamScore).toBe(0);
+        board.incrementScore(0, 10, level);
+        expect(board.currentTeamScore).toBe(10);
+        expect(board.accumulatedScore).toBe(10);
+        board.resetScores();
+        expect(board.currentTeamScore).toBe(0);
+    });
+
+    test("Resetting 'accumulatedScore' upon level increment", () => {
         const updateLevel = jest.spyOn(level, "checkUpdateLevel");
 
         expect(board.accumulatedScore).toBe(0);
@@ -35,7 +88,7 @@ describe("Testing 'Spectator'", () => {
         expect(board.accumulatedScore).toBe(0);
     });
 
-    test("Test Decrement User Scores", () => {
+    test("[FR19 Scoring Fall Through] decrement user scores", () => {
         const updateScoreboardUI = jest.spyOn(board, "updateScoreboardUI");
 
         expect(board.orangeScore).toBe(0);
@@ -50,7 +103,7 @@ describe("Testing 'Spectator'", () => {
         expect(updateScoreboardUI).toHaveBeenCalled();
     });
 
-    test("Test Get Final Scores", () => {
+    test("[FR28 Game Show Score] Get final scores", () => {
         expect(board.finalScores.length).toBe(0);
         expect(board.getFinalScores().length).toBe(5);
 

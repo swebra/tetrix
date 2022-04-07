@@ -105,12 +105,4 @@ export class Level {
         this._currentFallRate = 1000;
         this._currentLevel = 1;
     }
-
-    /**
-     * Notify the client of the current fallrate.
-     * @param socket The client requesting data.
-     */
-    public getFallRate(socket: SocketLevel) {
-        socket.emit("updateFallRate", this._currentFallRate);
-    }
 }
