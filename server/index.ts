@@ -183,6 +183,10 @@ io.on("connection", (socket) => {
         socket.emit("initPlayer", playerCounter);
         playerCounter += 1;
         playerCounter %= 4;
+
+        if (watchdogTimer == null) {
+            watchdogTimer = new Watchdog(TIMEOUT);
+        }
     }
 
     socket.on("playerMove", (playerId, state) => {
