@@ -1,11 +1,26 @@
 # Tetrix
-A capstone project
+Tetrix is a novel multiplayer take on the classic Tetris game in which block stacking is done by 4 players working in 4 different directions.
+Like traditional Tetris, the goal is to complete and clear lines to avoid filling the board as the game speeds up.
+Points are awarded on line clears and the game ends when a players stack reaches the end of their game board.
+The twist is that you must now think multi-directionally, all while attacking or helping your peers, coordinating trades and enduring spectator voted effects.
+The game is designed to be played both cooperatively and competetively. You can try for the highest team score by strategizing, trading and clearing together, or your can sabotage your enemies by blocking them off, stealing their lines and colliding with them directly.
 
-## Development
-- in `/server`, run `pnpm dev` or `yarn dev`
-- in `/client`, run `pnpm dev` or `yarn dev`
+## Running Instructions
+Ensure you have [NodeJS](https://nodejs.org/en/download/) and [pnpm](https://pnpm.io/) installed before continuing.
+- in the root directory, run `npm i`
+- in `/server` run `pnpm build` to build the server
 
-### Environment Variables
+### Starting the server
+- Run `export PORT=3001` to let the server run on port 3001. Change this to another port (other than port 3000) if it is already taken.
+- From the root directory, run `cd server && pnpm dev`
+
+### Starting the client
+This will need to be done in a separate terminal.
+- From the root directory, run `cd client && pnpm dev`
+- Navigate to `localhost:3000` to view the game on your browser. Use multiple browser tabs to simulate multiple clients.
+
+
+## Environment Variables
 | Component | Name | Type | Default | Function |
 | --------- | ---- | ---- | ------- | -------- |
 | Client | `VITE_BACKEND_URL` | String | `http://localhost:3001/` | URL of the Tetrix backend server (not to be confused with the client Vite server) |

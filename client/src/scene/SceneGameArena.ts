@@ -138,15 +138,7 @@ export class SceneGameArena extends Phaser.Scene {
         });
 
         this.keyThrottleManager.register([s, down], "down", () => {
-            const result = executeMove(Tetromino.fall);
-            if (result === false) {
-                // cannot move down
-                const currentOwner = this.gameState.currentTetromino.ownerId;
-                this.gameState.emitAndPlaceCurrentTetromino();
-                this.gameState.updateLineClearing(currentOwner);
-            } else if (result != null) {
-                this.gameState.currentTetromino.draw(this);
-            }
+            this.gameState.updateFalling();
         });
 
         this.keyThrottleManager.register([q, z], "rotateCCW", () => {
@@ -243,7 +235,7 @@ export class SceneGameArena extends Phaser.Scene {
 
         this.fallRateTimer = this.time.addEvent({
             delay: interval,
-            callback: () => this.updateFalling(),
+            callback: () => this.gameState.updateFalling(),
             loop: true,
         });
     }
@@ -263,18 +255,5 @@ export class SceneGameArena extends Phaser.Scene {
             this.gameState.tradeTetrominoType,
             this.gameState.tradingPlayerId
         );
-    }
-
-    private updateFalling() {
-        if (this.gameState.playerId == null) {
-            return;
-        }
-        if (this.gameState.moveIfCan(Tetromino.fall)) {
-            this.gameState.emitPlayerMove();
-        } else {
-            const currentOwner = this.gameState.currentTetromino.ownerId;
-            this.gameState.emitAndPlaceCurrentTetromino();
-            this.gameState.updateLineClearing(currentOwner);
-        }
     }
 }
